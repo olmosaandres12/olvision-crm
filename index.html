@@ -2112,7 +2112,7 @@ function renderSaldosPendientesHtml() {
     .filter(o => {
       const t = parseFloat(o.total)||0;
       const a = parseFloat(o.aCuenta)||0;
-      return t > 0 && a < t && !o.pagado;
+      return t > 0 && a < t && o.estado !== "entregado";
     })
     .sort((a,b) => String(b.num).localeCompare(String(a.num), undefined, {numeric:true}));
 
@@ -2157,12 +2157,27 @@ function renderPendientes() {
   // Asignar estado automático a órdenes sin estado
   D.orders.forEach(o => {
     if (!o.estado) {
-      o.estado = (o.fecha && o.fecha < hoyStr) ? 'entregado' : 'pendiente_envio';
+      // Solo marcar como entregado si: la fecha pasó, Y está pagada O no tiene saldo pendiente
+      const tieneSaldo = (parseFloat(o.saldo||0) > 0) ||
+                         (parseFloat(o.total||0) > 0 && parseFloat(o.aCuenta||0) < parseFloat(o.total||0) && !o.pagado);
+      const fechaPasada = o.fecha && o.fecha < hoyStr;
+      if (fechaPasada && !tieneSaldo && o.pagado) {
+        o.estado = 'entregado';
+      } else {
+        o.estado = 'pendiente_envio';
+      }
     }
   });
 
-  // Filtrar NO entregadas
-  const pendientes = D.orders.filter(o => o.estado !== 'entregado');
+  // Filtrar NO entregadas, O entregadas con saldo/pago pendiente
+  const tieneSaldoPendiente = (o) => {
+    if (o.pagado) return false;
+    const total   = parseFloat(o.total||0);
+    const aCuenta = parseFloat(o.aCuenta||0);
+    const saldo   = parseFloat(o.saldo||0);
+    return saldo > 0 || (total > 0 && aCuenta < total);
+  };
+  const pendientes = D.orders.filter(o => o.estado !== 'entregado' || tieneSaldoPendiente(o));
 
   if (!pendientes.length) {
     el.innerHTML = `<div class="empty"><span>🎉</span>¡Todo entregado!<br>No hay órdenes pendientes.</div>`;
@@ -2188,14 +2203,18 @@ function renderPendientes() {
     const e   = ESTADOS[o.estado] || ESTADOS.pendiente_envio;
     const dias = o.fecha ? Math.floor((new Date()-new Date(o.fecha+"T12:00:00"))/86400000) : null;
     const vencido = o.fechaEntrega && o.fechaEntrega < hoyStr;
+    const saldoCalc = parseFloat(o.saldo||0) || (parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+    const haySaldo = !o.pagado && saldoCalc > 0;
+    const borderColor = haySaldo ? '#E65100' : e.color;
 
-    return `<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ${e.color};box-shadow:0 1px 4px rgba(0,0,0,.06)">
+    return `<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ${borderColor};box-shadow:0 1px 4px rgba(0,0,0,.06)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <span style="font-weight:900;font-size:14px">${o.nombre||"—"}</span>
             <span style="font-size:11px;color:var(--suave)">N°${o.num||"—"}</span>
             ${vencido?'<span style="font-size:10px;font-weight:800;color:#C62828;background:#FDECEA;border-radius:20px;padding:1px 7px">⏰ Vencido</span>':""}
+            ${haySaldo?`<span style="font-size:10px;font-weight:800;color:#E65100;background:#FFF3E0;border-radius:20px;padding:1px 7px">💰 Saldo $${num(saldoCalc)}</span>`:""}
           </div>
           <div style="margin-top:4px">${getEstadoBadge(o.estado)}</div>
           <div style="font-size:11px;color:var(--suave);margin-top:4px">
@@ -2326,7 +2345,7 @@ function cobrarSaldo() {
     .filter(o => {
       const total = parseFloat(o.total)||0;
       const acuenta = parseFloat(o.aCuenta)||0;
-      return total > 0 && acuenta < total && !o.pagado;
+      return total > 0 && acuenta < total && o.estado !== 'entregado';
     })
     .sort((a,b) => String(b.num).localeCompare(String(a.num), undefined, {numeric:true}));
 
@@ -2380,7 +2399,7 @@ function filtrarSaldos(q) {
     .filter(o => {
       const total = parseFloat(o.total)||0;
       const acuenta = parseFloat(o.aCuenta)||0;
-      return total > 0 && acuenta < total && !o.pagado;
+      return total > 0 && acuenta < total && o.estado !== 'entregado';
     });
   const filtrado = q
     ? conSaldo.filter(o =>
