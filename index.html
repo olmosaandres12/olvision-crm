@@ -504,7 +504,11 @@ async function syncSheets() {
           pagado: r[38]===true || String(r[38])==="true",
           ctaCte: r[39]===true || String(r[39])==="true",
           notas:String(r[40]||""),
-          estado:String(r[41]||"pendiente_envio"),
+          estado:(()=>{
+            const v = r[41]!==undefined ? String(r[41]).trim() : "";
+            const validos = ["pendiente_envio","en_laboratorio","demorado","listo_laboratorio","listo_retirar","entregado"];
+            return validos.includes(v) ? v : "pendiente_envio";
+          })(),
           fechaEntrega:fNorm(r[42]),
           vendedora:String(r[43]||""),
           costo:String(r[44]||"")
@@ -532,6 +536,25 @@ function persist() {
   // Solo subir a Sheets si hay órdenes (proteger contra borrado accidental)
   if (D.orders && D.orders.length > 0) {
     push({ type: "SYNC", data: D });
+  }
+}
+
+// Fuerza reescritura completa de todas las órdenes en el sheet
+// Útil para migrar filas viejas que no tienen estado/fechaEntrega/vendedora/costo
+async function forzarResyncSheet() {
+  const st = document.getElementById("resync-status");
+  if (!D.orders || D.orders.length === 0) {
+    if (st) st.textContent = "⚠️ No hay órdenes cargadas.";
+    return;
+  }
+  if (st) st.textContent = "⏳ Enviando " + D.orders.length + " órdenes al sheet...";
+  try {
+    await push({ type: "SYNC", data: D });
+    if (st) st.textContent = "✅ " + D.orders.length + " órdenes re-sincronizadas correctamente.";
+    toast("✅ Sheet actualizado con " + D.orders.length + " órdenes");
+  } catch(e) {
+    if (st) st.textContent = "❌ Error al sincronizar. Intentá de nuevo.";
+    toast("❌ Error al sincronizar");
   }
 }
 function updateCount() {
@@ -677,6 +700,17 @@ function renderConfig() {
     seccion("Tipos de Lente", "🔭", "lentes", "Ej: Progresivo...") +
     seccion("Armazón", "🕶️", "armazon", "Ej: Armazon Nuevo...") +
     seccion("Formas de Pago", "💳", "formaPago", "Ej: Débito...") +
+    `<div class="fsec" style="border-left:4px solid var(--azul)">
+      <div class="fsec-tit">☁️ Sincronización con Google Sheets</div>
+      <div style="font-size:13px;color:var(--suave);margin-bottom:14px;line-height:1.6">
+        Si los estados, vendedoras o fechas de entrega no se guardan al recargar, 
+        usá este botón para reescribir <b>todas las órdenes</b> en el sheet con el formato actualizado.
+      </div>
+      <button onclick="forzarResyncSheet()" style="width:100%;padding:13px;border-radius:11px;border:none;background:var(--azul);color:var(--amarillo);font-size:15px;font-weight:900;cursor:pointer;margin-bottom:8px">
+        🔄 Re-sincronizar todas las órdenes
+      </button>
+      <div id="resync-status" style="font-size:12px;color:var(--suave);text-align:center;min-height:18px"></div>
+    </div>` +
     `<div style="height:20px"></div>`;
 }
 
