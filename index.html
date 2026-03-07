@@ -312,7 +312,7 @@
 
 </div><!-- /main-content -->
 <script>
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwdH1ljPzfpNZRX0DbdRxSsmcD_9EKJoxJ124h1_CKfG5krluZZh7YAvF5PEklmMipq/exec";
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbzmfflNH8JhIdmrTzW-2Bk16MVSsjG44t_Ba-eoElNQXYopPkoODmT345jR1KMbtGPc/exec";
 const DEFAULT_CONFIG = {
   lentes:      ["Monofocales","Bifocales","Progresivo","Ocupacional","Alto Índice"],
   tratamientos:["Orgánico Blanco","Orgánico Blue","Blue c/HD","HD","Fotocromático","Policarbonato","Mineral","Poli con AR","Orgánico Blue Fotocromático","Bifocal Flat Top Blanco","Bifocal Flat Top Blue","Bifocal Fotocromático","Bifocal Criptock"],
@@ -374,15 +374,6 @@ async function init() {
   renderCaja();
   await syncSheets();
   renderCaja();
-  // Sync automático cada 30 segundos para mantener todos los dispositivos actualizados
-  setInterval(async () => {
-    await syncSheets();
-    const active = document.querySelector(".screen.active")?.id?.replace("screen-","");
-    if (active === "pendientes")   renderPendientes();
-    else if (active === "ordenes") renderOrdenes();
-    else if (active === "caja")    renderCaja();
-    else if (active === "clientes") renderClientes();
-  }, 30000);
 }
 
 // Indicador visual de sync
