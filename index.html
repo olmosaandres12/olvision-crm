@@ -504,22 +504,26 @@ async function syncSheets() {
     });
     if (orders.length) {
       // Merge: conservar cambios locales recientes que aún no llegaron al sheet
-      // (evita race condition entre persist() y syncSheets())
-      const localMap = {};
-      (D.orders||[]).forEach(o => { localMap[o.id] = o; });
-      orders.forEach(o => {
-        const local = localMap[o.id];
-        if (local) {
-          // Si el local tiene estado más avanzado que el remoto, conservarlo
-          const prioridad = { entregado:6, listo_retirar:5, listo_laboratorio:4, demorado:3, en_laboratorio:2, pendiente_envio:1 };
-          const pLocal = prioridad[local.estado] || 0;
-          const pRemoto = prioridad[o.estado] || 0;
-          if (pLocal > pRemoto) o.estado = local.estado;
-          // Conservar pagado=true si local ya lo marcó
-          if (local.pagado && !o.pagado) o.pagado = local.pagado;
-        }
-      });
-      D.orders = orders;
+      // Si hay un syncLock activo (cambio reciente), NO sobreescribir D.orders
+      if (window._syncLock && Date.now() < window._syncLock) {
+        // Solo actualizar órdenes que no existen localmente (nuevas desde otro dispositivo)
+        const localIds = new Set((D.orders||[]).map(o => o.id));
+        orders.forEach(o => { if (!localIds.has(o.id)) D.orders.push(o); });
+      } else {
+        const localMap = {};
+        (D.orders||[]).forEach(o => { localMap[o.id] = o; });
+        orders.forEach(o => {
+          const local = localMap[o.id];
+          if (local) {
+            const prioridad = { entregado:6, listo_retirar:5, listo_laboratorio:4, demorado:3, en_laboratorio:2, pendiente_envio:1 };
+            const pLocal = prioridad[local.estado] || 0;
+            const pRemoto = prioridad[o.estado] || 0;
+            if (pLocal > pRemoto) o.estado = local.estado;
+            if (local.pagado && !o.pagado) o.pagado = local.pagado;
+          }
+        });
+        D.orders = orders;
+      }
       persistLocal();
       renderAll();
     }
@@ -2130,6 +2134,8 @@ function getEstadoBadge(estado) {
 function cambiarEstado(idx, nuevoEstado) {
   D.orders[idx].estado = nuevoEstado;
   persist();
+  // Bloquear que el próximo sync remoto pise este cambio por 10 segundos
+  window._syncLock = Date.now() + 10000;
   // Refrescar vista actual
   if (document.getElementById("screen-pendientes")?.classList.contains("active")) renderPendientes();
   else renderOrdenes();
