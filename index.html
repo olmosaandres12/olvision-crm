@@ -834,9 +834,9 @@ function verDetalle(idx) {
       </div>
     </div>
 
-    <!-- ESTADO — bloque principal -->
-    <div class="fsec" style="border-left:4px solid ${est.color};background:${est.bg}20">
-      <div class="fsec-tit" style="color:${est.color}">📋 Estado del trabajo</div>
+    <!-- ESTADO DEL TRABAJO -->
+    <div class="fsec" style="border-left:4px solid ${est.color}">
+      <div class="fsec-tit">📋 Estado del trabajo</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <span style="font-size:28px">${est.emoji}</span>
         <div>
@@ -844,11 +844,33 @@ function verDetalle(idx) {
           ${o.fechaEntrega?`<div style="font-size:12px;color:var(--suave);margin-top:2px">📅 Entrega est.: ${fmtDate(o.fechaEntrega)}</div>`:""}
         </div>
       </div>
-      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px">Cambiar estado:</div>
+      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px">Cambiar estado del trabajo:</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${botonesEstado}
       </div>
       ${waContextual?`<div style="margin-top:12px">${waContextual}</div>`:""}
+    </div>
+
+    <!-- ESTADO DE PAGO — separado y claro -->
+    <div class="fsec" style="border-left:4px solid ${o.pagado?'#2E7D32':'#E65100'}">
+      <div class="fsec-tit">💰 Estado de pago</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          ${o.pagado
+            ? `<div style="font-size:16px;font-weight:900;color:#2E7D32">✅ Pagado</div>`
+            : haySaldo
+              ? `<div style="font-size:16px;font-weight:900;color:#E65100">💰 Saldo pendiente: $${num(saldoN)}</div>`
+              : `<div style="font-size:15px;font-weight:800;color:#9E9E9E">Sin saldo</div>`
+          }
+          ${o.formaPago?`<div style="font-size:12px;color:var(--suave);margin-top:3px">💳 ${o.formaPago}</div>`:""}
+          ${o.ctaCte?`<div style="font-size:12px;font-weight:700;color:#E65100;margin-top:3px">📒 Cuenta Corriente</div>`:""}
+        </div>
+        ${!o.pagado
+          ? `<button onclick="togglePagadoDesdeDetalle(${idx})" style="background:#2E7D32;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ Marcar pagado</button>`
+          : `<button onclick="togglePagadoDesdeDetalle(${idx})" style="background:#F5F5F5;color:#9E9E9E;border:1.5px solid #E0E0E0;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">↺ Desmarcar</button>`
+        }
+      </div>
+      ${haySaldo?`<button onclick="cobrarSaldoDesdeDetalle(${idx})" style="width:100%;margin-top:10px;padding:11px;border-radius:10px;border:none;background:#E65100;color:#fff;font-size:14px;font-weight:800;cursor:pointer">💵 Registrar cobro parcial</button>`:""}
     </div>
 
     <!-- Paciente -->
@@ -902,19 +924,15 @@ function verDetalle(idx) {
       ${o.armazonDesc?`<div style="margin-top:10px;font-size:13px;color:var(--suave)"><b style="color:var(--texto)">🕶️ Armazón:</b> ${o.armazonDesc}</div>`:""}
     </div>`:""}
 
-    <!-- Pago -->
-    <div class="fsec">
-      <div class="fsec-tit">💰 Pago</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <!-- Montos -->
+    ${(o.total||o.aCuenta)?`<div class="fsec">
+      <div class="fsec-tit">🧾 Montos</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${o.total?`<div style="flex:1;min-width:80px;background:var(--gris);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total</div><div style="font-size:20px;font-weight:900">$${num(o.total)}</div></div>`:""}
         ${o.aCuenta?`<div style="flex:1;min-width:80px;background:#F1F8F2;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase;letter-spacing:.5px">A cuenta</div><div style="font-size:20px;font-weight:900;color:#2E7D32">$${num(o.aCuenta)}</div></div>`:""}
         ${haySaldo?`<div style="flex:1;min-width:80px;background:#FFF3E0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#E65100;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Saldo</div><div style="font-size:20px;font-weight:900;color:#E65100">$${num(saldoN)}</div></div>`:""}
-        ${o.pagado?`<div style="flex:1;min-width:80px;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Estado</div><div style="font-size:16px;font-weight:900;color:#2E7D32">✅ Pagado</div></div>`:""}
       </div>
-      ${o.formaPago?`<div style="font-size:13px;color:var(--suave);margin-bottom:8px">💳 ${o.formaPago}</div>`:""}
-      ${o.ctaCte&&!o.pagado?`<div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📒 Cuenta Corriente</div>`:""}
-      ${haySaldo?`<button onclick="cobrarSaldoDesdeDetalle(${idx})" style="width:100%;padding:11px;border-radius:10px;border:none;background:#E65100;color:#fff;font-size:14px;font-weight:800;cursor:pointer">💵 Registrar cobro de saldo</button>`:""}
-    </div>
+    </div>`:""}
 
     <!-- Notas -->
     ${o.notas?`<div class="fsec">
@@ -935,6 +953,22 @@ function verDetalle(idx) {
 }
 
 // Cambia estado desde el detalle y recarga el modal
+function togglePagadoDesdeDetalle(idx) {
+  const o = D.orders[idx];
+  if (!o) return;
+  const nuevoVal = !o.pagado;
+  D.orders[idx].pagado = nuevoVal;
+  // Si se marca pagado y no tiene saldo real, poner saldo en 0
+  if (nuevoVal) {
+    const saldoReal = Math.max(0, parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+    if (saldoReal === 0) D.orders[idx].saldo = "0";
+  }
+  persist();
+  renderAll();
+  toast(nuevoVal ? "✅ Orden marcada como pagada" : "↺ Pago desmarcado");
+  setTimeout(() => verDetalle(idx), 80);
+}
+
 function cambiarEstadoDesdeDetalle(idx, nuevoEstado) {
   D.orders[idx].estado = nuevoEstado;
   persist();
