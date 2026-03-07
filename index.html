@@ -503,7 +503,11 @@ async function syncSheets() {
           formaPago:String(r[37]||""),
           pagado: r[38]===true || String(r[38])==="true",
           ctaCte: r[39]===true || String(r[39])==="true",
-          notas:String(r[40]||"")
+          notas:String(r[40]||""),
+          estado:String(r[41]||"pendiente_envio"),
+          fechaEntrega:fNorm(r[42]),
+          vendedora:String(r[43]||""),
+          costo:String(r[44]||"")
         });
       }
     });
