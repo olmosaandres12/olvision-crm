@@ -494,7 +494,7 @@ async function syncSheets() {
           pagado: r[38]===true || String(r[38])==="true",
           ctaCte: r[39]===true || String(r[39])==="true",
           notas:String(r[40]||""),
-          estado:String(r[41]||""),
+          estado:String(r[41]||"") || "pendiente_envio",
           fechaEntrega:fNorm(r[42]),
           vendedora:String(r[43]||""),
           costo:String(r[44]||""),
@@ -2169,20 +2169,9 @@ function renderPendientes() {
   const el = document.getElementById("pendientes-body");
   const hoyStr = new Date().toISOString().slice(0,10);
 
-  // Asignar estado automático a órdenes sin estado
-  D.orders.forEach(o => {
-    if (!o.estado) {
-      // Solo marcar como entregado si: la fecha pasó, Y está pagada O no tiene saldo pendiente
-      const tieneSaldo = (parseFloat(o.saldo||0) > 0) ||
-                         (parseFloat(o.total||0) > 0 && parseFloat(o.aCuenta||0) < parseFloat(o.total||0) && !o.pagado);
-      const fechaPasada = o.fecha && o.fecha < hoyStr;
-      if (fechaPasada && !tieneSaldo && o.pagado) {
-        o.estado = 'entregado';
-      } else {
-        o.estado = 'pendiente_envio';
-      }
-    }
-  });
+  // Garantizar fallback de estado para datos viejos en memoria
+  D.orders.forEach(o => { if (!o.estado) o.estado = 'pendiente_envio'; });
+
 
   // Filtrar NO entregadas, O entregadas con saldo/pago pendiente
   const tieneSaldoPendiente = (o) => {
