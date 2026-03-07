@@ -374,6 +374,15 @@ async function init() {
   renderCaja();
   await syncSheets();
   renderCaja();
+  // Sync automático cada 30 segundos para mantener todos los dispositivos actualizados
+  setInterval(async () => {
+    await syncSheets();
+    const active = document.querySelector(".screen.active")?.id?.replace("screen-","");
+    if (active === "pendientes")   renderPendientes();
+    else if (active === "ordenes") renderOrdenes();
+    else if (active === "caja")    renderCaja();
+    else if (active === "clientes") renderClientes();
+  }, 30000);
 }
 
 // Indicador visual de sync
@@ -2127,20 +2136,13 @@ function getEstadoBadge(estado) {
   return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;color:${e.color};background:${e.bg};border-radius:20px;padding:2px 8px">${e.emoji} ${e.label}</span>`;
 }
 
-async function cambiarEstado(idx, nuevoEstado) {
+function cambiarEstado(idx, nuevoEstado) {
   D.orders[idx].estado = nuevoEstado;
-  persistLocal();
-  // Refrescar vista inmediata
+  persist();
+  // Refrescar vista actual
   if (document.getElementById("screen-pendientes")?.classList.contains("active")) renderPendientes();
   else renderOrdenes();
   toast("✅ Estado actualizado");
-  // Subir al sheet y esperar que procese, luego sync para actualizar todos los dispositivos
-  await push({ type: "SYNC", data: D });
-  setTimeout(async () => {
-    await syncSheets();
-    if (document.getElementById("screen-pendientes")?.classList.contains("active")) renderPendientes();
-    else if (document.getElementById("screen-ordenes")?.classList.contains("active")) renderOrdenes();
-  }, 3000);
 }
 
 // ══════════════════════════════════════════════════════════════
