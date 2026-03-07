@@ -498,27 +498,41 @@ async function syncSheets() {
           fechaEntrega:fNorm(r[42]),
           vendedora:String(r[43]||""),
           costo:String(r[44]||""),
-          retirado: r[45]===true || String(r[45])==="true"
+          retirado: r[45]===true || String(r[45])==="true",
+          updatedAt: r[46] ? Number(r[46]) : 0
         });
       }
     });
     if (orders.length) {
-      // Merge: conservar cambios locales recientes que aún no llegaron al sheet
-      // (evita race condition entre persist() y syncSheets())
+      // Merge: si la versión local tiene updatedAt más reciente que la remota,
+      // conservar TODOS los campos locales (el sheet aún no recibió ese cambio).
+      // Esto resuelve el conflicto entre dispositivos distintos.
       const localMap = {};
       (D.orders||[]).forEach(o => { localMap[o.id] = o; });
-      orders.forEach(o => {
+      const mergedOrders = orders.map(o => {
         const local = localMap[o.id];
+        if (local && local.updatedAt && o.updatedAt) {
+          // Ambos tienen timestamp → gana el más reciente
+          return local.updatedAt > o.updatedAt ? local : o;
+        }
+        if (local && local.updatedAt && !o.updatedAt) {
+          // Solo el local tiene timestamp → fue modificado recientemente, conservar local
+          return local;
+        }
+        // Sin timestamp → fallback: conservar estado más avanzado y pagado=true
         if (local) {
-          // Si el local tiene estado más avanzado que el remoto, conservarlo
           const prioridad = { entregado:6, listo_retirar:5, listo_laboratorio:4, demorado:3, en_laboratorio:2, pendiente_envio:1 };
-          const pLocal = prioridad[local.estado] || 0;
-          const pRemoto = prioridad[o.estado] || 0;
-          if (pLocal > pRemoto) o.estado = local.estado;
-          // Conservar pagado=true si local ya lo marcó
+          if ((prioridad[local.estado]||0) > (prioridad[o.estado]||0)) o.estado = local.estado;
           if (local.pagado && !o.pagado) o.pagado = local.pagado;
         }
+        return o;
       });
+      // Agregar órdenes locales nuevas que aún no llegaron al sheet
+      const remoteIds = new Set(orders.map(o => o.id));
+      (D.orders||[]).forEach(o => { if (!remoteIds.has(o.id)) mergedOrders.push(o); });
+      const orders2 = mergedOrders;
+      // reasignar para compatibilidad con el resto del bloque
+      orders.length = 0; orders2.forEach(x => orders.push(x));
       D.orders = orders;
       persistLocal();
       renderAll();
@@ -1374,6 +1388,7 @@ function marcarRetirado(idx) {
     const o = D.orders[idx];
     const saldo = parseFloat(o.saldo||0) || (parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
     if (saldo <= 0) D.orders[idx].pagado = true;
+    D.orders[idx].updatedAt = Date.now();
     persist();
     renderAll();
     closeModal();
@@ -2129,6 +2144,7 @@ function getEstadoBadge(estado) {
 
 function cambiarEstado(idx, nuevoEstado) {
   D.orders[idx].estado = nuevoEstado;
+  D.orders[idx].updatedAt = Date.now();
   persist();
   // Refrescar vista actual
   if (document.getElementById("screen-pendientes")?.classList.contains("active")) renderPendientes();
@@ -3612,7 +3628,8 @@ async function submitOrden(existingId){
     estado:g("f-estado")||'pendiente_envio',
     fechaEntrega:g("f-fechaEntrega"),
     vendedora:g("f-vendedora"),
-    costo:g("f-costo")
+    costo:g("f-costo"),
+    updatedAt: Date.now()
   };
   if(existingId) D.orders=D.orders.map(x=>x.id===existingId?o:x);
   else D.orders.push(o);
