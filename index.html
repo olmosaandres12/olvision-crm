@@ -228,18 +228,27 @@
     <span class="si">🔍</span>
     <input id="q-ordenes" type="search" placeholder="Nombre, DNI, N° orden o fecha..." oninput="renderOrdenes(this.value)">
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <select id="fil-fecha" onchange="renderOrdenes(document.getElementById('q-ordenes').value)" style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--blanco);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;">
+  <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    <select id="fil-fecha" onchange="renderOrdenes(document.getElementById('q-ordenes').value)" style="flex:1;min-width:130px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--blanco);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;">
       <option value="">📅 Todas las fechas</option>
       <option value="hoy">Hoy</option>
       <option value="semana">Esta semana</option>
       <option value="mes">Este mes</option>
     </select>
-    <select id="fil-pago" onchange="renderOrdenes(document.getElementById('q-ordenes').value)" style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--blanco);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;">
+    <select id="fil-pago" onchange="renderOrdenes(document.getElementById('q-ordenes').value)" style="flex:1;min-width:120px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--blanco);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;">
       <option value="">💳 Todos</option>
       <option value="pagado">✅ Pagados</option>
       <option value="ctacte">📒 Cta. Cte.</option>
     </select>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+    <button onclick="filtrarEstado('')" id="fest-" class="fest-btn fest-active" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid var(--azul);background:var(--azul);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap">Todos</button>
+    <button onclick="filtrarEstado('pendiente_envio')" id="fest-pendiente_envio" class="fest-btn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid #9E9E9E;background:#F5F5F5;color:#9E9E9E;cursor:pointer;font-family:inherit;white-space:nowrap">🔬 Pendiente</button>
+    <button onclick="filtrarEstado('en_laboratorio')" id="fest-en_laboratorio" class="fest-btn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid #1565C0;background:#E3F2FD;color:#1565C0;cursor:pointer;font-family:inherit;white-space:nowrap">🏭 En lab</button>
+    <button onclick="filtrarEstado('demorado')" id="fest-demorado" class="fest-btn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid #E65100;background:#FFF3E0;color:#E65100;cursor:pointer;font-family:inherit;white-space:nowrap">⚠️ Demorado</button>
+    <button onclick="filtrarEstado('listo_laboratorio')" id="fest-listo_laboratorio" class="fest-btn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid #6A1B9A;background:#EDE7F6;color:#6A1B9A;cursor:pointer;font-family:inherit;white-space:nowrap">📦 Listo lab</button>
+    <button onclick="filtrarEstado('listo_retirar')" id="fest-listo_retirar" class="fest-btn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid #2E7D32;background:#E8F5E9;color:#2E7D32;cursor:pointer;font-family:inherit;white-space:nowrap">📲 Para retirar</button>
+    <button onclick="filtrarEstado('entregado')" id="fest-entregado" class="fest-btn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid #757575;background:#F5F5F5;color:#757575;cursor:pointer;font-family:inherit;white-space:nowrap">✅ Entregado</button>
   </div>
   <div id="lista-ordenes"><div class="empty"><span>📋</span>Cargando...</div></div>
 
@@ -339,6 +348,7 @@ function saveCfg(c) {
 }
 
 let D = { orders: [] };
+let _filEstado = "";  // filtro de estado activo en la lista de órdenes
 
 function doLogin() {
   const pass = document.getElementById("login-pass").value;
@@ -702,6 +712,25 @@ function matchFecha(o, fil) {
   return true;
 }
 
+function filtrarEstado(estado) {
+  _filEstado = estado;
+  // Actualizar estilos de botones pill
+  document.querySelectorAll(".fest-btn").forEach(btn => {
+    const isActive = btn.id === "fest-" + estado;
+    btn.style.fontWeight = "800";
+    if (isActive) {
+      btn.style.opacity = "1";
+      btn.style.boxShadow = "0 2px 8px rgba(0,0,0,.18)";
+      btn.style.transform = "scale(1.06)";
+    } else {
+      btn.style.opacity = "0.65";
+      btn.style.boxShadow = "none";
+      btn.style.transform = "scale(1)";
+    }
+  });
+  renderOrdenes(document.getElementById("q-ordenes")?.value || "");
+}
+
 function renderOrdenes(q="") {
   const el = document.getElementById("lista-ordenes");
   const filFecha = document.getElementById("fil-fecha")?.value||"";
@@ -712,28 +741,37 @@ function renderOrdenes(q="") {
     const matchQ = !q || (o.nombre||"").toLowerCase().includes(ql)||(o.dni||"").includes(q)||(o.cel||"").includes(q)||String(o.num).includes(q)||fmtDate(o.fecha).includes(q);
     const matchF = matchFecha(o, filFecha);
     const matchP = !filPago || (filPago==="pagado"&&o.pagado) || (filPago==="ctacte"&&o.ctaCte);
-    return matchQ && matchF && matchP;
+    const matchE = !_filEstado || (o.estado||"pendiente_envio") === _filEstado;
+    return matchQ && matchF && matchP && matchE;
   });
   if (!list.length) { el.innerHTML=`<div class="empty"><span>📋</span>${D.orders.length===0?"Tocá + para cargar la primera orden":"Sin resultados"}</div>`; return; }
   el.innerHTML = list.map(o => {
     const idx = D.orders.findIndex(x => x.id === o.id);
     const ttColor = o.tipoTrabajo==="Recetado"?"#1565C0":o.tipoTrabajo==="Reposición de Cristales"?"#6A1B9A":"#F57F17";
     const ttBg    = o.tipoTrabajo==="Recetado"?"#E3F2FD":o.tipoTrabajo==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";
-    return `<div class="card" onclick="verDetalle(${idx})" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;transition:background .15s" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
-      <div style="background:var(--azul);color:var(--amarillo);font-size:11px;font-weight:900;padding:7px 8px;border-radius:10px;text-align:center;min-width:48px;line-height:1.4;flex-shrink:0">
-        <div style="font-size:16px">#${o.num}</div>
-        <div style="opacity:.8;font-size:9px">${fmtDate(o.fecha)}</div>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.nombre||"—"}</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
-          ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.tipoTrabajo}</span>`:""}
-          ${o.pagado?`<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">✅ Pagado</span>`:""}
-          ${o.ctaCte?`<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">📒 Cta.Cte</span>`:""}
-          ${o.armazonDesc?`<span style="background:#F3F0FF;color:#5B21B6;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">🕶️ ${o.armazonDesc}</span>`:""}
+    const estadoInfo = ESTADOS[o.estado||"pendiente_envio"] || ESTADOS.pendiente_envio;
+    const saldoCalc = parseFloat(o.saldo||0) || Math.max(0, parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+    const haySaldo  = !o.pagado && saldoCalc > 0;
+    const borderColor = o.estado==="demorado" ? "#E65100" : o.estado==="listo_retirar" ? "#2E7D32" : estadoInfo.color;
+    return `<div class="card" onclick="verDetalle(${idx})" style="cursor:pointer;display:flex;align-items:stretch;padding:0;border-left:4px solid ${borderColor};overflow:hidden;transition:background .15s" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;flex:1;min-width:0">
+        <div style="background:var(--azul);color:var(--amarillo);font-size:11px;font-weight:900;padding:7px 8px;border-radius:10px;text-align:center;min-width:48px;line-height:1.4;flex-shrink:0">
+          <div style="font-size:16px">#${o.num}</div>
+          <div style="opacity:.8;font-size:9px">${fmtDate(o.fecha)}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.nombre||"—"}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;align-items:center">
+            <span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;color:${estadoInfo.color};background:${estadoInfo.bg};border-radius:20px;padding:2px 8px">${estadoInfo.emoji} ${estadoInfo.label}</span>
+            ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.tipoTrabajo}</span>`:""}
+            ${haySaldo?`<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">💰 $${num(saldoCalc)}</span>`:""}
+            ${o.pagado?`<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">✅ Pagado</span>`:""}
+            ${o.ctaCte&&!o.pagado?`<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">📒 Cta.Cte</span>`:""}
+          </div>
+          ${o.laboratorio?`<div style="font-size:11px;color:var(--suave);margin-top:3px">🏭 ${o.laboratorio}</div>`:""}
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:6px;padding:0 10px;flex-shrink:0">
         ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" onclick="event.stopPropagation()" style="background:#E7F9EE;color:#25D366;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none">📲</a>`:""}
         <div style="font-size:22px;color:var(--gris-borde)">›</div>
       </div>
@@ -744,26 +782,76 @@ function renderOrdenes(q="") {
 function verDetalle(idx) {
   const o = D.orders[idx];
   if (!o) return;
-  const saldoN = (o.total&&o.aCuenta) ? parseFloat(o.total)-parseFloat(o.aCuenta) : null;
+  const saldoN = (o.total&&o.aCuenta) ? Math.max(0, parseFloat(o.total)-parseFloat(o.aCuenta)) : null;
   const tipos = o.tipos ? o.tipos.split(",").filter(Boolean) : [];
   const hasL = o.lEsf||o.lEsfI, hasC = o.cEsf||o.cEsfI;
   const ttColor = o.tipoTrabajo==="Recetado"?"#1565C0":o.tipoTrabajo==="Reposición de Cristales"?"#6A1B9A":"#F57F17";
   const ttBg    = o.tipoTrabajo==="Recetado"?"#E3F2FD":o.tipoTrabajo==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";
+  const est     = ESTADOS[o.estado||"pendiente_envio"] || ESTADOS.pendiente_envio;
+  const haySaldo = !o.pagado && saldoN && saldoN > 0;
+  const celLimpio = String(o.cel||"").replace(/[^0-9]/g,"");
+
+  // Botones de cambio de estado — todos menos el actual
+  const botonesEstado = Object.entries(ESTADOS)
+    .filter(([k]) => k !== (o.estado||"pendiente_envio"))
+    .map(([k,v]) => `<button onclick="cambiarEstadoDesdeDetalle(${idx},'${k}')"
+      style="font-size:11px;font-weight:800;padding:6px 12px;border:1.5px solid ${v.color};color:${v.color};background:${v.bg};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap">
+      ${v.emoji} ${v.label}
+    </button>`).join("");
+
+  // Botón WhatsApp contextual según estado
+  let waContextual = "";
+  if (o.cel) {
+    const getMsgs = () => getMensajes();
+    if (o.estado === "listo_retirar") {
+      const tpl = getMsgs().find(m=>m.id==="listo")||{texto:"Hola {nombre}, tus lentes están listas para retirar en Olvisión!"};
+      const txt = encodeURIComponent(tpl.texto.replace(/{nombre}/g, o.nombre||""));
+      waContextual = `<a href="https://wa.me/549${celLimpio}?text=${txt}" target="_blank"
+        style="display:inline-flex;align-items:center;gap:6px;background:#E8F5E9;color:#1B5E20;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:800;text-decoration:none;border:1.5px solid #A5D6A7">
+        📲 Avisar que está lista
+      </a>`;
+    } else if (haySaldo) {
+      const tpl = getMsgs().find(m=>m.id==="saldo")||{texto:"Hola {nombre}, te recordamos que tenés un saldo pendiente de ${saldo}."};
+      const txt = encodeURIComponent(tpl.texto.replace(/{nombre}/g,o.nombre||"").replace(/{saldo}/g,"$"+num(saldoN)));
+      waContextual = `<a href="https://wa.me/549${celLimpio}?text=${txt}" target="_blank"
+        style="display:inline-flex;align-items:center;gap:6px;background:#FFF3E0;color:#E65100;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:800;text-decoration:none;border:1.5px solid #FFCC80">
+        📲 Recordar saldo pendiente
+      </a>`;
+    }
+  }
 
   document.getElementById("modal-body").innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:8px">
+    <!-- Encabezado -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px">
       <div>
         <div style="font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px">Orden de Trabajo</div>
-        <div style="font-size:26px;font-weight:900;color:var(--azul);line-height:1.1">N° ${o.num}</div>
+        <div style="font-size:28px;font-weight:900;color:var(--azul);line-height:1.1">N° ${o.num}</div>
         ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block;margin-top:4px">${o.tipoTrabajo}</span>`:""}
       </div>
       <div style="text-align:right">
         ${o.fecha?`<div style="font-size:13px;color:var(--suave)">📅 ${fmtDate(o.fecha)}</div>`:""}
-        ${o.pagado?`<div style="color:#2E7D32;font-weight:800;font-size:13px;margin-top:4px">✅ Pagado</div>`:""}
-        ${o.ctaCte?`<div style="color:#E65100;font-weight:800;font-size:13px;margin-top:4px">📒 Cta. Corriente</div>`:""}
+        ${o.vendedora?`<div style="font-size:12px;color:var(--suave);margin-top:2px">👤 ${o.vendedora}</div>`:""}
       </div>
     </div>
 
+    <!-- ESTADO — bloque principal -->
+    <div class="fsec" style="border-left:4px solid ${est.color};background:${est.bg}20">
+      <div class="fsec-tit" style="color:${est.color}">📋 Estado del trabajo</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:28px">${est.emoji}</span>
+        <div>
+          <div style="font-size:17px;font-weight:900;color:${est.color}">${est.label}</div>
+          ${o.fechaEntrega?`<div style="font-size:12px;color:var(--suave);margin-top:2px">📅 Entrega est.: ${fmtDate(o.fechaEntrega)}</div>`:""}
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px">Cambiar estado:</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${botonesEstado}
+      </div>
+      ${waContextual?`<div style="margin-top:12px">${waContextual}</div>`:""}
+    </div>
+
+    <!-- Paciente -->
     <div class="fsec">
       <div class="fsec-tit">👤 Paciente</div>
       <div style="font-size:18px;font-weight:800;margin-bottom:8px">${o.nombre||"—"}</div>
@@ -774,9 +862,10 @@ function verDetalle(idx) {
         ${o.fechaNac?`<span>📆 Nac: ${fmtDate(o.fechaNac)}</span>`:""}
         ${o.dir?`<span>📍 ${o.dir}</span>`:""}
       </div>
-      ${o.cel?`<a href="https://wa.me/549${String(o.cel||"").replace(/[^0-9]/g,"")}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#E7F9EE;color:#25D366;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:700;text-decoration:none;margin-top:10px">📲 WhatsApp</a>`:""}
+      ${o.cel?`<a href="https://wa.me/549${celLimpio}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#E7F9EE;color:#25D366;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:700;text-decoration:none;margin-top:10px">📲 WhatsApp</a>`:""}
     </div>
 
+    <!-- Datos médicos -->
     ${(o.doctor||o.oSocial||o.laboratorio)?`<div class="fsec">
       <div class="fsec-tit">🏥 Datos Médicos</div>
       <div style="font-size:13px;color:var(--suave);display:flex;flex-wrap:wrap;gap:10px;line-height:1.8">
@@ -789,6 +878,7 @@ function verDetalle(idx) {
       </div>`:""}
     </div>`:""}
 
+    <!-- Graduación -->
     ${(hasL||hasC)?`<div class="fsec">
       <div class="fsec-tit">📐 Graduación</div>
       <div class="gtbl-wrap"><table class="gtbl" style="pointer-events:none">
@@ -802,6 +892,7 @@ function verDetalle(idx) {
       </table></div>
     </div>`:""}
 
+    <!-- Lente y tratamiento -->
     ${(tipos.length||o.tratamiento||o.armazonDesc)?`<div class="fsec">
       <div class="fsec-tit">👓 Lente y Tratamiento</div>
       <div class="chips">
@@ -811,21 +902,27 @@ function verDetalle(idx) {
       ${o.armazonDesc?`<div style="margin-top:10px;font-size:13px;color:var(--suave)"><b style="color:var(--texto)">🕶️ Armazón:</b> ${o.armazonDesc}</div>`:""}
     </div>`:""}
 
+    <!-- Pago -->
     <div class="fsec">
       <div class="fsec-tit">💰 Pago</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
         ${o.total?`<div style="flex:1;min-width:80px;background:var(--gris);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total</div><div style="font-size:20px;font-weight:900">$${num(o.total)}</div></div>`:""}
         ${o.aCuenta?`<div style="flex:1;min-width:80px;background:#F1F8F2;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase;letter-spacing:.5px">A cuenta</div><div style="font-size:20px;font-weight:900;color:#2E7D32">$${num(o.aCuenta)}</div></div>`:""}
-        ${saldoN&&saldoN>0?`<div style="flex:1;min-width:80px;background:#FFF3E0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#E65100;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Saldo</div><div style="font-size:20px;font-weight:900;color:#E65100">$${num(saldoN)}</div></div>`:""}
+        ${haySaldo?`<div style="flex:1;min-width:80px;background:#FFF3E0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#E65100;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Saldo</div><div style="font-size:20px;font-weight:900;color:#E65100">$${num(saldoN)}</div></div>`:""}
+        ${o.pagado?`<div style="flex:1;min-width:80px;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Estado</div><div style="font-size:16px;font-weight:900;color:#2E7D32">✅ Pagado</div></div>`:""}
       </div>
-      ${o.formaPago?`<div style="margin-top:8px;font-size:13px;color:var(--suave)">💳 ${o.formaPago}</div>`:""}
+      ${o.formaPago?`<div style="font-size:13px;color:var(--suave);margin-bottom:8px">💳 ${o.formaPago}</div>`:""}
+      ${o.ctaCte&&!o.pagado?`<div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📒 Cuenta Corriente</div>`:""}
+      ${haySaldo?`<button onclick="cobrarSaldoDesdeDetalle(${idx})" style="width:100%;padding:11px;border-radius:10px;border:none;background:#E65100;color:#fff;font-size:14px;font-weight:800;cursor:pointer">💵 Registrar cobro de saldo</button>`:""}
     </div>
 
+    <!-- Notas -->
     ${o.notas?`<div class="fsec">
       <div class="fsec-tit">📝 Notas</div>
       <div style="font-size:14px;line-height:1.7">${o.notas}</div>
     </div>`:""}
 
+    <!-- Acciones -->
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn-save" style="flex:1" onclick="closeModal();setTimeout(()=>editOrden(${idx}),100)">✏️ Editar</button>
       <button class="btn-cancel" style="flex:1" onclick="closeModal()">← Volver</button>
@@ -835,6 +932,75 @@ function verDetalle(idx) {
   `;
   document.getElementById("overlay").classList.add("open");
   setTimeout(()=>{ document.getElementById("modal-inner").scrollTop=0; },50);
+}
+
+// Cambia estado desde el detalle y recarga el modal
+function cambiarEstadoDesdeDetalle(idx, nuevoEstado) {
+  D.orders[idx].estado = nuevoEstado;
+  persist();
+  renderAll();
+  toast("✅ Estado: " + (ESTADOS[nuevoEstado]?.label || nuevoEstado));
+  // Reabrir detalle actualizado
+  setTimeout(() => verDetalle(idx), 80);
+}
+
+// Registrar cobro de saldo desde el detalle
+function cobrarSaldoDesdeDetalle(idx) {
+  const o = D.orders[idx];
+  if (!o) return;
+  const saldoAct = Math.max(0, parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+  document.getElementById("modal-body").innerHTML = `
+    <div style="font-size:20px;font-weight:900;color:var(--azul);margin-bottom:4px">💵 Registrar cobro</div>
+    <div style="font-size:13px;color:var(--suave);margin-bottom:18px">${o.nombre||""} — Orden N° ${o.num}</div>
+    <div class="fsec">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <div style="flex:1;min-width:80px;background:var(--gris);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase">Total</div>
+          <div style="font-size:20px;font-weight:900">$${num(o.total)}</div>
+        </div>
+        <div style="flex:1;min-width:80px;background:#F1F8F2;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Ya pagado</div>
+          <div style="font-size:20px;font-weight:900;color:#2E7D32">$${num(o.aCuenta)}</div>
+        </div>
+        <div style="flex:1;min-width:80px;background:#FFF3E0;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#E65100;font-weight:700;text-transform:uppercase">Saldo</div>
+          <div style="font-size:20px;font-weight:900;color:#E65100">$${num(saldoAct)}</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Monto cobrado ahora $</label>
+        <input id="cobro-monto" type="number" inputmode="decimal" placeholder="${saldoAct}" value="${saldoAct}" style="font-size:18px;font-weight:800;text-align:center">
+      </div>
+      <div class="field">
+        <label>Forma de pago</label>
+        <select id="cobro-pago" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;">
+          ${(getCfg().formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <button onclick="confirmarCobroSaldo(${idx})" style="width:100%;padding:13px;border-radius:12px;border:none;background:#E65100;color:#fff;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:8px">✅ Confirmar cobro</button>
+    <button onclick="verDetalle(${idx})" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--gris-borde);background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:var(--texto)">← Volver</button>
+    <div style="height:12px"></div>
+  `;
+}
+
+function confirmarCobroSaldo(idx) {
+  const o = D.orders[idx];
+  if (!o) return;
+  const montoCobrado = parseFloat(document.getElementById("cobro-monto")?.value || 0);
+  if (!montoCobrado || montoCobrado <= 0) { toast("⚠ Ingresá un monto válido"); return; }
+  const aCuentaActual = parseFloat(o.aCuenta || 0);
+  const nuevoACuenta  = aCuentaActual + montoCobrado;
+  const total         = parseFloat(o.total || 0);
+  const nuevoSaldo    = Math.max(0, total - nuevoACuenta);
+  D.orders[idx].aCuenta   = String(nuevoACuenta);
+  D.orders[idx].saldo     = String(nuevoSaldo);
+  D.orders[idx].pagado    = nuevoSaldo === 0;
+  D.orders[idx].formaPago = document.getElementById("cobro-pago")?.value || o.formaPago;
+  persist();
+  renderAll();
+  toast("✅ Cobro registrado — nuevo saldo: $" + num(nuevoSaldo));
+  setTimeout(() => verDetalle(idx), 80);
 }
 
 
@@ -1921,11 +2087,12 @@ function renderAdminOrdenes() {
 
 // ── MENSAJES PREDEFINIDOS ─────────────────────────────────────────────────────
 const DEFAULT_MENSAJES = [
-  { id:"cumple",    nombre:"🎂 Cumpleaños",        texto:"Hola {nombre}, desde Olvisión te deseamos un muy feliz cumpleaños! 🎉👓 Que lo disfrutes mucho!" },
-  { id:"listo",     nombre:"✅ Listo para retirar", texto:"Hola {nombre}, te avisamos que tus anteojos ya están listos para retirar en Olvisión. Cualquier consulta escribinos. 👓" },
+  { id:"cumple",     nombre:"🎂 Cumpleaños",        texto:"Hola {nombre}, desde Olvisión te deseamos un muy feliz cumpleaños! 🎉👓 Que lo disfrutes mucho!" },
+  { id:"listo",      nombre:"✅ Listo para retirar", texto:"Hola {nombre}, te avisamos que tus anteojos ya están listos para retirar en Olvisión. Cualquier consulta escribinos. 👓" },
+  { id:"demorado",   nombre:"⚠️ Aviso de demora",   texto:"Hola {nombre}, te queremos avisar que tus anteojos están demorando un poco más de lo previsto en el laboratorio. En cuanto estén listos te avisamos. Disculpá las molestias!" },
   { id:"aniversario",nombre:"📅 Seguimiento 1 año", texto:"Hola {nombre}! Hace un año renovaste tus anteojos en Olvisión. Te recordamos que es buen momento para hacer un control visual. Contamos con las últimas novedades en armazones y lentes. 👓" },
-  { id:"saldo",     nombre:"💰 Recordatorio pago",  texto:"Hola {nombre}, te recordamos que tenés un saldo pendiente en Olvisión. Cuando puedas pasate o escribinos para coordinarlo. Gracias!" },
-  { id:"pami",      nombre:"🏥 Turno PAMI",         texto:"Hola {nombre}, te recordamos que podés renovar tus anteojos a través de PAMI en Olvisión. Estamos para ayudarte, escribinos cuando quieras!" }
+  { id:"saldo",      nombre:"💰 Recordatorio pago",  texto:"Hola {nombre}, te recordamos que tenés un saldo pendiente en Olvisión. Cuando puedas pasate o escribinos para coordinarlo. Gracias!" },
+  { id:"pami",       nombre:"🏥 Turno PAMI",         texto:"Hola {nombre}, te recordamos que podés renovar tus anteojos a través de PAMI en Olvisión. Estamos para ayudarte, escribinos cuando quieras!" }
 ];
 
 function getMensajes() {
@@ -2208,14 +2375,51 @@ function renderPendientes() {
   const prioridad = { demorado:0, listo_laboratorio:1, listo_retirar:2, en_laboratorio:3, pendiente_envio:4 };
   const sortOrds = (ords) => ords.sort((a,b) => (prioridad[a.estado]??5) - (prioridad[b.estado]??5));
 
+  // Genera el botón WA contextual según el estado de la orden
+  const waBtnContextual = (o) => {
+    if (!o.cel) return "";
+    const cel = String(o.cel).replace(/[^0-9]/g,"");
+    const nom = encodeURIComponent(o.nombre||"");
+    const msgs = getMensajes();
+    const saldoCalc = parseFloat(o.saldo||0) || Math.max(0, parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+    const haySaldo = !o.pagado && saldoCalc > 0;
+
+    // 1. Listo para retirar → aviso de retiro
+    if (o.estado === "listo_retirar") {
+      return `<button onclick="enviarMsgDirecto('listo','${nom}','${cel}')"
+        style="background:#E8F5E9;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">
+        📲 Avisar retiro
+      </button>`;
+    }
+    // 2. Demorado → mensaje de disculpa/aviso demora
+    if (o.estado === "demorado") {
+      return `<button onclick="enviarMsgDirecto('demorado','${nom}','${cel}')"
+        style="background:#FFF3E0;color:#E65100;border:1.5px solid #FFCC80;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">
+        📲 Avisar demora
+      </button>`;
+    }
+    // 3. Saldo pendiente → recordatorio de saldo
+    if (haySaldo) {
+      return `<button onclick="enviarMsgDirecto('saldo','${nom}','${cel}')"
+        style="background:#FFF3E0;color:#BF360C;border:1.5px solid #FFAB91;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">
+        📲 Saldo
+      </button>`;
+    }
+    // 4. Default → selector de mensaje
+    return `<button onclick="enviarMensajeCliente('${nom}','${cel}')"
+      style="background:#E7F9EE;color:#25D366;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+      📲 WA
+    </button>`;
+  };
+
   const renderOrdenPendiente = (o) => {
     const idx = D.orders.findIndex(x=>x.id===o.id);
     const e   = ESTADOS[o.estado] || ESTADOS.pendiente_envio;
     const dias = o.fecha ? Math.floor((new Date()-new Date(o.fecha+"T12:00:00"))/86400000) : null;
     const vencido = o.fechaEntrega && o.fechaEntrega < hoyStr;
-    const saldoCalc = parseFloat(o.saldo||0) || (parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+    const saldoCalc = parseFloat(o.saldo||0) || Math.max(0, parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
     const haySaldo = !o.pagado && saldoCalc > 0;
-    const borderColor = haySaldo ? '#E65100' : e.color;
+    const borderColor = o.estado==="demorado" ? "#E65100" : haySaldo ? "#F57F17" : e.color;
 
     return `<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ${borderColor};box-shadow:0 1px 4px rgba(0,0,0,.06)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -2224,7 +2428,7 @@ function renderPendientes() {
             <span style="font-weight:900;font-size:14px">${o.nombre||"—"}</span>
             <span style="font-size:11px;color:var(--suave)">N°${o.num||"—"}</span>
             ${vencido?'<span style="font-size:10px;font-weight:800;color:#C62828;background:#FDECEA;border-radius:20px;padding:1px 7px">⏰ Vencido</span>':""}
-            ${haySaldo?`<span style="font-size:10px;font-weight:800;color:#E65100;background:#FFF3E0;border-radius:20px;padding:1px 7px">💰 Saldo $${num(saldoCalc)}</span>`:""}
+            ${haySaldo?`<span style="font-size:10px;font-weight:800;color:#E65100;background:#FFF3E0;border-radius:20px;padding:1px 7px">💰 $${num(saldoCalc)}</span>`:""}
           </div>
           <div style="margin-top:4px">${getEstadoBadge(o.estado)}</div>
           <div style="font-size:11px;color:var(--suave);margin-top:4px">
@@ -2233,8 +2437,7 @@ function renderPendientes() {
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
-          ${o.cel?`<button onclick="enviarMensajeCliente('${encodeURIComponent(o.nombre||'')}','${o.cel}')" style="background:#E7F9EE;color:#25D366;border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📲 WA</button>`:""}
-          ${o.cel&&o.estado==='listo_retirar'?`<button onclick="enviarMsgDirecto('listo','${encodeURIComponent(o.nombre||'')}','${o.cel}')" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">✅ Aviso</button>`:""}
+          ${waBtnContextual(o)}
           <button onclick="verDetalle(${idx})" style="background:var(--azul-light);color:var(--azul);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">Ver</button>
         </div>
       </div>
@@ -3589,7 +3792,7 @@ async function submitOrden(existingId){
     lEsf:gGrad("lEsf"),lCil:gGrad("lCil"),lEje:g("lEje"),lAdd:gGrad("lAdd"),
     lEsfI:gGrad("lEsfI"),lCilI:gGrad("lCilI"),lEjeI:g("lEjeI"),lAddI:gGrad("lAddI"),
     cEsf:gGrad("cEsf"),cCil:gGrad("cCil"),cEje:g("cEje"),cAdd:gGrad("cAdd"),
-    cEsfI:g("cEsfI"),cCilI:g("cCilI"),cEjeI:g("cEjeI"),cAddI:g("cAddI"),
+    cEsfI:gGrad("cEsfI"),cCilI:gGrad("cCilI"),cEjeI:g("cEjeI"),cAddI:gGrad("cAddI"),
     tipoTrabajo: (document.querySelector("input[name='tipo-trabajo']:checked")?.value||""),
     armazonDesc: g("f-armazon-desc"),
     tipos,tratamiento,total,aCuenta,saldo,formaPago:g("f-pago"),
@@ -3610,12 +3813,9 @@ function editOrden(idx){openOrdenForm(D.orders[idx]);}
 function delOrden(idx){
   const o = D.orders[idx];
   const nombre = o ? (o.nombre||"esta orden") : "esta orden";
-  const ordenId = o?.id;
   confirmarAccion("¿Eliminar la orden de " + nombre + "?", function() {
     D.orders.splice(idx,1);
     persist();
-    // Avisar a Sheets que borre esta orden por ID
-    if (ordenId) push({ type: "DELETE_ORDER", id: ordenId });
     closeModal();
     renderAll();
     toast("🗑 Orden eliminada");
