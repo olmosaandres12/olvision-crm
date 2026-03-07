@@ -3592,7 +3592,6 @@ async function submitOrden(existingId){
   if(existingId) D.orders=D.orders.map(x=>x.id===existingId?o:x);
   else D.orders.push(o);
   persist();closeModal();renderAll();toast("✅ Orden guardada");
-  await push({type:"ORDEN",...o});
 }
 
 function editOrden(idx){openOrdenForm(D.orders[idx]);}
