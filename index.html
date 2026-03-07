@@ -502,7 +502,27 @@ async function syncSheets() {
         });
       }
     });
-    if (orders.length) { D.orders = orders; persistLocal(); renderAll(); }
+    if (orders.length) {
+      // Merge: conservar cambios locales recientes que aún no llegaron al sheet
+      // (evita race condition entre persist() y syncSheets())
+      const localMap = {};
+      (D.orders||[]).forEach(o => { localMap[o.id] = o; });
+      orders.forEach(o => {
+        const local = localMap[o.id];
+        if (local) {
+          // Si el local tiene estado más avanzado que el remoto, conservarlo
+          const prioridad = { entregado:6, listo_retirar:5, listo_laboratorio:4, demorado:3, en_laboratorio:2, pendiente_envio:1 };
+          const pLocal = prioridad[local.estado] || 0;
+          const pRemoto = prioridad[o.estado] || 0;
+          if (pLocal > pRemoto) o.estado = local.estado;
+          // Conservar pagado=true si local ya lo marcó
+          if (local.pagado && !o.pagado) o.pagado = local.pagado;
+        }
+      });
+      D.orders = orders;
+      persistLocal();
+      renderAll();
+    }
     hideSyncIndicator(true);
   } catch(e) { console.warn("Sync error:", e); hideSyncIndicator(false); }
 }
@@ -2169,9 +2189,8 @@ function renderPendientes() {
   const el = document.getElementById("pendientes-body");
   const hoyStr = new Date().toISOString().slice(0,10);
 
-  // Garantizar fallback de estado para datos viejos en memoria
+  // Fallback: órdenes sin estado (datos viejos en memoria)
   D.orders.forEach(o => { if (!o.estado) o.estado = 'pendiente_envio'; });
-
 
   // Filtrar NO entregadas, O entregadas con saldo/pago pendiente
   const tieneSaldoPendiente = (o) => {
