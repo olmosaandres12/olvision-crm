@@ -497,13 +497,7 @@ async function syncSheets() {
         });
       }
     });
-    if (orders.length) {
-      // Eliminar duplicados: quedarse con la última ocurrencia de cada id
-      const seen = new Map();
-      orders.forEach((o,i) => seen.set(o.id, i));
-      D.orders = orders.filter((_,i) => [...seen.values()].includes(i));
-      persist(); renderAll();
-    }
+    if (orders.length) { D.orders = orders; persist(); renderAll(); }
     hideSyncIndicator(true);
   } catch(e) { console.warn("Sync error:", e); hideSyncIndicator(false); }
 }
@@ -2118,7 +2112,7 @@ function renderSaldosPendientesHtml() {
     .filter(o => {
       const t = parseFloat(o.total)||0;
       const a = parseFloat(o.aCuenta)||0;
-      return t > 0 && a < t && o.estado !== "entregado";
+      return t > 0 && a < t && !o.pagado;
     })
     .sort((a,b) => String(b.num).localeCompare(String(a.num), undefined, {numeric:true}));
 
@@ -2167,8 +2161,8 @@ function renderPendientes() {
     }
   });
 
-  // Filtrar NO entregadas (conservando el índice real de D.orders)
-  const pendientes = D.orders.map((o,i) => ({...o, _realIdx: i})).filter(o => o.estado !== 'entregado');
+  // Filtrar NO entregadas
+  const pendientes = D.orders.filter(o => o.estado !== 'entregado');
 
   if (!pendientes.length) {
     el.innerHTML = `<div class="empty"><span>🎉</span>¡Todo entregado!<br>No hay órdenes pendientes.</div>`;
@@ -2190,7 +2184,7 @@ function renderPendientes() {
   const sortOrds = (ords) => ords.sort((a,b) => (prioridad[a.estado]??5) - (prioridad[b.estado]??5));
 
   const renderOrdenPendiente = (o) => {
-    const idx = o._realIdx !== undefined ? o._realIdx : D.orders.findIndex(x=>x.id===o.id);
+    const idx = D.orders.findIndex(x=>x.id===o.id);
     const e   = ESTADOS[o.estado] || ESTADOS.pendiente_envio;
     const dias = o.fecha ? Math.floor((new Date()-new Date(o.fecha+"T12:00:00"))/86400000) : null;
     const vencido = o.fechaEntrega && o.fechaEntrega < hoyStr;
@@ -2332,7 +2326,7 @@ function cobrarSaldo() {
     .filter(o => {
       const total = parseFloat(o.total)||0;
       const acuenta = parseFloat(o.aCuenta)||0;
-      return total > 0 && acuenta < total && o.estado !== 'entregado';
+      return total > 0 && acuenta < total && !o.pagado;
     })
     .sort((a,b) => String(b.num).localeCompare(String(a.num), undefined, {numeric:true}));
 
@@ -2386,7 +2380,7 @@ function filtrarSaldos(q) {
     .filter(o => {
       const total = parseFloat(o.total)||0;
       const acuenta = parseFloat(o.aCuenta)||0;
-      return total > 0 && acuenta < total && o.estado !== 'entregado';
+      return total > 0 && acuenta < total && !o.pagado;
     });
   const filtrado = q
     ? conSaldo.filter(o =>
