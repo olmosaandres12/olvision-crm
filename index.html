@@ -958,24 +958,24 @@ function togglePagadoDesdeDetalle(idx) {
   if (!o) return;
   const nuevoVal = !o.pagado;
   D.orders[idx].pagado = nuevoVal;
-  // Si se marca pagado y no tiene saldo real, poner saldo en 0
   if (nuevoVal) {
     const saldoReal = Math.max(0, parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
     if (saldoReal === 0) D.orders[idx].saldo = "0";
   }
   persist();
-  renderAll();
   toast(nuevoVal ? "✅ Orden marcada como pagada" : "↺ Pago desmarcado");
-  setTimeout(() => verDetalle(idx), 80);
+  verDetalle(idx);
+  setTimeout(() => renderAll(), 200);
 }
 
 function cambiarEstadoDesdeDetalle(idx, nuevoEstado) {
+  if (!D.orders[idx]) return;
   D.orders[idx].estado = nuevoEstado;
   persist();
-  renderAll();
   toast("✅ Estado: " + (ESTADOS[nuevoEstado]?.label || nuevoEstado));
-  // Reabrir detalle actualizado
-  setTimeout(() => verDetalle(idx), 80);
+  verDetalle(idx);
+  // Actualizar listas en background sin afectar el modal abierto
+  setTimeout(() => renderAll(), 200);
 }
 
 // Registrar cobro de saldo desde el detalle
@@ -1032,9 +1032,9 @@ function confirmarCobroSaldo(idx) {
   D.orders[idx].pagado    = nuevoSaldo === 0;
   D.orders[idx].formaPago = document.getElementById("cobro-pago")?.value || o.formaPago;
   persist();
-  renderAll();
   toast("✅ Cobro registrado — nuevo saldo: $" + num(nuevoSaldo));
-  setTimeout(() => verDetalle(idx), 80);
+  verDetalle(idx);
+  setTimeout(() => renderAll(), 200);
 }
 
 
