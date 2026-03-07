@@ -497,13 +497,19 @@ async function syncSheets() {
         });
       }
     });
-    if (orders.length) { D.orders = orders; persist(); renderAll(); }
+    if (orders.length) { D.orders = orders; persistLocal(); renderAll(); }
     hideSyncIndicator(true);
   } catch(e) { console.warn("Sync error:", e); hideSyncIndicator(false); }
 }
 
 async function push(payload) {
   try { await fetch(SHEETS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); } catch{}
+}
+
+// Solo guarda localmente, sin subir a Sheets (para usar dentro de syncSheets y evitar loops)
+function persistLocal() {
+  try { localStorage.setItem("olvision_v3", JSON.stringify(D)); } catch{}
+  updateCount();
 }
 
 function persist() {
@@ -1340,7 +1346,9 @@ function renderOrdenesAlerta() {
 function marcarRetirado(idx) {
   confirmarAccion("¿Marcar la orden como retirada?", function() {
     D.orders[idx].estado = "entregado";
-    D.orders[idx].pagado = true;
+    const o = D.orders[idx];
+    const saldo = parseFloat(o.saldo||0) || (parseFloat(o.total||0) - parseFloat(o.aCuenta||0));
+    if (saldo <= 0) D.orders[idx].pagado = true;
     persist();
     renderAll();
     closeModal();
@@ -2110,9 +2118,11 @@ function renderSaldosPendientesHtml() {
   const lista = D.orders
     .map((o,i) => ({...o, _idx: i}))
     .filter(o => {
+      if (o.pagado) return false;
       const t = parseFloat(o.total)||0;
       const a = parseFloat(o.aCuenta)||0;
-      return t > 0 && a < t && o.estado !== "entregado";
+      const s = parseFloat(o.saldo||0);
+      return t > 0 && (s > 0 || a < t);
     })
     .sort((a,b) => String(b.num).localeCompare(String(a.num), undefined, {numeric:true}));
 
@@ -2343,9 +2353,11 @@ function cobrarSaldo() {
   const conSaldo = D.orders
     .map((o,i) => ({...o, _idx: i}))
     .filter(o => {
+      if (o.pagado) return false;
       const total = parseFloat(o.total)||0;
       const acuenta = parseFloat(o.aCuenta)||0;
-      return total > 0 && acuenta < total && o.estado !== 'entregado';
+      const saldo = parseFloat(o.saldo||0);
+      return total > 0 && (saldo > 0 || acuenta < total);
     })
     .sort((a,b) => String(b.num).localeCompare(String(a.num), undefined, {numeric:true}));
 
@@ -2397,9 +2409,11 @@ function filtrarSaldos(q) {
   const conSaldo = D.orders
     .map((o,i) => ({...o, _idx: i}))
     .filter(o => {
+      if (o.pagado) return false;
       const total = parseFloat(o.total)||0;
       const acuenta = parseFloat(o.aCuenta)||0;
-      return total > 0 && acuenta < total && o.estado !== 'entregado';
+      const saldo = parseFloat(o.saldo||0);
+      return total > 0 && (saldo > 0 || acuenta < total);
     });
   const filtrado = q
     ? conSaldo.filter(o =>
@@ -2814,11 +2828,9 @@ function renderVentasRapidasDia(fecha) {
 function eliminarOrdenCaja(idx) {
   const o = D.orders[idx];
   const nombre = o ? (o.nombre||"esta orden") : "esta orden";
-  const ordenId = o?.id;
   confirmarAccion("¿Eliminar la orden de " + nombre + "?", function() {
     D.orders.splice(idx, 1);
     persist();
-    if (ordenId) push({ type: "DELETE_ORDER", id: ordenId });
     renderAll();
     renderCaja();
     toast("🗑 Orden eliminada");
@@ -3563,7 +3575,7 @@ async function submitOrden(existingId){
   const numIngresado = g("f-num");
   const numDupe = D.orders.find(o => String(o.num) === String(numIngresado) && o.id !== existingId);
   if(numDupe){toast("⚠ Ya existe la orden N° "+numIngresado+" ("+numDupe.nombre+")");return;}
-  const tipos=[...document.querySelectorAll(".check-item.checked input")].map(x=>x.value).join(",");
+  const tipos=[...document.querySelectorAll(".check-grid .check-item.checked input[type=checkbox]")].filter(x=>x.name!=='pami-op').map(x=>x.value).join(",");
   const tratamiento=g("f-tratamiento");
   const total=getRawMonto(document.getElementById("f-total"))||g("f-total"),aCuenta=getRawMonto(document.getElementById("f-acuenta"))||g("f-acuenta");
   const saldo=(total&&aCuenta)?String(Math.max(0,parseFloat(total)-parseFloat(aCuenta))):String(parseFloat((g("f-saldo")||"0").replace(/\./g,""))||0);
