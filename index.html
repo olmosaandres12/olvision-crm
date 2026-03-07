@@ -515,7 +515,26 @@ async function syncSheets() {
         });
       }
     });
-    if (orders.length) { D.orders = orders; persistLocal(); renderAll(); }
+    if (orders.length) {
+      // Merge permanente: el sheet es fuente de verdad EXCEPTO para campos
+      // que filas viejas no tienen (estado, vendedora, fechaEntrega, costo).
+      // Si el sheet trae vacío pero local tiene valor, se preserva el local.
+      const ESTADOS_VALIDOS = ["pendiente_envio","en_laboratorio","demorado","listo_laboratorio","listo_retirar","entregado"];
+      const localMap = {};
+      D.orders.forEach(o => { localMap[o.id] = o; });
+      D.orders = orders.map(o => {
+        const local = localMap[o.id];
+        if (!local) return o;
+        return Object.assign({}, o, {
+          estado:       (ESTADOS_VALIDOS.includes(o.estado) ? o.estado : null) || local.estado || "pendiente_envio",
+          vendedora:    o.vendedora    || local.vendedora    || "",
+          fechaEntrega: o.fechaEntrega || local.fechaEntrega || "",
+          costo:        o.costo        || local.costo        || "",
+        });
+      });
+      persistLocal();
+      renderAll();
+    }
     hideSyncIndicator(true);
   } catch(e) { console.warn("Sync error:", e); hideSyncIndicator(false); }
 }
@@ -531,6 +550,7 @@ function persistLocal() {
 }
 
 function persist() {
+  D._lastPush = Date.now();  // timestamp de la última escritura local
   try { localStorage.setItem("olvision_v3", JSON.stringify(D)); } catch{}
   updateCount();
   // Solo subir a Sheets si hay órdenes (proteger contra borrado accidental)
@@ -642,7 +662,7 @@ function setTab(t,btn) {
   closeSidebar();
   // Scroll top
   window.scrollTo(0,0);
-  // Render inmediato con datos locales (sin esperar red)
+  // Render con datos locales — el sync solo ocurre al iniciar la app
   if(t==="osocial")      renderOSocial();
   if(t==="ctacte")       renderCtaCte();
   if(t==="config")       renderConfig();
@@ -654,21 +674,6 @@ function setTab(t,btn) {
   if(t==="caja")         renderCaja();
   if(t==="pendientes")   renderPendientes();
   if(t==="ordenes")      renderOrdenes();
-
-  // Sync con Sheets → re-render con datos frescos
-  syncSheets().then(() => {
-    if(t==="ordenes")      renderOrdenes();
-    if(t==="pendientes")   renderPendientes();
-    if(t==="clientes")     renderClientes();
-    if(t==="caja")         renderCaja();
-    if(t==="osocial")      renderOSocial();
-    if(t==="ctacte")       renderCtaCte();
-    if(t==="stats")        renderStats();
-    if(t==="fidelizacion") renderFidelizacion();
-    if(t==="mensajes")     renderMensajes();
-    if(t==="config")       renderConfig();
-    if(t==="admin")        renderAdminPanel();
-  });
 }
 
 function renderConfig() {
