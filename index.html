@@ -486,12 +486,24 @@ async function syncSheets() {
     if (ventasRow && ventasRow[1]) {
       try {
         const ventasRemoto = JSON.parse(ventasRow[1]);
-        const ventasTs = parseInt(localStorage.getItem("olvision_ventas_ts") || "0");
-        const segundosDesdeModif = (Date.now() - ventasTs) / 1000;
-        // Solo sobreescribir local si no hubo cambios locales en los últimos 90 segundos
-        // Esto evita que el sync restaure items recién eliminados antes de que Sheets los procese
-        if (Array.isArray(ventasRemoto) && segundosDesdeModif > 90) {
-          localStorage.setItem("olvision_ventas", JSON.stringify(ventasRemoto));
+        if (Array.isArray(ventasRemoto)) {
+          // Filtrar IDs que fueron eliminados localmente pero Sheets aún no los procesó
+          const deletedIds = getVentaDeletedIds();
+          const ventasFiltradas = ventasRemoto.filter(v => !deletedIds[v.id]);
+          // También preservar ventas locales recientes que el sheet todavía no tiene
+          const ventasTs = parseInt(localStorage.getItem("olvision_ventas_ts") || "0");
+          const segundosSinCambio = (Date.now() - ventasTs) / 1000;
+          if (segundosSinCambio < 120) {
+            // Hubo cambios locales hace menos de 2 min: solo agregar lo que no está local
+            const ventasLocal = getCajasVentas();
+            const idsLocales = new Set(ventasLocal.map(v => v.id));
+            const nuevasDeRemoto = ventasFiltradas.filter(v => !idsLocales.has(v.id));
+            if (nuevasDeRemoto.length > 0) {
+              localStorage.setItem("olvision_ventas", JSON.stringify([...ventasLocal, ...nuevasDeRemoto]));
+            }
+          } else {
+            localStorage.setItem("olvision_ventas", JSON.stringify(ventasFiltradas));
+          }
         }
       } catch(e) {}
     }
@@ -2646,8 +2658,23 @@ function getCajasVentas() {
 }
 function saveCajasVentas(v) {
   localStorage.setItem("olvision_ventas", JSON.stringify(v));
-  localStorage.setItem("olvision_ventas_ts", Date.now()); // timestamp de última modificación local
-  push({ type: "SAVE_DATA", key: "VENTAS", value: JSON.stringify(v) }); // siempre pushea, incluso vacío
+  localStorage.setItem("olvision_ventas_ts", Date.now());
+  push({ type: "SAVE_DATA", key: "VENTAS", value: JSON.stringify(v) }); // siempre, incluso vacío
+}
+
+function addVentaDeletedId(id) {
+  try {
+    const del = JSON.parse(localStorage.getItem("olvision_ventas_deleted") || "{}");
+    del[id] = Date.now();
+    // Limpiar entradas viejas (más de 24h)
+    const hace24h = Date.now() - 86400000;
+    Object.keys(del).forEach(k => { if (del[k] < hace24h) delete del[k]; });
+    localStorage.setItem("olvision_ventas_deleted", JSON.stringify(del));
+  } catch(e) {}
+}
+
+function getVentaDeletedIds() {
+  try { return JSON.parse(localStorage.getItem("olvision_ventas_deleted") || "{}"); } catch { return {}; }
 }
 
 function ventaRapida(tipo) {
@@ -3050,6 +3077,7 @@ function verDetalleMovimiento(id) {
 
 function eliminarVentaRapida(id) {
   confirmarAccion("¿Eliminar este movimiento?", function() {
+    addVentaDeletedId(id); // registrar ID como eliminado para protegerlo del sync
     const ventas = getCajasVentas().filter(v => v.id !== id);
     saveCajasVentas(ventas);
     renderCaja();
