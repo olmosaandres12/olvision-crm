@@ -3201,7 +3201,7 @@ function cobrarSaldoPendiente() {
         </select>
       </div>
       <div class="field">
-        <label>👤 Vendedora</label>
+        <label>👤 Vendedora <span id="cobro-vend-hint" style="font-weight:400;color:var(--suave);font-size:12px"></span></label>
         ${vendedoraSelect("cobro-saldo-vendedora","")}
       </div>
       <button onclick="confirmarCobroSaldo()" style="width:100%;padding:15px;border-radius:12px;border:none;background:#1B5E20;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
@@ -3231,22 +3231,16 @@ function seleccionarOrdenSaldo(idx, el) {
   const saldo = (parseFloat(o.total)||0) - (parseFloat(o.aCuenta)||0);
 
   document.getElementById("cobro-saldo-info").innerHTML =
-    `<b>${o.nombre}</b> · N° ${o.num}<br>Saldo pendiente: <b>$${num(saldo)}</b>`;
+    `<b>${o.nombre}</b> · N° ${o.num}<br>Saldo pendiente: <b>$${num(saldo)}</b>${o.vendedora ? ` · 👤 ${o.vendedora}` : ""}`;
   document.getElementById("cobro-saldo-monto").value = saldo;
-  document.getElementById("panel-cobro-saldo").style.display = "block";
-  // Pre-seleccionar vendedora de la orden original
+  // Pre-asignar vendedora de la orden original
   if (o.vendedora) {
-    const sel = document.getElementById("cobro-saldo-vendedora");
-    if (sel) {
-      // Buscar la opción que coincide (select o input)
-      if (sel.tagName === "SELECT") {
-        const opt = Array.from(sel.options).find(x => x.value === o.vendedora);
-        if (opt) sel.value = o.vendedora;
-      } else {
-        sel.value = o.vendedora;
-      }
-    }
+    const selVend = document.getElementById("cobro-saldo-vendedora");
+    if (selVend) selVend.value = o.vendedora;
+    const hint = document.getElementById("cobro-vend-hint");
+    if (hint) hint.textContent = `(orden original: ${o.vendedora})`;
   }
+  document.getElementById("panel-cobro-saldo").style.display = "block";
   setTimeout(()=>{ const m=document.getElementById("cobro-saldo-monto"); if(m) bindMontoField(m); },50);
 }
 
