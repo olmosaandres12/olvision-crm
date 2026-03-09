@@ -2429,6 +2429,11 @@ function nuevaVenta() {
         <span style="font-size:20px">💰</span> Cobrar saldo pendiente
       </button>
 
+      <button onclick="closeModal();setTimeout(()=>registrarGasto(),100)"
+        style="background:#FFF8F8;color:#C62828;border:1.5px solid #FFCDD2;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">💸</span> Registrar gasto / retiro
+      </button>
+
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
   `;
   document.getElementById("overlay").classList.add("open");
@@ -2598,7 +2603,8 @@ function confirmarPagoSaldo(idx) {
     pago:     pago,
     vendedora,
     ordenIdx: idx,
-    ordenId:  o.id
+    ordenId:  o.id,
+    ordenFecha: o.fecha
   });
   saveCajasVentas(ventas);
 
@@ -2775,6 +2781,8 @@ function renderCaja() {
   // Caja abierta hoy
   const ordenesDia = D.orders.filter(o => o.fecha === hoy);
   const resumen = calcResumen(ordenesDia, cajaHoy);
+  const gastosDia = getCajasVentas().filter(v => v.fecha === hoy && v.tipo === "gasto");
+  const totalGastosDia = gastosDia.reduce((a,v)=>a+(v.total||0),0);
 
   el.innerHTML = `
     <div style="background:linear-gradient(135deg,var(--azul),var(--azul-dark));border-radius:16px;padding:16px;margin-bottom:12px;color:#fff">
@@ -2785,7 +2793,7 @@ function renderCaja() {
         </div>
         <div style="text-align:right">
           <div style="font-size:10px;opacity:.7">Apertura</div>
-          <div style="font-size:18px;font-weight:900;color:var(--amarillo)">$${num(cajaHoy.montoApertura||0)}</div>
+          <div style="font-size:16px;font-weight:900;color:var(--amarillo)">$${num(cajaHoy.montoApertura||0)}</div>
         </div>
       </div>
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
@@ -2804,11 +2812,36 @@ function renderCaja() {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <button onclick="nuevaVenta()" style="background:var(--amarillo);color:var(--azul-dark);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer">
+    <!-- Efectivo en caja en tiempo real -->
+    <div style="background:#E3F2FD;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid #90CAF9">
+      <div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💵 Efectivo en caja ahora</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#1565C0;padding:3px 0">
+        <span>Apertura</span><span>$${num(cajaHoy.montoApertura||0)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#1565C0;padding:3px 0">
+        <span>+ Cobrado en efectivo</span><span>$${num(resumen.porMedio["Efectivo"]||0)}</span>
+      </div>
+      ${totalGastosDia > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#C0392B;padding:3px 0">
+        <span>− Gastos / retiros</span><span>$${num(totalGastosDia)}</span>
+      </div>` : ""}
+      <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900;color:#0D47A1;border-top:1.5px solid #90CAF9;margin-top:8px;padding-top:8px">
+        <span>Total en caja</span><span>$${num(resumen.efectivoEnCaja)}</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <button onclick="nuevaVenta()" style="background:var(--amarillo);color:var(--azul-dark);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
         ➕ Nueva venta
       </button>
-      <button onclick="cerrarCaja()" style="background:#FDECEA;color:#C0392B;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer">
+      <button onclick="cobrarSaldoPendiente()" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
+        💰 Cobrar saldo
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button onclick="registrarGasto()" style="background:#FFF3E0;color:#E65100;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
+        📤 Gasto / retiro
+      </button>
+      <button onclick="cerrarCaja()" style="background:#FDECEA;color:#C0392B;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
         🔒 Cerrar caja
       </button>
     </div>
@@ -2874,41 +2907,53 @@ function calcResumen(ordenes, cajaInfo, fecha) {
   ordenes.filter(o=>o.pagado&&o.formaPago).forEach(o => {
     porMedio[o.formaPago] = (porMedio[o.formaPago]||0) + (parseFloat(o.total)||0);
   });
-  // Sumar ventas rápidas
+  // Sumar ventas rápidas (accesorios, taller, saldos)
   const ventasDia = getCajasVentas().filter(v => v.fecha === (fecha || new Date().toISOString().slice(0,10)));
-  const soloVentas = ventasDia.filter(v => v.tipo !== "saldo");
+  const soloVentas = ventasDia.filter(v => v.tipo !== "saldo" && v.tipo !== "gasto");
   const soloSaldos = ventasDia.filter(v => v.tipo === "saldo");
+  const soloGastos = ventasDia.filter(v => v.tipo === "gasto");
   const totalVentas = soloVentas.reduce((a,v) => a + (v.total||0), 0);
   const totalSaldos = soloSaldos.reduce((a,v) => a + (v.total||0), 0);
-  ventasDia.filter(v=>v.pago&&v.pago!=="Sin cargo").forEach(v => {
+  const totalGastos = soloGastos.reduce((a,v) => a + (v.total||0), 0);
+  ventasDia.filter(v=>v.tipo!=="gasto"&&v.pago&&v.pago!=="Sin cargo").forEach(v => {
     porMedio[v.pago] = (porMedio[v.pago]||0) + (v.total||0);
   });
-  return { totalFacturado: totalFacturado + totalVentas, totalCobrado: totalCobrado + totalVentas + totalSaldos, porMedio, totalVentas, totalSaldos };
+  // Efectivo en caja = apertura + efectivo cobrado (ordenes+ventas+saldos) - gastos
+  const efectivoCobrado = (porMedio["Efectivo"]||0);
+  const efectivoEnCaja  = (cajaInfo?.montoApertura||0) + efectivoCobrado - totalGastos;
+  return {
+    totalFacturado: totalFacturado + totalVentas,
+    totalCobrado:   totalCobrado + totalVentas + totalSaldos,
+    porMedio, totalVentas, totalSaldos, totalGastos, efectivoEnCaja
+  };
 }
 
 function renderVentasRapidasDia(fecha) {
   const ventas = getCajasVentas().filter(v => v.fecha === fecha);
   if (!ventas.length) return "";
   const sorted = ventas.sort((a,b)=>b.hora?.localeCompare(a.hora||"")||0);
-  const colorMap = { accesorio:"#6A1B9A", taller:"#F57F17", saldo:"#1B5E20" };
-  const emojiMap = { accesorio:"🛍️", taller:"🔧", saldo:"💰" };
+  const colorMap = { accesorio:"#6A1B9A", taller:"#F57F17", saldo:"#1B5E20", gasto:"#C0392B" };
+  const emojiMap = { accesorio:"🛍️", taller:"🔧", saldo:"💰", gasto:"📤" };
   return `<div class="fsec-tit" style="margin-bottom:8px;padding:0 2px">⚡ Movimientos del día</div>` +
-    sorted.map(v => `
-      <div class="card" style="margin-bottom:8px;border-left:4px solid ${colorMap[v.tipo]||'#607D8B'};cursor:pointer" onclick="verDetalleMovimiento('${v.id}')">
+    sorted.map(v => {
+      const esGasto = v.tipo === "gasto";
+      const color = colorMap[v.tipo] || "#607D8B";
+      return `
+      <div class="card" style="margin-bottom:8px;border-left:4px solid ${color};cursor:pointer${esGasto?";background:#FFF5F5":""}" onclick="verDetalleMovimiento('${v.id}')">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="flex:1;min-width:0">
             <div style="font-weight:800;font-size:14px">${emojiMap[v.tipo]||'💲'} ${v.item}</div>
             <div style="font-size:12px;color:var(--suave);margin-top:2px">
-              ${v.cantidad>1?`${v.cantidad} u. · `:""}${v.pago||""} ${v.hora?`· ${v.hora}`:""}
-              ${v.notas?`· ${v.notas}`:""}
+              ${v.cantidad>1?`${v.cantidad} u. `:""}${v.pago||""} ${v.hora?`· ${v.hora}`:""}
+              ${v.notas?`· ${v.notas}`:""}${v.quien?` · ${v.quien}`:""}
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <div style="font-weight:900;font-size:15px;color:${colorMap[v.tipo]||'#607D8B'}">$${num(v.total)}</div>
+            <div style="font-weight:900;font-size:15px;color:${color}">${esGasto?"-":""}$${num(v.total)}</div>
             <button onclick="event.stopPropagation();eliminarVentaRapida('${v.id}')" style="background:#FDECEA;color:#C0392B;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0">🗑</button>
           </div>
         </div>
-      </div>`).join("");
+      </div>`;}).join("");
 }
 
 function eliminarOrdenCaja(idx) {
@@ -2939,10 +2984,12 @@ function verDetalleMovimiento(id) {
   const emoji = emojiMap[v.tipo] || "💲";
 
   const filas = [
-    v.fecha     ? ["📅 Fecha",        v.fecha] : null,
+    v.fecha     ? ["📅 Fecha de cobro",   v.fecha] : null,
+    v.tipo==="saldo" && v.ordenFecha && v.ordenFecha !== v.fecha ? ["📋 Fecha de la orden", v.ordenFecha] : null,
     v.hora      ? ["🕐 Hora",         v.hora] : null,
     v.pago      ? ["💳 Forma de pago", v.pago] : null,
     v.vendedora ? ["👤 Vendedora",     v.vendedora] : null,
+    v.quien     ? ["👤 Quién",         v.quien] : null,
     v.cantidad>1? ["📦 Cantidad",      v.cantidad + " u."] : null,
     v.notas     ? ["📝 Notas",         v.notas] : null,
     v.tipo==="saldo" && v.ordenId ? ["🔗 Orden vinculada", "N° " + (D.orders.find(x=>x.id===v.ordenId)?.num||"")] : null,
@@ -2984,6 +3031,98 @@ function eliminarVentaRapida(id) {
 
 function renderCajaConVentas() { renderCaja(); }
 
+// ── REGISTRAR GASTO / RETIRO ──────────────────────────────────
+function registrarGasto() {
+  const cfg = getCfg();
+  document.getElementById("modal-body").innerHTML = `
+    <div style="font-size:18px;font-weight:900;color:#C62828;margin-bottom:4px">💸 Gasto / Retiro</div>
+    <div style="font-size:12px;color:var(--suave);margin-bottom:16px">${new Date().toLocaleDateString("es-AR")} — descuenta del efectivo en caja</div>
+
+    <div class="field">
+      <label>Descripción</label>
+      <input id="gasto-desc" placeholder="Ej: Retiro propietario, pago proveedor, materiales..." 
+        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+    </div>
+
+    <div class="field">
+      <label>Monto $</label>
+      <input id="gasto-monto" type="number" inputmode="decimal" placeholder="0" 
+        style="width:100%;border:2px solid #FFCDD2;border-radius:9px;padding:14px;font-size:22px;font-weight:700;background:#FFF8F8;font-family:inherit;outline:none;text-align:center;color:#C62828">
+    </div>
+
+    <div class="field">
+      <label>Quién retira / responsable</label>
+      ${(cfg.vendedores||[]).length
+        ? `<select id="gasto-quien" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+            <option value="">— Seleccioná —</option>
+            ${(cfg.vendedores||[]).map(v=>`<option value="${v}">${v}</option>`).join("")}
+            <option value="Dueño / Propietario">Dueño / Propietario</option>
+           </select>`
+        : `<input id="gasto-quien" placeholder="Nombre..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">`
+      }
+    </div>
+
+    <div class="field">
+      <label>Categoría (opcional)</label>
+      <select id="gasto-cat" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+        <option value="">— Sin categoría —</option>
+        <option value="Retiro propietario">Retiro propietario</option>
+        <option value="Pago proveedor">Pago proveedor</option>
+        <option value="Gastos varios">Gastos varios</option>
+        <option value="Flete / envío">Flete / envío</option>
+        <option value="Materiales / insumos">Materiales / insumos</option>
+        <option value="Servicios">Servicios</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Notas (opcional)</label>
+      <input id="gasto-notas" placeholder="Detalle adicional..." 
+        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+    </div>
+
+    <button onclick="guardarGasto()" style="width:100%;padding:15px;border-radius:12px;border:none;background:#C62828;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
+      💸 Registrar gasto
+    </button>
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    <div style="height:12px"></div>
+  `;
+  document.getElementById("overlay").classList.add("open");
+  setTimeout(()=>{ const m=document.getElementById("gasto-monto"); if(m) bindMontoField(m); },50);
+}
+
+function guardarGasto() {
+  const desc   = document.getElementById("gasto-desc")?.value.trim() || "";
+  const monto  = parseFloat(getRawMonto(document.getElementById("gasto-monto"))||document.getElementById("gasto-monto")?.value)||0;
+  const quien  = document.getElementById("gasto-quien")?.value.trim() || "";
+  const cat    = document.getElementById("gasto-cat")?.value || "";
+  const notas  = document.getElementById("gasto-notas")?.value.trim() || "";
+
+  if (!desc && !cat) { toast("⚠ Ingresá una descripción"); return; }
+  if (!monto || monto <= 0) { toast("⚠ Ingresá el monto"); return; }
+
+  const label = desc || cat;
+  const gasto = {
+    id:   uid(),
+    fecha: new Date().toISOString().slice(0,10),
+    hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    tipo: "gasto",
+    item: label,
+    total: monto,
+    pago: "Efectivo",
+    vendedora: quien
+  };
+  if (cat && desc)  gasto.categoria = cat;
+  if (notas) gasto.notas = notas;
+
+  const ventas = getCajasVentas();
+  ventas.push(gasto);
+  saveCajasVentas(ventas);
+  closeModal();
+  toast(`💸 Gasto registrado · $${num(monto)}`);
+  if (document.getElementById("screen-caja")?.classList.contains("active")) renderCaja();
+}
+
 function renderMediosPago(porMedio) {
   const entries = Object.entries(porMedio);
   if (!entries.length) return `<div style="color:var(--suave);font-size:13px">Sin cobros registrados</div>`;
@@ -2996,6 +3135,159 @@ function renderMediosPago(porMedio) {
       <span style="font-size:14px;font-weight:800">Total cobrado</span>
       <span style="font-size:18px;font-weight:900;color:#2E7D32">$${num(Object.values(porMedio).reduce((a,b)=>a+b,0))}</span>
     </div>`;
+}
+
+// ── COBRO DE SALDO PENDIENTE ───────────────────────────────────
+function cobrarSaldoPendiente() {
+  // Órdenes con saldo pendiente (de cualquier fecha)
+  const pendientes = D.orders
+    .map((o,i) => ({o,i}))
+    .filter(({o}) => {
+      const total = parseFloat(o.total)||0;
+      const acuenta = parseFloat(o.aCuenta)||0;
+      return total > 0 && !o.pagado && (total - acuenta) > 0;
+    })
+    .sort((a,b) => b.o.fecha?.localeCompare(a.o.fecha||"")||0);
+
+  if (!pendientes.length) {
+    toast("✅ No hay órdenes con saldo pendiente");
+    return;
+  }
+
+  const cfg = getCfg();
+  const listaHTML = pendientes.map(({o,i}) => {
+    const saldo = (parseFloat(o.total)||0) - (parseFloat(o.aCuenta)||0);
+    const esHoy = o.fecha === new Date().toISOString().slice(0,10);
+    return `
+      <div class="card" style="margin-bottom:8px;cursor:pointer;border-left:4px solid #C0392B"
+           onclick="seleccionarOrdenSaldo(${i}, this)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:14px">${o.nombre||"—"} <span style="font-size:11px;color:var(--suave)">N° ${o.num}</span></div>
+            <div style="font-size:12px;color:var(--suave);margin-top:2px">
+              ${esHoy?"Hoy":fmtDate(o.fecha||"")} · ${o.tratamiento||""} ${o.oSocial?"· "+o.oSocial:""}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px">
+            <div style="font-weight:900;color:#C0392B;font-size:15px">$${num(saldo)}</div>
+            <div style="font-size:11px;color:var(--suave)">de $${num(o.total)}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("modal-body").innerHTML = `
+    <div style="font-size:18px;font-weight:900;color:#1B5E20;margin-bottom:4px">💰 Cobrar saldo pendiente</div>
+    <div style="font-size:12px;color:var(--suave);margin-bottom:14px">Seleccioná la orden a cobrar:</div>
+
+    <div id="lista-saldos-pendientes" style="max-height:260px;overflow-y:auto;margin-bottom:12px">
+      ${listaHTML}
+    </div>
+
+    <div id="panel-cobro-saldo" style="display:none">
+      <div style="background:#E8F5E9;border-radius:12px;padding:12px;margin-bottom:12px">
+        <div id="cobro-saldo-info" style="font-size:13px;color:#1B5E20;font-weight:700"></div>
+      </div>
+      <div class="field">
+        <label>Monto a cobrar $</label>
+        <input id="cobro-saldo-monto" inputmode="numeric" placeholder="0"
+          style="width:100%;border:2px solid #A5D6A7;border-radius:9px;padding:13px;font-size:22px;font-weight:700;background:#F1F8E9;font-family:inherit;outline:none;text-align:center;color:#1B5E20">
+      </div>
+      <div class="field">
+        <label>Forma de pago</label>
+        <select id="cobro-saldo-pago" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+          <option value="">— Seleccioná —</option>
+          ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <label>👤 Vendedora</label>
+        ${vendedoraSelect("cobro-saldo-vendedora","")}
+      </div>
+      <button onclick="confirmarCobroSaldo()" style="width:100%;padding:15px;border-radius:12px;border:none;background:#1B5E20;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
+        ✅ Confirmar cobro
+      </button>
+    </div>
+
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    <div style="height:8px"></div>
+  `;
+  document.getElementById("overlay").classList.add("open");
+}
+
+let _cobroSaldoIdx = null;
+
+function seleccionarOrdenSaldo(idx, el) {
+  // Destacar selección
+  document.querySelectorAll("#lista-saldos-pendientes .card").forEach(c => {
+    c.style.borderLeft = "4px solid #C0392B";
+    c.style.background = "";
+  });
+  el.style.borderLeft = "4px solid #1B5E20";
+  el.style.background = "#F1F8E9";
+
+  _cobroSaldoIdx = idx;
+  const o = D.orders[idx];
+  const saldo = (parseFloat(o.total)||0) - (parseFloat(o.aCuenta)||0);
+
+  document.getElementById("cobro-saldo-info").innerHTML =
+    `<b>${o.nombre}</b> · N° ${o.num}<br>Saldo pendiente: <b>$${num(saldo)}</b>`;
+  document.getElementById("cobro-saldo-monto").value = saldo;
+  document.getElementById("panel-cobro-saldo").style.display = "block";
+  setTimeout(()=>{ const m=document.getElementById("cobro-saldo-monto"); if(m) bindMontoField(m); },50);
+}
+
+function confirmarCobroSaldo() {
+  const idx = _cobroSaldoIdx;
+  if (idx === null || !D.orders[idx]) { toast("⚠ Seleccioná una orden"); return; }
+  const o = D.orders[idx];
+  const monto = parseFloat(getRawMonto(document.getElementById("cobro-saldo-monto"))||document.getElementById("cobro-saldo-monto")?.value)||0;
+  const pago = document.getElementById("cobro-saldo-pago")?.value||"";
+  let vendedora = document.getElementById("cobro-saldo-vendedora")?.value.trim()||"";
+  if (!vendedora && o.vendedora) vendedora = o.vendedora;
+
+  if (!monto || monto <= 0) { toast("⚠ Ingresá un monto válido"); return; }
+  if (!pago) { toast("⚠ Seleccioná la forma de pago"); return; }
+
+  const total     = parseFloat(o.total)||0;
+  const acuenta   = parseFloat(o.aCuenta)||0;
+  const nuevoAC   = Math.min(acuenta + monto, total);
+  const nuevoSaldo = total - nuevoAC;
+
+  // Actualizar la orden (de cualquier fecha)
+  D.orders[idx].aCuenta = nuevoAC;
+  D.orders[idx].saldo   = nuevoSaldo;
+  if (nuevoSaldo <= 0) {
+    D.orders[idx].pagado  = true;
+    D.orders[idx].saldo   = 0;
+    D.orders[idx].aCuenta = total;
+  }
+  persist();
+
+  // Registrar el cobro en el día de HOY (no en la fecha de la orden)
+  const ventas = getCajasVentas();
+  ventas.push({
+    id:       "saldo_" + Date.now(),
+    tipo:     "saldo",
+    fecha:    new Date().toISOString().slice(0,10),   // ← siempre hoy
+    hora:     new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    item:     "Saldo N° " + (o.num||"") + " — " + (o.nombre||""),
+    total:    monto,
+    pago,
+    vendedora,
+    ordenIdx: idx,
+    ordenId:  o.id,
+    ordenFecha: o.fecha   // guardamos la fecha original de la orden
+  });
+  saveCajasVentas(ventas);
+  _cobroSaldoIdx = null;
+
+  closeModal();
+  renderAll();
+  renderCaja();
+  toast(nuevoSaldo <= 0
+    ? "✅ Saldo cancelado! Orden pagada"
+    : `✅ Cobro registrado · Saldo restante: $${num(nuevoSaldo)}`);
 }
 
 function renderCajasAnteriores() {
@@ -3072,48 +3364,105 @@ function cerrarCaja() {
   const cajaHoy = getCajaHoy();
   const ordenesDia = D.orders.filter(o => o.fecha === hoy);
   const res = calcResumen(ordenesDia, cajaHoy, hoy);
-  const totalEnCaja = (cajaHoy.montoApertura||0) + (res.porMedio["Efectivo"]||0);
+  const ventasDia = getCajasVentas().filter(v => v.fecha === hoy);
+  const gastosDia = ventasDia.filter(v => v.tipo === "gasto");
+  const movDia    = ventasDia.filter(v => v.tipo !== "gasto");
 
   document.getElementById("modal-body").innerHTML = `
     <div style="font-size:20px;font-weight:900;color:var(--azul);margin-bottom:16px">🔒 Cierre de caja</div>
 
-    <div class="card" style="background:#E8F5E9;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Resumen del día</div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span>Órdenes</span><b>${ordenesDia.length}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span>Total facturado</span><b>$${num(res.totalFacturado)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-top:1px solid #C8E6C9;margin-top:4px"><span style="font-weight:800">Total cobrado</span><b style="color:#2E7D32;font-size:16px">$${num(res.totalCobrado)}</b></div>
+    <!-- Resumen visual del día -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#E3F2FD;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#1565C0;text-transform:uppercase">Órdenes</div>
+        <div style="font-size:24px;font-weight:900;color:#1565C0">${ordenesDia.length}</div>
+      </div>
+      <div style="background:#E8F5E9;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#2E7D32;text-transform:uppercase">Cobrado</div>
+        <div style="font-size:18px;font-weight:900;color:#2E7D32">$${num(res.totalCobrado)}</div>
+      </div>
+      <div style="background:#FFF3E0;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#E65100;text-transform:uppercase">Facturado</div>
+        <div style="font-size:18px;font-weight:900;color:#E65100">$${num(res.totalFacturado)}</div>
+      </div>
     </div>
 
+    <!-- Detalle movimientos -->
+    ${movDia.length ? `<div class="card" style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⚡ Movimientos rápidos</div>
+      ${movDia.filter(v=>v.tipo==="accesorio").length?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>🛍️ Accesorios (${movDia.filter(v=>v.tipo==="accesorio").length})</span><b>$${num(movDia.filter(v=>v.tipo==="accesorio").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
+      ${movDia.filter(v=>v.tipo==="taller").length?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>🔧 Taller (${movDia.filter(v=>v.tipo==="taller").length})</span><b>$${num(movDia.filter(v=>v.tipo==="taller").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
+      ${movDia.filter(v=>v.tipo==="saldo").length?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>💰 Saldos cobrados (${movDia.filter(v=>v.tipo==="saldo").length})</span><b>$${num(movDia.filter(v=>v.tipo==="saldo").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
+    </div>`:""}
+
+    <!-- Gastos del día -->
+    ${gastosDia.length ? `<div class="card" style="background:#FFF8F8;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#C62828;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💸 Gastos / Retiros del día</div>
+      ${gastosDia.map(g=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${g.item}${g.vendedora?` · ${g.vendedora}`:""}</span><b style="color:#C62828">−$${num(g.total)}</b></div>`).join("")}
+      <div style="display:flex;justify-content:space-between;padding:6px 0 2px;font-size:13px;font-weight:800;border-top:1px solid #FFCDD2;margin-top:4px"><span>Total gastos</span><b style="color:#C62828">−$${num(res.totalGastos)}</b></div>
+    </div>`:""}
+
+    <!-- Medios de pago -->
     <div class="card" style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Por medio de pago</div>
+      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💳 Por medio de pago</div>
       ${renderMediosPago(res.porMedio)}
     </div>
 
+    <!-- Efectivo esperado -->
     <div class="card" style="background:#E3F2FD;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">💵 Efectivo en caja</div>
+      <div style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💵 Efectivo en caja</div>
       <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--suave)"><span>Apertura</span><span>$${num(cajaHoy.montoApertura||0)}</span></div>
       <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--suave)"><span>+ Cobrado en efectivo</span><span>$${num(res.porMedio["Efectivo"]||0)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:16px;font-weight:900;color:#1565C0;border-top:1px solid #BBDEFB;margin-top:4px"><span>Total en caja</span><span>$${num(totalEnCaja)}</span></div>
+      ${res.totalGastos ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#C62828"><span>− Gastos / Retiros</span><span>−$${num(res.totalGastos)}</span></div>` : ""}
+      <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:17px;font-weight:900;color:#1565C0;border-top:1px solid #BBDEFB;margin-top:4px"><span>Esperado en caja</span><span>$${num(res.efectivoEnCaja)}</span></div>
+    </div>
+
+    <!-- Arqueo real -->
+    <div class="field">
+      <label style="font-weight:800;color:#1B5E20">💵 Efectivo físico contado ($) <span style="font-weight:400;color:var(--suave)">(arqueo real)</span></label>
+      <input id="cierre-arqueo" type="number" inputmode="decimal" placeholder="${res.efectivoEnCaja}" 
+        style="width:100%;border:2px solid #A5D6A7;border-radius:9px;padding:12px;font-size:22px;font-weight:700;background:#F1F8E9;font-family:inherit;outline:none;text-align:center;color:#1B5E20"
+        oninput="mostrarDiferenciaCierre(${res.efectivoEnCaja})">
+      <div id="diferencia-caja" style="text-align:center;font-size:13px;font-weight:700;margin-top:6px;min-height:20px"></div>
     </div>
 
     <div class="field">
       <label>¿Cuánto dejás en caja para mañana? ($)</label>
-      <input id="cierre-dejar" type="number" inputmode="decimal" placeholder="0" value="${Math.min(totalEnCaja, 5000)}" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+      <input id="cierre-dejar" type="number" inputmode="decimal" placeholder="0" 
+        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
     </div>
     <div class="field">
       <label>Notas de cierre (opcional)</label>
-      <textarea id="cierre-notas" placeholder="Retiros, gastos, observaciones..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:10px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none;resize:none;height:70px"></textarea>
+      <textarea id="cierre-notas" placeholder="Retiros, gastos, observaciones..." 
+        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:10px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none;resize:none;height:70px"></textarea>
     </div>
-    <button onclick="confirmarCierre(${res.totalFacturado},${res.totalCobrado})" style="width:100%;padding:15px;border-radius:12px;border:none;background:#C62828;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">🔒 Confirmar cierre</button>
+    <button onclick="confirmarCierre(${res.totalFacturado},${res.totalCobrado},${res.efectivoEnCaja})" 
+      style="width:100%;padding:15px;border-radius:12px;border:none;background:#C62828;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">🔒 Confirmar cierre</button>
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     <div style="height:12px"></div>
   `;
   document.getElementById("overlay").classList.add("open");
+  setTimeout(()=>{ const a=document.getElementById("cierre-arqueo"); if(a) bindMontoField(a); const d=document.getElementById("cierre-dejar"); if(d) bindMontoField(d); },50);
 }
 
-function confirmarCierre(totalFacturado, totalCobrado) {
+function mostrarDiferenciaCierre(esperado) {
+  const contado = parseFloat(getRawMonto(document.getElementById("cierre-arqueo"))||document.getElementById("cierre-arqueo")?.value)||0;
+  const el = document.getElementById("diferencia-caja");
+  if (!el || !contado) return;
+  const dif = contado - esperado;
+  if (Math.abs(dif) < 1) {
+    el.innerHTML = `<span style="color:#2E7D32">✅ Cuadra perfecto</span>`;
+  } else if (dif > 0) {
+    el.innerHTML = `<span style="color:#1565C0">📈 Sobrante: $${num(dif)}</span>`;
+  } else {
+    el.innerHTML = `<span style="color:#C62828">📉 Faltante: $${num(Math.abs(dif))}</span>`;
+  }
+}
+
+function confirmarCierre(totalFacturado, totalCobrado, efectivoEsperado) {
   const hoy = new Date().toISOString().slice(0,10);
-  const dejar = parseFloat(document.getElementById("cierre-dejar").value)||0;
+  const dejar = parseFloat(getRawMonto(document.getElementById("cierre-dejar"))||document.getElementById("cierre-dejar")?.value)||0;
+  const arqueoContado = parseFloat(getRawMonto(document.getElementById("cierre-arqueo"))||document.getElementById("cierre-arqueo")?.value)||0;
   const notasCierre = document.getElementById("cierre-notas").value.trim();
   const cajas = getCajas();
   const idx = cajas.findIndex(c => c.fecha === hoy);
@@ -3124,6 +3473,13 @@ function confirmarCierre(totalFacturado, totalCobrado) {
     cajas[idx].totalCobrado = totalCobrado;
     cajas[idx].montoDejar = dejar;
     cajas[idx].notasCierre = notasCierre;
+    if (arqueoContado) {
+      cajas[idx].arqueo = {
+        esperado: efectivoEsperado,
+        contado: arqueoContado,
+        diferencia: arqueoContado - efectivoEsperado
+      };
+    }
     saveCajas(cajas);
   }
   closeModal();
@@ -3167,6 +3523,18 @@ function verResumenCaja(fecha) {
       <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:#1565C0">
         <span>💵 Dejado en caja para mañana</span><span>$${num(caja.montoDejar)}</span>
       </div>
+      ${caja.arqueo ? `
+        <div style="border-top:1px solid #BBDEFB;margin-top:8px;padding-top:8px">
+          <div style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;margin-bottom:6px">Arqueo</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--suave)">Esperado</span><span>$${num(caja.arqueo.esperado)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--suave)">Contado</span><span>$${num(caja.arqueo.contado)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;padding:4px 0">
+            <span>Diferencia</span>
+            <span style="color:${caja.arqueo.diferencia===0?'#2E7D32':caja.arqueo.diferencia>0?'#1565C0':'#C62828'}">
+              ${caja.arqueo.diferencia===0?'✅ Cuadra':caja.arqueo.diferencia>0?`📈 +$${num(caja.arqueo.diferencia)}`:`📉 −$${num(Math.abs(caja.arqueo.diferencia))}`}
+            </span>
+          </div>
+        </div>` : ""}
     </div>`:""}
 
     ${caja.notas||caja.notasCierre?`<div class="card" style="margin-bottom:10px">
