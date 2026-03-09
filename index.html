@@ -466,7 +466,6 @@ async function syncSheets() {
       try {
         const cajasRemoto = JSON.parse(cajasRow[1]);
         if (Array.isArray(cajasRemoto)) {
-          // Merge: si la caja local está cerrada, nunca la pisamos con la versión remota
           const cajasLocal = getCajas();
           const localMap = {};
           cajasLocal.forEach(c => { localMap[c.fecha] = c; });
@@ -475,7 +474,6 @@ async function syncSheets() {
             if (cl && cl.cerrada) return cl; // local cerrada tiene prioridad absoluta
             return cr;
           });
-          // Agregar cajas locales que aún no llegaron al sheet
           const remoteFechas = new Set(cajasRemoto.map(c => c.fecha));
           cajasLocal.forEach(cl => { if (!remoteFechas.has(cl.fecha)) cajaMerged.push(cl); });
           localStorage.setItem("olvision_cajas", JSON.stringify(cajaMerged));
@@ -2774,13 +2772,22 @@ function renderCaja() {
   const hoy = new Date().toISOString().slice(0,10);
   const hoyFmt = new Date().toLocaleDateString("es-AR", {weekday:"long", year:"numeric", month:"long", day:"numeric"});
 
-  if (!cajaHoy) {
-    // Sin apertura hoy
+  if (!cajaHoy || cajaHoy.cerrada) {
+    // Sin apertura hoy, o caja del día ya cerrada
+    const resumenCierre = cajaHoy && cajaHoy.cerrada ? `
+      <div style="background:#F1F8E9;border-radius:14px;padding:14px;margin:0 0 16px;border:1.5px solid #A5D6A7">
+        <div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">✅ Resumen del cierre de hoy</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1B5E20"><span>Facturado</span><b>$${num(cajaHoy.totalFacturado||0)}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1B5E20"><span>Cobrado</span><b>$${num(cajaHoy.totalCobrado||0)}</b></div>
+        ${cajaHoy.arqueo ? `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1B5E20"><span>Arqueo</span><b style="color:${cajaHoy.arqueo.diferencia===0?'#2E7D32':cajaHoy.arqueo.diferencia>0?'#1565C0':'#C62828'}">${cajaHoy.arqueo.diferencia===0?'✅ Cuadra':cajaHoy.arqueo.diferencia>0?`📈 +$${num(cajaHoy.arqueo.diferencia)}`:`📉 −$${num(Math.abs(cajaHoy.arqueo.diferencia))}`}</b></div>` : ""}
+        ${cajaHoy.horaCierre ? `<div style="font-size:11px;color:#66BB6A;margin-top:6px">Cerrada a las ${cajaHoy.horaCierre}</div>` : ""}
+      </div>` : "";
     el.innerHTML = `
       <div style="text-align:center;padding:30px 16px 20px">
         <div style="font-size:48px;margin-bottom:12px">💵</div>
         <div style="font-size:18px;font-weight:900;color:var(--azul);margin-bottom:6px">Caja cerrada</div>
         <div style="font-size:13px;color:var(--suave);margin-bottom:24px;text-transform:capitalize">${hoyFmt}</div>
+        ${resumenCierre}
         <button onclick="abrirCaja()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:13px;padding:16px 32px;font-size:17px;font-weight:900;cursor:pointer;width:100%;max-width:320px">
           🔓 Abrir Caja
         </button>
