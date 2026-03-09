@@ -3477,100 +3477,129 @@ async function debugCajaSync() {
 }
 
 function verHistorialCajas(filtroMes) {
-  const hoy = getHoy();
-  const cajas = getCajas().filter(c => c.fecha !== hoy).sort((a,b) => b.fecha.localeCompare(a.fecha));
+  // Incluye HOY también (bug anterior la excluía)
+  const cajas = getCajas().sort((a,b) => b.fecha.localeCompare(a.fecha));
   const meses = [...new Set(cajas.map(c => c.fecha.slice(0,7)))].sort((a,b) => b.localeCompare(a));
-  const mesSel = filtroMes !== undefined ? filtroMes : "";
+  // Por defecto muestra el mes actual
+  const mesActual = getHoy().slice(0,7);
+  const mesSel = filtroMes !== undefined ? filtroMes : (meses.includes(mesActual) ? mesActual : (meses[0] || ""));
   const nomMes = (ym) => {
-    if (!ym) return "";
+    if (!ym) return "Todo";
     const [y,m] = ym.split("-");
     return new Date(y, m-1, 1).toLocaleDateString("es-AR", {month:"long", year:"numeric"});
   };
   const cajasFiltradas = mesSel ? cajas.filter(c => c.fecha.startsWith(mesSel)) : cajas;
 
-  let totalCobradoMes=0, totalFacturadoMes=0, totalOrdenesMes=0, totalGastosMes=0;
+  // Totales del período
+  let totalCobrado=0, totalFacturado=0, totalOrdenes=0, totalGastos=0;
   cajasFiltradas.forEach(c => {
     const ordenes = D.orders.filter(o => o.fecha === c.fecha);
     const res = calcResumen(ordenes, c, c.fecha);
-    totalCobradoMes += res.totalCobrado||0;
-    totalFacturadoMes += res.totalFacturado||0;
-    totalOrdenesMes += ordenes.length;
-    totalGastosMes += res.totalGastos||0;
+    totalCobrado   += res.totalCobrado||0;
+    totalFacturado += res.totalFacturado||0;
+    totalOrdenes   += ordenes.length;
+    totalGastos    += res.totalGastos||0;
   });
 
-  const selectorMeses = meses.length > 0 ? `
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+  // Selector de meses — chips horizontales
+  const chips = `
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch">
       <button onclick="verHistorialCajas('')"
-        style="padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
-          background:${mesSel===''?'var(--azul)':'var(--gris)'};color:${mesSel===''?'var(--amarillo)':'var(--suave)'}">Todos</button>
+        style="flex-shrink:0;padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+          background:${mesSel===''?'var(--azul)':'#F0F0F0'};color:${mesSel===''?'var(--amarillo)':'#666'}">Todos</button>
       ${meses.map(m => `<button onclick="verHistorialCajas('${m}')"
-        style="padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
-          background:${m===mesSel?'var(--azul)':'var(--gris)'};color:${m===mesSel?'var(--amarillo)':'var(--suave)'}">
+        style="flex-shrink:0;padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+          background:${m===mesSel?'var(--azul)':'#F0F0F0'};color:${m===mesSel?'var(--amarillo)':'#666'}">
         ${nomMes(m)}</button>`).join("")}
-    </div>` : "";
-
-  const resumenMes = cajasFiltradas.length ? `
-    <div style="background:linear-gradient(135deg,var(--azul),var(--azul-dark));border-radius:14px;padding:16px;margin-bottom:14px;color:#fff">
-      <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${mesSel?nomMes(mesSel):"Todo el período"} · ${cajasFiltradas.length} día${cajasFiltradas.length!==1?'s':''}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Órdenes</div>
-          <div style="font-size:26px;font-weight:900">${totalOrdenesMes}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Facturado</div>
-          <div style="font-size:18px;font-weight:900;color:var(--amarillo)">$${num(totalFacturadoMes)}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Cobrado</div>
-          <div style="font-size:18px;font-weight:900;color:#A5F3A5">$${num(totalCobradoMes)}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Gastos</div>
-          <div style="font-size:18px;font-weight:900;color:#FFAB91">${totalGastosMes>0?'−$'+num(totalGastosMes):'—'}</div>
-        </div>
-      </div>
-    </div>` : "";
-
-  const tarjetas = cajasFiltradas.map(c => {
-    const ordenes = D.orders.filter(o => o.fecha === c.fecha);
-    const ventas = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo !== "gasto");
-    const gastos = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo === "gasto");
-    const res = calcResumen(ordenes, c, c.fecha);
-    const estadoBadge = c.cerrada
-      ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔒 Cerrada</span>`
-      : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚠ Sin cerrar</span>`;
-    const arqueoIcon = c.arqueo ? (c.arqueo.diferencia===0?" ✅":c.arqueo.diferencia>0?" 📈":" 📉") : "";
-    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:4px solid ${c.cerrada?'#4CAF50':'#FF9800'}" onclick="verResumenCaja('${c.fecha}','${mesSel}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:800;font-size:14px">${fmtDate(c.fecha)}${arqueoIcon}</div>
-          <div style="font-size:12px;color:var(--suave);margin-top:3px">${ordenes.length} orden${ordenes.length!==1?'es':''}${ventas.length?` · ${ventas.length} mov`:''}${gastos.length?` · ${gastos.length} gasto${gastos.length!==1?'s':''}`:''} ${c.vendedora?`· ${c.vendedora}`:''}</div>
-          <div style="margin-top:5px">${estadoBadge}</div>
-        </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:10px">
-          <div style="font-size:17px;font-weight:900;color:#2E7D32">$${num(res.totalCobrado)}</div>
-          ${res.totalFacturado!==res.totalCobrado?`<div style="font-size:11px;color:var(--suave)">facturado $${num(res.totalFacturado)}</div>`:""}
-          <div style="font-size:10px;color:var(--azul);font-weight:700;margin-top:4px">ver detalle ▶</div>
-        </div>
-      </div>
     </div>`;
+
+  // Banner resumen del período
+  const banner = cajasFiltradas.length ? `
+    <div style="background:linear-gradient(135deg,#1a237e,#283593);border-radius:16px;padding:16px;margin-bottom:14px;color:#fff">
+      <div style="font-size:11px;opacity:.65;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">
+        ${mesSel ? nomMes(mesSel) : "Todo el período"} · ${cajasFiltradas.length} día${cajasFiltradas.length!==1?'s':''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:10px;opacity:.65;text-transform:uppercase;margin-bottom:4px">Órdenes</div>
+          <div style="font-size:28px;font-weight:900;line-height:1">${totalOrdenes}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:10px;opacity:.65;text-transform:uppercase;margin-bottom:4px">Facturado</div>
+          <div style="font-size:17px;font-weight:900;color:#FFD54F;line-height:1.2">$${num(totalFacturado)}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:10px;opacity:.65;text-transform:uppercase;margin-bottom:4px">Cobrado</div>
+          <div style="font-size:17px;font-weight:900;color:#A5D6A7;line-height:1.2">$${num(totalCobrado)}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:10px;opacity:.65;text-transform:uppercase;margin-bottom:4px">Gastos</div>
+          <div style="font-size:17px;font-weight:900;color:#FFAB91;line-height:1.2">${totalGastos>0?'−$'+num(totalGastos):'—'}</div>
+        </div>
+      </div>
+    </div>` : "";
+
+  // Lista de cajas
+  const lista = cajasFiltradas.map(c => {
+    const hoy = getHoy();
+    const esHoy = c.fecha === hoy;
+    const ordenes = D.orders.filter(o => o.fecha === c.fecha);
+    const ventas  = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo !== "gasto");
+    const gastos  = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo === "gasto");
+    const res = calcResumen(ordenes, c, c.fecha);
+    const arqueoIcon = c.arqueo
+      ? (c.arqueo.diferencia===0 ? "✅" : c.arqueo.diferencia>0 ? "📈" : "📉")
+      : "";
+    const estadoColor = c.cerrada ? "#4CAF50" : "#FF9800";
+    const estadoLabel = c.cerrada
+      ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px">🔒 Cerrada</span>`
+      : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px">${esHoy?'🔓 Abierta':'⚠️ Sin cerrar'}</span>`;
+    const hoyBadge = esHoy ? `<span style="background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;margin-left:4px">Hoy</span>` : "";
+
+    return `
+      <div onclick="verResumenCaja('${c.fecha}','${mesSel}')"
+        style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;
+          border-left:4px solid ${estadoColor};box-shadow:0 1px 4px rgba(0,0,0,.07);
+          display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:800;font-size:14px">${fmtDate(c.fecha)}</span>
+            ${arqueoIcon ? `<span style="font-size:14px">${arqueoIcon}</span>` : ""}
+            ${hoyBadge}
+          </div>
+          <div style="font-size:12px;color:#888;margin-bottom:6px">
+            ${ordenes.length} orden${ordenes.length!==1?'es':''}
+            ${ventas.length ? ` · ${ventas.length} mov` : ''}
+            ${gastos.length ? ` · ${gastos.length} gasto${gastos.length!==1?'s':''}` : ''}
+            ${c.vendedora ? ` · ${c.vendedora}` : ''}
+          </div>
+          ${estadoLabel}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:18px;font-weight:900;color:#2E7D32">$${num(res.totalCobrado)}</div>
+          ${res.totalFacturado !== res.totalCobrado
+            ? `<div style="font-size:11px;color:#aaa">fact. $${num(res.totalFacturado)}</div>` : ""}
+          <div style="font-size:11px;color:var(--azul);font-weight:700;margin-top:4px">ver ▶</div>
+        </div>
+      </div>`;
   }).join("");
 
   document.getElementById("modal-body").innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <div style="font-size:28px">📅</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:32px">📅</div>
       <div>
         <div style="font-size:19px;font-weight:900;color:var(--azul)">Historial de Cajas</div>
-        <div style="font-size:12px;color:var(--suave)">${cajas.length} día${cajas.length!==1?'s':''} registrado${cajas.length!==1?'s':''}</div>
+        <div style="font-size:12px;color:#888">${cajas.length} día${cajas.length!==1?'s':''} registrado${cajas.length!==1?'s':''}</div>
       </div>
     </div>
     ${!cajas.length
-      ? `<div style="color:var(--suave);font-size:14px;padding:30px;text-align:center">📭 Sin historial registrado todavía</div>`
-      : `${selectorMeses}${resumenMes}${cajasFiltradas.length ? tarjetas : `<div style="color:var(--suave);font-size:13px;padding:16px;text-align:center">Sin cajas en este período</div>`}`
+      ? `<div style="color:#aaa;font-size:14px;padding:40px;text-align:center">📭 Sin historial todavía</div>`
+      : `${chips}${banner}${cajasFiltradas.length
+          ? lista
+          : `<div style="color:#aaa;font-size:13px;padding:20px;text-align:center">Sin cajas en este período</div>`}`
     }
-    <button class="btn-cancel" onclick="closeModal()">← Cerrar</button>
-    <div style="height:12px"></div>
+    <button class="btn-cancel" onclick="closeModal()" style="margin-top:8px">← Cerrar</button>
+    <div style="height:16px"></div>
   `;
   document.getElementById("overlay").classList.add("open");
 }
