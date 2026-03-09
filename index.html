@@ -3234,6 +3234,19 @@ function seleccionarOrdenSaldo(idx, el) {
     `<b>${o.nombre}</b> · N° ${o.num}<br>Saldo pendiente: <b>$${num(saldo)}</b>`;
   document.getElementById("cobro-saldo-monto").value = saldo;
   document.getElementById("panel-cobro-saldo").style.display = "block";
+  // Pre-seleccionar vendedora de la orden original
+  if (o.vendedora) {
+    const sel = document.getElementById("cobro-saldo-vendedora");
+    if (sel) {
+      // Buscar la opción que coincide (select o input)
+      if (sel.tagName === "SELECT") {
+        const opt = Array.from(sel.options).find(x => x.value === o.vendedora);
+        if (opt) sel.value = o.vendedora;
+      } else {
+        sel.value = o.vendedora;
+      }
+    }
+  }
   setTimeout(()=>{ const m=document.getElementById("cobro-saldo-monto"); if(m) bindMontoField(m); },50);
 }
 
