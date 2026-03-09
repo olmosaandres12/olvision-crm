@@ -388,6 +388,14 @@ async function init() {
   setInterval(syncSheets, 5 * 60 * 1000);
   // Eventos de conectividad
   window.addEventListener('online', () => { drainQueue(); syncSheets(); updateOnlineStatus(); });
+  // Sync al volver de background (iPhone/Android desde otra app o pantalla apagada)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncSheets().then(() => {
+        if (document.getElementById("screen-caja")?.classList.contains("active")) renderCaja();
+      });
+    }
+  });
   window.addEventListener('offline', updateOnlineStatus);
   updateOnlineStatus();
 }
@@ -471,10 +479,13 @@ async function syncSheets() {
           cajasLocal.forEach(c => { localMap[c.fecha] = c; });
           const cajaMerged = cajasRemoto.map(cr => {
             const cl = localMap[cr.fecha];
-            if (cl && cl.cerrada) return cl; // local cerrada tiene prioridad absoluta
+            // Remota siempre gana, EXCEPTO: local la cerró y la remota todavía no sabe
+            // (ventana de tiempo entre cierre local y que el push llegue a Sheets)
+            if (cl && cl.cerrada && !cr.cerrada) return cl;
             return cr;
           });
           const remoteFechas = new Set(cajasRemoto.map(c => c.fecha));
+          // Agregar cajas locales que no están en remoto (recién creadas, aún no subidas)
           cajasLocal.forEach(cl => { if (!remoteFechas.has(cl.fecha)) cajaMerged.push(cl); });
           localStorage.setItem("olvision_cajas", JSON.stringify(cajaMerged));
         }
@@ -2829,6 +2840,9 @@ function renderCaja() {
         <button onclick="verHistorialCajas()" style="background:var(--blanco);color:var(--azul);border:2px solid var(--azul);border-radius:13px;padding:12px 32px;font-size:14px;font-weight:800;cursor:pointer;width:100%;max-width:320px;margin-top:10px">
           📅 Ver historial de cajas
         </button>
+        <button onclick="syncSheets().then(()=>renderCaja())" style="background:transparent;color:var(--suave);border:none;border-radius:13px;padding:10px 32px;font-size:13px;font-weight:600;cursor:pointer;width:100%;max-width:320px;margin-top:4px">
+          🔄 Actualizar
+        </button>
       </div>`;
     return;
   }
@@ -2950,6 +2964,11 @@ function renderCaja() {
     <div style="margin-top:8px">
       <button onclick="verHistorialCajas()" style="background:var(--blanco);color:var(--azul);border:2px solid var(--azul);border-radius:13px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
         📅 Ver historial de cajas
+      </button>
+    </div>
+    <div style="margin-top:8px">
+      <button onclick="syncSheets().then(()=>renderCaja())" style="background:transparent;color:var(--suave);border:1.5px solid var(--gris-borde);border-radius:13px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">
+        🔄 Actualizar caja
       </button>
     </div>
     <div style="height:20px"></div>
