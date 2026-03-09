@@ -2972,6 +2972,11 @@ function renderCaja() {
         🔄 Actualizar caja
       </button>
     </div>
+    <div style="margin-top:8px">
+      <button onclick="debugCajaSync()" style="background:transparent;color:#999;border:1px dashed #ccc;border-radius:13px;padding:8px;font-size:11px;cursor:pointer;width:100%">
+        🔍 Debug sync (temporal)
+      </button>
+    </div>
     <div style="height:20px"></div>
   `;
 }
@@ -3432,6 +3437,43 @@ function renderCajasAnteriores(filtroMes) {
 function renderCajasAnteroresConFiltro(mes) {
   const contenedor = document.getElementById("cajas-anteriores-body");
   if (contenedor) contenedor.innerHTML = renderCajasAnteriores(mes);
+}
+
+async function debugCajaSync() {
+  const hoy = getHoy();
+  const local = getCajas().find(c => c.fecha === hoy);
+  let remota = null;
+  let errorMsg = "";
+  try {
+    const res = await fetch(SHEETS_URL + "?t=" + Date.now());
+    const rows = await res.json();
+    const cajasRow = rows.find(r => Array.isArray(r) && r[0] === "CAJAS");
+    if (cajasRow && cajasRow[1]) {
+      const arr = JSON.parse(cajasRow[1]);
+      remota = arr.find(c => c.fecha === hoy);
+    } else {
+      errorMsg = "⚠️ No hay fila CAJAS en el Sheet";
+    }
+  } catch(e) { errorMsg = "❌ Error al conectar con Sheets: " + e.message; }
+
+  const fmt = obj => obj ? JSON.stringify(obj, null, 2) : "null";
+  document.getElementById("modal-body").innerHTML = `
+    <div style="font-size:16px;font-weight:900;color:var(--azul);margin-bottom:12px">🔍 Debug Caja — ${hoy}</div>
+    ${errorMsg ? `<div style="background:#FFEBEE;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;color:#C62828">${errorMsg}</div>` : ""}
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:4px">📱 Local (este dispositivo)</div>
+      <pre style="background:#F5F5F5;border-radius:8px;padding:10px;font-size:11px;overflow-x:auto;white-space:pre-wrap">${fmt(local)}</pre>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:4px">☁️ Google Sheets (remota)</div>
+      <pre style="background:#F5F5F5;border-radius:8px;padding:10px;font-size:11px;overflow-x:auto;white-space:pre-wrap">${fmt(remota)}</pre>
+    </div>
+    <div style="font-size:11px;color:var(--suave);margin-bottom:12px">
+      ${local && remota ? (local.updatedAt > (remota.updatedAt||0) ? "⬆️ Local es más reciente" : local.updatedAt < (remota.updatedAt||0) ? "⬇️ Remota es más reciente" : "⚠️ Sin timestamps para comparar") : ""}
+    </div>
+    <button class="btn-cancel" onclick="closeModal()">Cerrar</button>
+  `;
+  document.getElementById("overlay").classList.add("open");
 }
 
 function verHistorialCajas(filtroMes) {
