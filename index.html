@@ -2791,10 +2791,9 @@ function renderCaja() {
         <button onclick="abrirCaja()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:13px;padding:16px 32px;font-size:17px;font-weight:900;cursor:pointer;width:100%;max-width:320px">
           🔓 Abrir Caja
         </button>
-      </div>
-      <div style="margin-top:8px">
-        <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 2px">📅 Cajas anteriores</div>
-        <div id="cajas-anteriores-body">${renderCajasAnteriores()}</div>
+        <button onclick="verHistorialCajas()" style="background:var(--blanco);color:var(--azul);border:2px solid var(--azul);border-radius:13px;padding:12px 32px;font-size:14px;font-weight:800;cursor:pointer;width:100%;max-width:320px;margin-top:10px">
+          📅 Ver historial de cajas
+        </button>
       </div>`;
     return;
   }
@@ -2914,8 +2913,9 @@ function renderCaja() {
     </div>
 
     <div style="margin-top:8px">
-      <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 2px">📅 Cajas anteriores</div>
-      <div id="cajas-anteriores-body">${renderCajasAnteriores()}</div>
+      <button onclick="verHistorialCajas()" style="background:var(--blanco);color:var(--azul);border:2px solid var(--azul);border-radius:13px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+        📅 Ver historial de cajas
+      </button>
     </div>
     <div style="height:20px"></div>
   `;
@@ -3378,6 +3378,110 @@ function renderCajasAnteroresConFiltro(mes) {
   if (contenedor) contenedor.innerHTML = renderCajasAnteriores(mes);
 }
 
+function verHistorialCajas(filtroMes) {
+  const hoy = new Date().toISOString().slice(0,10);
+  const cajas = getCajas().filter(c => c.fecha !== hoy).sort((a,b) => b.fecha.localeCompare(a.fecha));
+  const meses = [...new Set(cajas.map(c => c.fecha.slice(0,7)))].sort((a,b) => b.localeCompare(a));
+  const mesSel = filtroMes || meses[0] || "";
+  const nomMes = (ym) => {
+    if (!ym) return "";
+    const [y,m] = ym.split("-");
+    return new Date(y, m-1, 1).toLocaleDateString("es-AR", {month:"long", year:"numeric"});
+  };
+  const cajasFiltradas = cajas.filter(c => c.fecha.startsWith(mesSel));
+
+  // Totales del mes seleccionado
+  let totalCobradoMes=0, totalFacturadoMes=0, totalOrdenesMes=0, totalGastosMes=0;
+  cajasFiltradas.forEach(c => {
+    const ordenes = D.orders.filter(o => o.fecha === c.fecha);
+    const res = calcResumen(ordenes, c, c.fecha);
+    totalCobradoMes += res.totalCobrado;
+    totalFacturadoMes += res.totalFacturado;
+    totalOrdenesMes += ordenes.length;
+    totalGastosMes += res.totalGastos || 0;
+  });
+
+  const selectorMeses = meses.length > 0 ? `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${meses.map(m => `<button onclick="verHistorialCajas('${m}')"
+        style="padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+          background:${m===mesSel?'var(--azul)':'var(--gris)'};color:${m===mesSel?'var(--amarillo)':'var(--suave)'}">
+        ${nomMes(m)}</button>`).join("")}
+    </div>` : "";
+
+  const resumenMes = cajasFiltradas.length ? `
+    <div style="background:linear-gradient(135deg,var(--azul),var(--azul-dark));border-radius:14px;padding:16px;margin-bottom:14px;color:#fff">
+      <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;text-transform:capitalize">${nomMes(mesSel)} · ${cajasFiltradas.length} día${cajasFiltradas.length!==1?'s':''} trabajado${cajasFiltradas.length!==1?'s':''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Órdenes</div>
+          <div style="font-size:26px;font-weight:900">${totalOrdenesMes}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Facturado</div>
+          <div style="font-size:18px;font-weight:900;color:var(--amarillo)">$${num(totalFacturadoMes)}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Cobrado</div>
+          <div style="font-size:18px;font-weight:900;color:#A5F3A5">$${num(totalCobradoMes)}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Gastos</div>
+          <div style="font-size:18px;font-weight:900;color:#FFAB91">${totalGastosMes>0?'−$'+num(totalGastosMes):'—'}</div>
+        </div>
+      </div>
+    </div>` : "";
+
+  const tarjetas = cajasFiltradas.map(c => {
+    const ordenes = D.orders.filter(o => o.fecha === c.fecha);
+    const ventas = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo !== "gasto");
+    const gastos = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo === "gasto");
+    const res = calcResumen(ordenes, c, c.fecha);
+    const estadoBadge = c.cerrada
+      ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔒 Cerrada</span>`
+      : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚠ Sin cerrar</span>`;
+    const arqueoIcon = c.arqueo
+      ? (c.arqueo.diferencia===0?" ✅":c.arqueo.diferencia>0?" 📈":" 📉") : "";
+    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:4px solid ${c.cerrada?'#4CAF50':'#FF9800'}"
+        onclick="verResumenCaja('${c.fecha}','${mesSel}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:14px">${fmtDate(c.fecha)}${arqueoIcon}</div>
+          <div style="font-size:12px;color:var(--suave);margin-top:3px">
+            ${ordenes.length} orden${ordenes.length!==1?'es':''}${ventas.length?` · ${ventas.length} mov`:''}${gastos.length?` · ${gastos.length} gasto${gastos.length!==1?'s':''}`:''} ${c.vendedora?`· ${c.vendedora}`:''}
+          </div>
+          <div style="margin-top:5px">${estadoBadge}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:10px">
+          <div style="font-size:17px;font-weight:900;color:#2E7D32">$${num(res.totalCobrado)}</div>
+          ${res.totalFacturado!==res.totalCobrado?`<div style="font-size:11px;color:var(--suave)">facturado $${num(res.totalFacturado)}</div>`:""}
+          <div style="font-size:10px;color:var(--azul);font-weight:700;margin-top:4px">ver detalle ▶</div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("modal-body").innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="font-size:28px">📅</div>
+      <div>
+        <div style="font-size:19px;font-weight:900;color:var(--azul)">Historial de Cajas</div>
+        <div style="font-size:12px;color:var(--suave)">${cajas.length} día${cajas.length!==1?'s':''} registrado${cajas.length!==1?'s':''}</div>
+      </div>
+    </div>
+    ${!cajas.length
+      ? `<div style="color:var(--suave);font-size:14px;padding:30px;text-align:center">📭 Sin historial registrado todavía</div>`
+      : `${selectorMeses}${resumenMes}${cajasFiltradas.length
+          ? tarjetas
+          : `<div style="color:var(--suave);font-size:13px;padding:16px;text-align:center">Sin cajas en este período</div>`
+        }`
+    }
+    <button class="btn-cancel" onclick="closeModal()">← Cerrar</button>
+    <div style="height:12px"></div>
+  `;
+  document.getElementById("overlay").classList.add("open");
+}
+
 function abrirCaja() {
   const vends = getCfg().vendedores || [];
   const vendSelect = vends.length
@@ -3558,7 +3662,7 @@ function guardarNotasCaja() {
   if (idx >= 0) { cajas[idx].notas = notas; saveCajas(cajas); toast("✅ Notas guardadas"); }
 }
 
-function verResumenCaja(fecha) {
+function verResumenCaja(fecha, fromHistorial) {
   const cajas = getCajas();
   const caja = cajas.find(c => c.fecha === fecha);
   if (!caja) return;
@@ -3664,7 +3768,9 @@ function verResumenCaja(fecha) {
           <button onclick="cerrarCajaRetroactiva('${fecha}')" style="background:#E65100;color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap">🔒 Cerrar caja</button>
         </div>
       </div>` : ""}
-    <button class="btn-cancel" onclick="closeModal()">← Volver</button>
+    ${fromHistorial !== undefined
+      ? `<button class="btn-cancel" onclick="verHistorialCajas('${fromHistorial}')">← Volver al historial</button>`
+      : `<button class="btn-cancel" onclick="closeModal()">← Volver</button>`}
     <div style="height:12px"></div>
   `;
   document.getElementById("overlay").classList.add("open");
