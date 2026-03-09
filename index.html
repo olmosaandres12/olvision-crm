@@ -487,22 +487,20 @@ async function syncSheets() {
       try {
         const ventasRemoto = JSON.parse(ventasRow[1]);
         if (Array.isArray(ventasRemoto)) {
-          const deletedIds = getVentaDeletedIds();
-          const ventasFiltradas = ventasRemoto.filter(v => !deletedIds[v.id]);
-          const ventasTs = parseInt(localStorage.getItem("olvision_ventas_ts") || "0");
-          const segundosSinCambio = (Date.now() - ventasTs) / 1000;
-          if (segundosSinCambio < 120) {
-            // Cambios locales recientes: solo agregar novedades del remoto, no pisar
-            const ventasLocal = getCajasVentas();
-            const idsLocales = new Set(ventasLocal.map(v => v.id));
-            const nuevasDeRemoto = ventasFiltradas.filter(v => !idsLocales.has(v.id));
-            if (nuevasDeRemoto.length > 0) {
-              localStorage.setItem("olvision_ventas", JSON.stringify([...ventasLocal, ...nuevasDeRemoto]));
-            }
-          } else {
-            localStorage.setItem("olvision_ventas", JSON.stringify(ventasFiltradas));
-          }
-          // Re-render caja si está activa
+          // Merge: usar mapa local para preservar flags _deleted que el sheet todavía no tiene
+          const ventasLocalRaw = getCajasVentasRaw();
+          const localMap = {};
+          ventasLocalRaw.forEach(v => { localMap[v.id] = v; });
+          // Para cada item remoto: si local lo marcó _deleted, preservar ese flag
+          const merged = ventasRemoto.map(vr => {
+            const vl = localMap[vr.id];
+            if (vl && vl._deleted) return {...vr, _deleted: true}; // preservar borrado local
+            return vr;
+          });
+          // Agregar items locales que todavía no llegaron al sheet (nuevos o recién borrados)
+          const remoteIds = new Set(ventasRemoto.map(v => v.id));
+          ventasLocalRaw.forEach(vl => { if (!remoteIds.has(vl.id)) merged.push(vl); });
+          localStorage.setItem("olvision_ventas", JSON.stringify(merged));
           if (document.getElementById("screen-caja")?.classList.contains("active")) renderCaja();
         }
       } catch(e) {}
@@ -569,7 +567,7 @@ async function syncSheets() {
         });
       }
     });
-    // ── Re-render caja si hubo cambios en cajas remotas ──
+    // Re-render caja si hubo cambios en cajas remotas
     if (cajasRow && cajasRow[1]) {
       if (document.getElementById("screen-caja")?.classList.contains("active")) renderCaja();
     }
@@ -2202,7 +2200,7 @@ function enviarMsgA(i, nombreEnc, celNum) {
 // SISTEMA DE CAJA
 // ══════════════════════════════════════════════════════════════
 
-// Fecha local (evita bug de zona horaria UTC vs Argentina)
+// Fecha local — evita bug UTC vs Argentina (después de las 21hs cambia de día en UTC)
 function getHoy() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -2665,26 +2663,19 @@ function openOrdenFormTipo(tipo) {
 
 // ── VENTA RÁPIDA ─────────────────────────────────────────────
 function getCajasVentas() {
+  try {
+    const s = localStorage.getItem("olvision_ventas");
+    const all = s ? JSON.parse(s) : [];
+    return all.filter(v => !v._deleted); // siempre ocultar los marcados como eliminados
+  } catch { return []; }
+}
+function getCajasVentasRaw() {
+  // versión sin filtrar, para sync/save
   try { const s = localStorage.getItem("olvision_ventas"); return s ? JSON.parse(s) : []; } catch { return []; }
 }
 function saveCajasVentas(v) {
   localStorage.setItem("olvision_ventas", JSON.stringify(v));
-  localStorage.setItem("olvision_ventas_ts", Date.now());
   push({ type: "SAVE_DATA", key: "VENTAS", value: JSON.stringify(v) }); // siempre, incluso vacío
-}
-
-function addVentaDeletedId(id) {
-  try {
-    const del = JSON.parse(localStorage.getItem("olvision_ventas_deleted") || "{}");
-    del[id] = Date.now();
-    const hace24h = Date.now() - 86400000;
-    Object.keys(del).forEach(k => { if (del[k] < hace24h) delete del[k]; });
-    localStorage.setItem("olvision_ventas_deleted", JSON.stringify(del));
-  } catch(e) {}
-}
-
-function getVentaDeletedIds() {
-  try { return JSON.parse(localStorage.getItem("olvision_ventas_deleted") || "{}"); } catch { return {}; }
 }
 
 function ventaRapida(tipo) {
@@ -3087,8 +3078,8 @@ function verDetalleMovimiento(id) {
 
 function eliminarVentaRapida(id) {
   confirmarAccion("¿Eliminar este movimiento?", function() {
-    addVentaDeletedId(id);
-    const ventas = getCajasVentas().filter(v => v.id !== id);
+    // Marca como _deleted en el array raw para que el flag llegue a Sheets y a todos los dispositivos
+    const ventas = getCajasVentasRaw().map(v => v.id === id ? {...v, _deleted: true} : v);
     saveCajasVentas(ventas);
     renderCaja();
     toast("🗑 Eliminado");
@@ -3449,8 +3440,7 @@ function verHistorialCajas(filtroMes) {
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
       <button onclick="verHistorialCajas('')"
         style="padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
-          background:${mesSel===''?'var(--azul)':'var(--gris)'};color:${mesSel===''?'var(--amarillo)':'var(--suave)'}">
-        Todos</button>
+          background:${mesSel===''?'var(--azul)':'var(--gris)'};color:${mesSel===''?'var(--amarillo)':'var(--suave)'}">Todos</button>
       ${meses.map(m => `<button onclick="verHistorialCajas('${m}')"
         style="padding:6px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
           background:${m===mesSel?'var(--azul)':'var(--gris)'};color:${m===mesSel?'var(--amarillo)':'var(--suave)'}">
@@ -3459,7 +3449,7 @@ function verHistorialCajas(filtroMes) {
 
   const resumenMes = cajasFiltradas.length ? `
     <div style="background:linear-gradient(135deg,var(--azul),var(--azul-dark));border-radius:14px;padding:16px;margin-bottom:14px;color:#fff">
-      <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${mesSel ? nomMes(mesSel) : "Todo el período"} · ${cajasFiltradas.length} día${cajasFiltradas.length!==1?'s':''}</div>
+      <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${mesSel?nomMes(mesSel):"Todo el período"} · ${cajasFiltradas.length} día${cajasFiltradas.length!==1?'s':''}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div style="background:rgba(255,255,255,.13);border-radius:10px;padding:10px;text-align:center">
           <div style="font-size:10px;opacity:.7;text-transform:uppercase">Órdenes</div>
@@ -3489,14 +3479,11 @@ function verHistorialCajas(filtroMes) {
       ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔒 Cerrada</span>`
       : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚠ Sin cerrar</span>`;
     const arqueoIcon = c.arqueo ? (c.arqueo.diferencia===0?" ✅":c.arqueo.diferencia>0?" 📈":" 📉") : "";
-    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:4px solid ${c.cerrada?'#4CAF50':'#FF9800'}"
-        onclick="verResumenCaja('${c.fecha}','${mesSel}')">
+    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:4px solid ${c.cerrada?'#4CAF50':'#FF9800'}" onclick="verResumenCaja('${c.fecha}','${mesSel}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div style="flex:1;min-width:0">
           <div style="font-weight:800;font-size:14px">${fmtDate(c.fecha)}${arqueoIcon}</div>
-          <div style="font-size:12px;color:var(--suave);margin-top:3px">
-            ${ordenes.length} orden${ordenes.length!==1?'es':''}${ventas.length?` · ${ventas.length} mov`:''}${gastos.length?` · ${gastos.length} gasto${gastos.length!==1?'s':''}`:''} ${c.vendedora?`· ${c.vendedora}`:''}
-          </div>
+          <div style="font-size:12px;color:var(--suave);margin-top:3px">${ordenes.length} orden${ordenes.length!==1?'es':''}${ventas.length?` · ${ventas.length} mov`:''}${gastos.length?` · ${gastos.length} gasto${gastos.length!==1?'s':''}`:''} ${c.vendedora?`· ${c.vendedora}`:''}</div>
           <div style="margin-top:5px">${estadoBadge}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:10px">
@@ -3518,10 +3505,7 @@ function verHistorialCajas(filtroMes) {
     </div>
     ${!cajas.length
       ? `<div style="color:var(--suave);font-size:14px;padding:30px;text-align:center">📭 Sin historial registrado todavía</div>`
-      : `${selectorMeses}${resumenMes}${cajasFiltradas.length
-          ? tarjetas
-          : `<div style="color:var(--suave);font-size:13px;padding:16px;text-align:center">Sin cajas en este período</div>`
-        }`
+      : `${selectorMeses}${resumenMes}${cajasFiltradas.length ? tarjetas : `<div style="color:var(--suave);font-size:13px;padding:16px;text-align:center">Sin cajas en este período</div>`}`
     }
     <button class="btn-cancel" onclick="closeModal()">← Cerrar</button>
     <div style="height:12px"></div>
