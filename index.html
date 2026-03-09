@@ -2794,7 +2794,7 @@ function renderCaja() {
       </div>
       <div style="margin-top:8px">
         <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 2px">📅 Cajas anteriores</div>
-        ${renderCajasAnteriores()}
+        <div id="cajas-anteriores-body">${renderCajasAnteriores()}</div>
       </div>`;
     return;
   }
@@ -2915,7 +2915,7 @@ function renderCaja() {
 
     <div style="margin-top:8px">
       <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 2px">📅 Cajas anteriores</div>
-      ${renderCajasAnteriores()}
+      <div id="cajas-anteriores-body">${renderCajasAnteriores()}</div>
     </div>
     <div style="height:20px"></div>
   `;
@@ -3318,29 +3318,64 @@ function confirmarCobroSaldo() {
     : `✅ Cobro registrado · Saldo restante: $${num(nuevoSaldo)}`);
 }
 
-function renderCajasAnteriores() {
-  const cajas = getCajas().filter(c => c.fecha !== new Date().toISOString().slice(0,10))
-                           .sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,7);
+function renderCajasAnteriores(filtroMes) {
+  const hoy = new Date().toISOString().slice(0,10);
+  const cajas = getCajas().filter(c => c.fecha !== hoy).sort((a,b) => b.fecha.localeCompare(a.fecha));
   if (!cajas.length) return `<div style="color:var(--suave);font-size:13px;padding:8px">Sin historial previo</div>`;
-  return cajas.map(c => {
+
+  const meses = [...new Set(cajas.map(c => c.fecha.slice(0,7)))].sort((a,b)=>b.localeCompare(a));
+  const mesSel = filtroMes || meses[0] || "";
+  const cajasFiltradas = cajas.filter(c => c.fecha.startsWith(mesSel));
+  const nomMes = (ym) => { const [y,m] = ym.split("-"); return new Date(y,m-1,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"}); };
+
+  const selectorMeses = meses.length > 1 ? `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      ${meses.map(m => `<button onclick="renderCajasAnteroresConFiltro('${m}')"
+        style="padding:5px 12px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:${m===mesSel?'var(--azul)':'var(--gris)'};color:${m===mesSel?'var(--amarillo)':'var(--suave)'}">
+        ${nomMes(m)}</button>`).join("")}
+    </div>` : "";
+
+  let totalCobrado=0, totalOrdenes=0;
+  cajasFiltradas.forEach(c => {
     const ordenes = D.orders.filter(o => o.fecha === c.fecha);
+    const res = calcResumen(ordenes, c, c.fecha);
+    totalCobrado += res.totalCobrado;
+    totalOrdenes += ordenes.length;
+  });
+
+  const resumenMes = cajasFiltradas.length > 1 ? `
+    <div style="background:#E8F5E9;border-radius:12px;padding:12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+      <div><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Días</div><div style="font-size:20px;font-weight:900;color:#1B5E20">${cajasFiltradas.length}</div></div>
+      <div><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Órdenes</div><div style="font-size:20px;font-weight:900;color:#1B5E20">${totalOrdenes}</div></div>
+      <div><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Cobrado</div><div style="font-size:16px;font-weight:900;color:#1B5E20">$${num(totalCobrado)}</div></div>
+    </div>` : "";
+
+  const tarjetas = cajasFiltradas.map(c => {
+    const ordenes = D.orders.filter(o => o.fecha === c.fecha);
+    const ventas = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo !== "gasto");
+    const gastos = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo === "gasto");
     const res = calcResumen(ordenes, c, c.fecha);
     const estadoBadge = c.cerrada
       ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔒 Cerrada</span>`
       : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚠ Sin cerrar</span>`;
+    const arqueoIcon = c.arqueo ? (c.arqueo.diferencia===0?" ✅":c.arqueo.diferencia>0?" 📈":" 📉") : "";
     return `<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="verResumenCaja('${c.fecha}')">
-      <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-weight:800;font-size:14px">${fmtDate(c.fecha)}</div>
-          <div style="font-size:12px;color:var(--suave);margin-top:2px">${ordenes.length} órdenes · apertura $${num(c.montoApertura||0)}</div>
+          <div style="font-weight:800;font-size:14px">${fmtDate(c.fecha)}${arqueoIcon}</div>
+          <div style="font-size:12px;color:var(--suave);margin-top:2px">${ordenes.length} órdenes${ventas.length?` · ${ventas.length} movs`:""}${gastos.length?` · ${gastos.length} gastos`:""} · $${num(res.totalFacturado)} facturado</div>
         </div>
-        <div style="text-align:right">
-          ${estadoBadge}
-          <div style="font-size:15px;font-weight:900;color:var(--azul);margin-top:4px">$${num(res.totalCobrado)}</div>
-        </div>
+        <div style="text-align:right">${estadoBadge}<div style="font-size:15px;font-weight:900;color:var(--azul);margin-top:4px">$${num(res.totalCobrado)}</div></div>
       </div>
     </div>`;
   }).join("");
+
+  return selectorMeses + resumenMes + (cajasFiltradas.length ? tarjetas : `<div style="color:var(--suave);font-size:13px;padding:8px">Sin cajas en este período</div>`);
+}
+
+function renderCajasAnteroresConFiltro(mes) {
+  const contenedor = document.getElementById("cajas-anteriores-body");
+  if (contenedor) contenedor.innerHTML = renderCajasAnteriores(mes);
 }
 
 function abrirCaja() {
@@ -3528,60 +3563,99 @@ function verResumenCaja(fecha) {
   const caja = cajas.find(c => c.fecha === fecha);
   if (!caja) return;
   const ordenes = D.orders.filter(o => o.fecha === fecha);
+  const ventasDia = getCajasVentas().filter(v => v.fecha === fecha);
+  const movs = ventasDia.filter(v => v.tipo !== "gasto");
+  const gastos = ventasDia.filter(v => v.tipo === "gasto");
   const res = calcResumen(ordenes, caja, fecha);
+
+  const tipoLabel = { accesorio:"🛍️ Accesorio", taller:"🔧 Taller", saldo:"💰 Saldo cobrado" };
 
   document.getElementById("modal-body").innerHTML = `
     <div style="font-size:18px;font-weight:900;color:var(--azul);margin-bottom:4px">📅 Resumen de caja</div>
-    <div style="font-size:13px;color:var(--suave);margin-bottom:16px">${fmtDate(fecha)}</div>
+    <div style="font-size:13px;color:var(--suave);margin-bottom:16px">${fmtDate(fecha)}${caja.vendedora?" · "+caja.vendedora:""}</div>
 
-    <div class="card" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span>Apertura</span><b>$${num(caja.montoApertura||0)}</b></div>
-      ${caja.vendedora?`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span>Responsable</span><b>${caja.vendedora}</b></div>`:""}
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span>Órdenes</span><b>${ordenes.length}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span>Total facturado</span><b>$${num(res.totalFacturado)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:16px;font-weight:900;border-top:1px solid var(--gris-borde);margin-top:6px"><span>Total cobrado</span><b style="color:#2E7D32">$${num(res.totalCobrado)}</b></div>
+    <!-- Resumen top -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#E3F2FD;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#1565C0;text-transform:uppercase">Órdenes</div>
+        <div style="font-size:22px;font-weight:900;color:#1565C0">${ordenes.length}</div>
+      </div>
+      <div style="background:#E8F5E9;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#2E7D32;text-transform:uppercase">Cobrado</div>
+        <div style="font-size:16px;font-weight:900;color:#2E7D32">$${num(res.totalCobrado)}</div>
+      </div>
+      <div style="background:#FFF3E0;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#E65100;text-transform:uppercase">Facturado</div>
+        <div style="font-size:16px;font-weight:900;color:#E65100">$${num(res.totalFacturado)}</div>
+      </div>
     </div>
 
+    <!-- Medios de pago -->
     <div class="card" style="margin-bottom:10px">
       <div class="fsec-tit" style="margin-bottom:10px">💳 Por medio de pago</div>
       ${renderMediosPago(res.porMedio)}
     </div>
 
-    ${caja.montoDejar!==undefined?`<div class="card" style="background:#E3F2FD;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:#1565C0">
-        <span>💵 Dejado en caja para mañana</span><span>$${num(caja.montoDejar)}</span>
-      </div>
-      ${caja.arqueo ? `
+    <!-- Arqueo / efectivo -->
+    ${caja.montoDejar!==undefined||caja.arqueo?`<div class="card" style="background:#E3F2FD;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💵 Efectivo</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1565C0"><span>Apertura</span><span>$${num(caja.montoApertura||0)}</span></div>
+      ${caja.montoDejar!==undefined?`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1565C0"><span>Dejado para mañana</span><span>$${num(caja.montoDejar)}</span></div>`:""}
+      ${caja.arqueo?`
         <div style="border-top:1px solid #BBDEFB;margin-top:8px;padding-top:8px">
-          <div style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;margin-bottom:6px">Arqueo</div>
           <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--suave)">Esperado</span><span>$${num(caja.arqueo.esperado)}</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--suave)">Contado</span><span>$${num(caja.arqueo.contado)}</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;padding:4px 0">
-            <span>Diferencia</span>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:900;padding:5px 0;border-top:1px solid #BBDEFB;margin-top:4px">
+            <span>Arqueo</span>
             <span style="color:${caja.arqueo.diferencia===0?'#2E7D32':caja.arqueo.diferencia>0?'#1565C0':'#C62828'}">
               ${caja.arqueo.diferencia===0?'✅ Cuadra':caja.arqueo.diferencia>0?`📈 +$${num(caja.arqueo.diferencia)}`:`📉 −$${num(Math.abs(caja.arqueo.diferencia))}`}
             </span>
           </div>
-        </div>` : ""}
+        </div>`:""
+      }
     </div>`:""}
 
+    <!-- Movimientos rápidos -->
+    ${movs.length?`<div class="card" style="margin-bottom:10px">
+      <div class="fsec-tit" style="margin-bottom:8px">⚡ Movimientos rápidos</div>
+      ${movs.map(v=>`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--gris-borde)">
+        <div><span style="font-size:11px;color:var(--suave)">${tipoLabel[v.tipo]||v.tipo}</span><br><b>${v.item||""}</b>${v.vendedora?` <span style="font-size:11px;color:var(--suave)">· ${v.vendedora}</span>`:""}</div>
+        <div style="text-align:right"><b style="color:var(--azul)">$${num(v.total)}</b><br><span style="font-size:11px;color:var(--suave)">${v.pago||""}</span></div>
+      </div>`).join("")}
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;padding-top:8px;margin-top:4px"><span>Total movimientos</span><b>$${num(movs.reduce((a,v)=>a+v.total,0))}</b></div>
+    </div>`:""}
+
+    <!-- Gastos -->
+    ${gastos.length?`<div class="card" style="background:#FFF8F8;margin-bottom:10px">
+      <div class="fsec-tit" style="color:#C62828;margin-bottom:8px">💸 Gastos / Retiros</div>
+      ${gastos.map(g=>`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #FFCDD2">
+        <div><b>${g.item||""}</b>${g.vendedora?` <span style="font-size:11px;color:var(--suave)">· ${g.vendedora}</span>`:""}${g.notas?`<br><span style="font-size:11px;color:var(--suave)">${g.notas}</span>`:""}</div>
+        <b style="color:#C62828">−$${num(g.total)}</b>
+      </div>`).join("")}
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;padding-top:8px;margin-top:4px;color:#C62828"><span>Total gastos</span><b>−$${num(gastos.reduce((a,v)=>a+v.total,0))}</b></div>
+    </div>`:""}
+
+    <!-- Notas -->
     ${caja.notas||caja.notasCierre?`<div class="card" style="margin-bottom:10px">
       <div class="fsec-tit" style="margin-bottom:8px">📝 Notas</div>
       ${caja.notas?`<div style="font-size:13px;margin-bottom:6px">${caja.notas}</div>`:""}
       ${caja.notasCierre?`<div style="font-size:13px;color:var(--suave)">${caja.notasCierre}</div>`:""}
     </div>`:""}
 
-    <div class="fsec-tit" style="margin-bottom:8px">📋 Órdenes del día</div>
-    ${ordenes.map(o => {
+    <!-- Órdenes del día -->
+    ${ordenes.length?`<div class="fsec-tit" style="margin-bottom:8px">📋 Órdenes del día (${ordenes.length})</div>
+    ${ordenes.sort((a,b)=>String(b.num).localeCompare(String(a.num),undefined,{numeric:true})).map(o => {
       const idx = D.orders.findIndex(x => x.id === o.id);
       return `<div class="card" onclick="closeModal();setTimeout(()=>verDetalle(${idx}),100)" style="cursor:pointer;margin-bottom:8px;border-left:4px solid var(--azul)">
         <div style="display:flex;justify-content:space-between">
-          <div><b>${o.nombre||"—"}</b> · N° ${o.num}<br><span style="font-size:12px;color:var(--suave)">${o.tratamiento||""} ${o.oSocial?"· 🏥"+o.oSocial:""}</span></div>
+          <div><b>${o.nombre||"—"}</b> <span style="font-size:12px;color:var(--suave)">N° ${o.num}</span><br>
+            <span style="font-size:12px;color:var(--suave)">${o.tratamiento||""} ${o.oSocial?"· 🏥"+o.oSocial:""}</span></div>
           <div style="text-align:right"><b style="color:var(--azul)">${o.total?"$"+num(o.total):""}</b><br>
-            <span style="font-size:11px">${o.pagado?"✅":o.ctaCte?"📒":""} ${o.formaPago||""}</span></div>
+            <span style="font-size:11px">${o.pagado?"✅":o.ctaCte?"📒":o.saldo&&Number(o.saldo)>0?"⏳ debe $"+num(o.saldo):""} ${o.formaPago||""}</span></div>
         </div>
       </div>`;
-    }).join("")}
+    }).join("")}`:`<div class="empty" style="padding:16px"><span>📋</span>Sin órdenes ese día</div>`}
+
     ${!caja.cerrada ? `
       <div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:8px">
         <div style="font-size:12px;color:#E65100;font-weight:700;margin-bottom:10px">⚠️ Esta caja no fue cerrada</div>
