@@ -479,10 +479,11 @@ async function syncSheets() {
           cajasLocal.forEach(c => { localMap[c.fecha] = c; });
           const cajaMerged = cajasRemoto.map(cr => {
             const cl = localMap[cr.fecha];
-            // Remota siempre gana, EXCEPTO: local la cerró y la remota todavía no sabe
-            // (ventana de tiempo entre cierre local y que el push llegue a Sheets)
-            if (cl && cl.cerrada && !cr.cerrada) return cl;
-            return cr;
+            if (!cl) return cr; // no hay local, usar remota
+            // Gana el que tiene el updatedAt más reciente
+            const tsRemoto = cr.updatedAt || 0;
+            const tsLocal  = cl.updatedAt || 0;
+            return tsLocal > tsRemoto ? cl : cr;
           });
           const remoteFechas = new Set(cajasRemoto.map(c => c.fecha));
           // Agregar cajas locales que no están en remoto (recién creadas, aún no subidas)
@@ -3569,7 +3570,7 @@ function confirmarApertura() {
   const notas = document.getElementById("ap-notas").value.trim();
   const hoy = getHoy();
   const cajas = getCajas().filter(c => c.fecha !== hoy);
-  cajas.push({ fecha:hoy, montoApertura:monto, vendedora, notas, cerrada:false, horaApertura: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}) });
+  cajas.push({ fecha:hoy, montoApertura:monto, vendedora, notas, cerrada:false, horaApertura: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}), updatedAt: Date.now() });
   saveCajas(cajas);
   closeModal();
   renderCaja();
@@ -3690,6 +3691,7 @@ function confirmarCierre(totalFacturado, totalCobrado, efectivoEsperado) {
     cajas[idx].totalCobrado = totalCobrado;
     cajas[idx].montoDejar = dejar;
     cajas[idx].notasCierre = notasCierre;
+    cajas[idx].updatedAt = Date.now();
     if (arqueoContado) {
       cajas[idx].arqueo = {
         esperado: efectivoEsperado,
