@@ -2764,6 +2764,26 @@ function ventaRapida(tipo) {
   setTimeout(()=>{ const p=document.getElementById("venta-precio"); if(p) bindMontoField(p); },50);
 }
 
+function selTipoLC(e, label, value) {
+  e.preventDefault();
+  const radio = label.querySelector("input[type=radio]");
+  const yaSeleccionado = radio.checked;
+  // Deseleccionar todos
+  document.querySelectorAll("input[name='lc-tipo']").forEach(r => {
+    const l = r.closest(".check-item");
+    l.classList.remove("checked");
+    l.querySelector(".cbox").textContent = "";
+    r.checked = false;
+  });
+  if (!yaSeleccionado) {
+    // Seleccionar este
+    label.classList.add("checked");
+    radio.checked = true;
+    label.querySelector(".cbox").textContent = "✓";
+  }
+  actualizarCamposLC();
+}
+
 function selVentaItem(e, label, value) {
   e.preventDefault();
   document.querySelectorAll("input[name='venta-item']").forEach(r => {
@@ -2813,7 +2833,7 @@ function ventaLC() {
           ["oi","Medio par OI"],
           ["2medios","2 medios pares (dist. grad.)"]
         ].map(([v,l]) => `
-          <label class="check-item" onclick="selVentaItem(event,this,'${v}')" id="lc-tipo-${v}" style="justify-content:center">
+          <label class="check-item" onclick="selTipoLC(event,this,'${v}')" id="lc-tipo-${v}" style="justify-content:center">
             <input type="radio" name="lc-tipo" value="${v}">
             <span class="cbox"></span>
             <span class="clabel" style="font-size:13px">${l}</span>
@@ -2886,10 +2906,6 @@ function ventaLC() {
   setTimeout(()=>{
     const p = document.getElementById("lc-precio");
     if(p) bindMontoField(p);
-    // Manejo dinámico de qué campos de grad mostrar según presentación
-    document.querySelectorAll("input[name='lc-tipo']").forEach(r => {
-      r.addEventListener("change", actualizarCamposLC);
-    });
   }, 50);
 }
 
