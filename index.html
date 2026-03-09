@@ -465,7 +465,20 @@ async function syncSheets() {
     if (cajasRow && cajasRow[1]) {
       try {
         const cajasRemoto = JSON.parse(cajasRow[1]);
-        if (Array.isArray(cajasRemoto)) localStorage.setItem("olvision_cajas", JSON.stringify(cajasRemoto));
+        if (Array.isArray(cajasRemoto)) {
+          // Merge inteligente: si una caja está cerrada localmente, NO pisar con versión remota desactualizada
+          const cajasLocal = getCajas();
+          const merged = cajasRemoto.map(cr => {
+            const local = cajasLocal.find(cl => cl.fecha === cr.fecha);
+            if (local && local.cerrada && !cr.cerrada) return local;
+            return cr;
+          });
+          // Preservar cajas locales que aún no subieron al sheet (ej: apertura reciente)
+          cajasLocal.forEach(cl => {
+            if (!merged.find(m => m.fecha === cl.fecha)) merged.push(cl);
+          });
+          localStorage.setItem("olvision_cajas", JSON.stringify(merged));
+        }
       } catch(e) {}
     }
 
