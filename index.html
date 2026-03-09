@@ -2764,31 +2764,17 @@ function ventaRapida(tipo) {
   setTimeout(()=>{ const p=document.getElementById("venta-precio"); if(p) bindMontoField(p); },50);
 }
 
+let _lcTipo = ""; // variable global para tipo de LC seleccionado
+
 function selTipoLC(value) {
-  const btns = document.querySelectorAll("#lc-tipo-grid button");
-  let yaActivo = false;
-  btns.forEach(b => {
-    if (b.dataset.lc === value && b.dataset.selected === "1") yaActivo = true;
+  _lcTipo = (_lcTipo === value) ? "" : value; // toggle
+  document.querySelectorAll("#lc-tipo-grid button").forEach(b => {
+    const activo = b.dataset.lc === _lcTipo && _lcTipo !== "";
+    b.style.background   = activo ? "var(--azul-light)" : "var(--gris)";
+    b.style.borderColor  = activo ? "var(--azul)"       : "var(--gris-borde)";
+    b.style.color        = activo ? "var(--azul)"       : "var(--texto)";
+    b.style.fontWeight   = activo ? "800"               : "600";
   });
-  // Limpiar todos
-  btns.forEach(b => {
-    b.dataset.selected = "0";
-    b.style.background = "var(--gris)";
-    b.style.borderColor = "var(--gris-borde)";
-    b.style.color = "var(--texto)";
-    b.style.fontWeight = "600";
-  });
-  if (!yaActivo) {
-    // Marcar el seleccionado
-    const btn = document.querySelector(`#lc-tipo-grid button[data-lc="${value}"]`);
-    if (btn) {
-      btn.dataset.selected = "1";
-      btn.style.background = "var(--azul-light)";
-      btn.style.borderColor = "var(--azul)";
-      btn.style.color = "var(--azul)";
-      btn.style.fontWeight = "800";
-    }
-  }
   actualizarCamposLC();
 }
 
@@ -2922,6 +2908,7 @@ function ventaLC() {
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     <div style="height:12px"></div>
   `;
+  _lcTipo = ""; // reset al abrir el modal
   document.getElementById("overlay").classList.add("open");
   setTimeout(()=>{
     const p = document.getElementById("lc-precio");
@@ -2930,8 +2917,7 @@ function ventaLC() {
 }
 
 function actualizarCamposLC() {
-  const btn = document.querySelector("#lc-tipo-grid button[data-selected='1']");
-  const tipo = btn ? btn.dataset.lc : "";
+  const tipo = _lcTipo;
   const parBox      = document.getElementById("lc-par-box");
   const separadoBox = document.getElementById("lc-separado-box");
   const odBox       = document.getElementById("lc-od-box");
@@ -2963,8 +2949,7 @@ function actualizarCamposLC() {
 }
 
 function guardarVentaLC() {
-  const tipoBtn = document.querySelector("#lc-tipo-grid button[data-selected='1']");
-  const tipo = tipoBtn ? tipoBtn.dataset.lc : "";
+  const tipo = _lcTipo;
   if (!tipo) { toast("⚠ Seleccioná la presentación"); return; }
   const marcaSel = document.getElementById("lc-marca")?.value || "";
   const marcaCustom = document.getElementById("lc-marca-custom")?.value.trim() || "";
