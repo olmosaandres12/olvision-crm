@@ -2862,7 +2862,18 @@ function ventaLC() {
 
     <!-- Graduaciones -->
     <div id="lc-grad-box">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+      <!-- Par completo: un solo campo -->
+      <div id="lc-par-box" style="display:none;margin-top:8px">
+        <div class="field">
+          <label>Graduación (ambos ojos)</label>
+          <select id="lc-grad-par" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;font-weight:700">
+            <option value="">— Elegir —</option>
+            ${gradOpts()}
+          </select>
+        </div>
+      </div>
+      <!-- OD / OI por separado -->
+      <div id="lc-separado-box" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
         <div class="field" id="lc-od-box">
           <label>Graduación OD</label>
           <select id="lc-grad-od" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;font-weight:700">
@@ -2921,20 +2932,33 @@ function ventaLC() {
 function actualizarCamposLC() {
   const btn = document.querySelector("#lc-tipo-grid button[data-selected='1']");
   const tipo = btn ? btn.dataset.lc : "";
-  const od = document.getElementById("lc-od-box");
-  const oi = document.getElementById("lc-oi-box");
-  if (!od || !oi) return;
-  if (tipo === "par" || tipo === "2medios") {
-    od.style.display = ""; oi.style.display = "";
-    od.querySelector("label").textContent = tipo === "2medios" ? "Grad. OD (½ par)" : "Graduación OD";
-    oi.querySelector("label").textContent = tipo === "2medios" ? "Grad. OI (½ par)" : "Graduación OI";
+  const parBox      = document.getElementById("lc-par-box");
+  const separadoBox = document.getElementById("lc-separado-box");
+  const odBox       = document.getElementById("lc-od-box");
+  const oiBox       = document.getElementById("lc-oi-box");
+  if (!parBox || !separadoBox) return;
+
+  if (tipo === "par") {
+    parBox.style.display = "";
+    separadoBox.style.display = "none";
   } else if (tipo === "od") {
-    od.style.display = ""; oi.style.display = "none";
+    parBox.style.display = "none";
+    separadoBox.style.display = "grid";
+    if (odBox) { odBox.style.display = ""; odBox.querySelector("label").textContent = "Graduación OD"; }
+    if (oiBox) oiBox.style.display = "none";
   } else if (tipo === "oi") {
-    od.style.display = "none"; oi.style.display = "";
+    parBox.style.display = "none";
+    separadoBox.style.display = "grid";
+    if (odBox) odBox.style.display = "none";
+    if (oiBox) { oiBox.style.display = ""; oiBox.querySelector("label").textContent = "Graduación OI"; }
+  } else if (tipo === "2medios") {
+    parBox.style.display = "none";
+    separadoBox.style.display = "grid";
+    if (odBox) { odBox.style.display = ""; odBox.querySelector("label").textContent = "Grad. OD (½ par)"; }
+    if (oiBox) { oiBox.style.display = ""; oiBox.querySelector("label").textContent = "Grad. OI (½ par)"; }
   } else {
-    // Ninguno seleccionado — mostrar ambos
-    od.style.display = ""; oi.style.display = "";
+    parBox.style.display = "none";
+    separadoBox.style.display = "none";
   }
 }
 
@@ -2946,10 +2970,12 @@ function guardarVentaLC() {
   const marcaCustom = document.getElementById("lc-marca-custom")?.value.trim() || "";
   const marca = marcaCustom || marcaSel;
   if (!marca) { toast("⚠ Seleccioná o escribí la marca"); return; }
-  const gradOD = tipo !== "oi" ? (document.getElementById("lc-grad-od")?.value || "") : "";
-  const gradOI = tipo !== "od" ? (document.getElementById("lc-grad-oi")?.value || "") : "";
-  if (tipo !== "oi" && !gradOD) { toast("⚠ Seleccioná la graduación OD"); return; }
-  if (tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
+  const gradPar = document.getElementById("lc-grad-par")?.value || "";
+  const gradOD = tipo === "par" ? gradPar : (tipo !== "oi" ? (document.getElementById("lc-grad-od")?.value || "") : "");
+  const gradOI = tipo === "par" ? gradPar : (tipo !== "od" ? (document.getElementById("lc-grad-oi")?.value || "") : "");
+  if (tipo === "par" && !gradPar) { toast("⚠ Seleccioná la graduación"); return; }
+  if (tipo !== "par" && tipo !== "oi" && !gradOD) { toast("⚠ Seleccioná la graduación OD"); return; }
+  if (tipo !== "par" && tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
   const precio = parseFloat(getRawMonto(document.getElementById("lc-precio"))) || parseFloat(document.getElementById("lc-precio")?.value) || 0;
   if (!precio) { toast("⚠ Ingresá el precio"); return; }
   const pago = document.getElementById("lc-pago")?.value || "";
