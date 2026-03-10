@@ -252,11 +252,28 @@
 </div>
 
 <div id="screen-clientes" class="screen">
-  <div class="search-wrap">
-    <span class="si">🔍</span>
-    <input id="q-clientes" type="search" placeholder="Nombre, DNI o teléfono..." oninput="renderClientes(this.value)">
+  <!-- Tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button id="tab-agenda" onclick="switchClienteTab('agenda')" style="flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--azul);background:var(--azul);color:var(--amarillo);font-size:14px;font-weight:800;cursor:pointer">📖 Agenda</button>
+    <button id="tab-ranking" onclick="switchClienteTab('ranking')" style="flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--azul);background:#fff;color:var(--azul);font-size:14px;font-weight:800;cursor:pointer">🏆 Ranking</button>
   </div>
-  <div id="lista-clientes"><div class="empty"><span>👤</span>Cargando...</div></div>
+
+  <!-- Agenda -->
+  <div id="panel-agenda">
+    <div class="search-wrap" style="margin-bottom:10px">
+      <span class="si">🔍</span>
+      <input id="q-clientes" type="search" placeholder="Nombre, DNI o teléfono..." oninput="renderClientes(this.value)">
+    </div>
+    <div style="display:flex;gap:0;position:relative">
+      <div id="lista-clientes" style="flex:1;padding-right:30px"><div class="empty"><span>👤</span>Cargando...</div></div>
+      <div id="az-sidebar" style="position:fixed;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;z-index:80;background:rgba(255,255,255,0.92);border-radius:20px;padding:6px 4px;box-shadow:0 2px 10px rgba(27,79,168,.15)"></div>
+    </div>
+  </div>
+
+  <!-- Ranking -->
+  <div id="panel-ranking" style="display:none">
+    <div id="lista-ranking"><div class="empty"><span>🏆</span>Cargando...</div></div>
+  </div>
 </div>
 
 <div id="screen-osocial" class="screen">
@@ -743,6 +760,9 @@ function setTab(t,btn) {
   // Mostrar FAB solo en órdenes
   const fab = document.getElementById("fab-ordenes");
   if(fab) fab.style.display = (t==="ordenes") ? "flex" : "none";
+  // Mostrar sidebar A-Z solo en clientes/agenda
+  const azSb = document.getElementById("az-sidebar");
+  if(azSb) azSb.style.display = (t==="clientes") ? "flex" : "none";
   // Cerrar sidebar en mobile
   closeSidebar();
   // Scroll top
@@ -983,6 +1003,7 @@ function verDetalle(idx) {
 
 function renderClientes(q="") {
   const el = document.getElementById("lista-clientes");
+  const sidebar = document.getElementById("az-sidebar");
   const map = new Map();
   D.orders.forEach(o => {
     const nombre = (o.nombre||"").trim();
@@ -991,24 +1012,109 @@ function renderClientes(q="") {
     if(!map.has(k)) map.set(k,{nombre:nombre||o.dni||"Sin nombre",cel:o.cel,dni:o.dni,orders:[]});
     map.get(k).orders.push(o);
   });
-  let list=[...map.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  let list=[...map.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre,"es",{sensitivity:"base"}));
   if(q) list=list.filter(c=>c.nombre.toLowerCase().includes(q.toLowerCase())||(c.cel||"").includes(q)||(c.dni||"").includes(q));
-  if(!list.length){el.innerHTML=`<div class="empty"><span>👤</span>${D.orders.length===0?"Cargá órdenes para ver los clientes":"Sin resultados"}</div>`;return;}
-  el.innerHTML=list.map(c=>{
-    const s=[...c.orders].sort((a,b)=>String(b.num).localeCompare(String(a.num),undefined,{numeric:true}));
-    return `<div class="card" onclick="verFichaCliente('${encodeURIComponent(c.nombre)}')" style="cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="background:var(--azul);color:var(--amarillo);width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0">
-          ${c.nombre.trim()[0]?.toUpperCase()||"?"}
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><span>👤</span>${D.orders.length===0?"Cargá órdenes para ver los clientes":"Sin resultados"}</div>`;
+    if(sidebar) sidebar.innerHTML="";
+    return;
+  }
+
+  // Agrupar por letra inicial
+  const byLetter = {};
+  list.forEach(c => {
+    const letra = c.nombre.trim()[0]?.toUpperCase().replace(/[ÁÀÂÄ]/g,"A").replace(/[ÉÈÊË]/g,"E").replace(/[ÍÌÎÏ]/g,"I").replace(/[ÓÒÔÖ]/g,"O").replace(/[ÚÙÛÜ]/g,"U") || "#";
+    if(!byLetter[letra]) byLetter[letra] = [];
+    byLetter[letra].push(c);
+  });
+  const letrasPresentes = Object.keys(byLetter).sort();
+
+  // Render lista agrupada
+  el.innerHTML = letrasPresentes.map(letra => `
+    <div id="az-${letra}" style="scroll-margin-top:70px">
+      <div style="background:linear-gradient(90deg,var(--azul) 0%,#2563eb 100%);color:var(--amarillo);font-size:13px;font-weight:900;padding:5px 14px;border-radius:8px;margin:10px 0 6px;letter-spacing:1.5px;display:inline-block">${letra}</div>
+      ${byLetter[letra].map(c=>`
+        <div class="card" onclick="verFichaCliente('${encodeURIComponent(c.nombre)}')" style="cursor:pointer;transition:background .15s;margin-bottom:7px" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="background:var(--azul);color:var(--amarillo);width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0">
+              ${c.nombre.trim()[0]?.toUpperCase()||"?"}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="card-name">${c.nombre}</div>
+              <div class="card-meta">${c.cel?`<span>📞 ${c.cel}</span>`:""} ${c.dni?`<span>🪪 ${c.dni}</span>`:""} <span>${c.orders.length} orden${c.orders.length!==1?"es":""}</span></div>
+            </div>
+            <div style="font-size:22px;color:var(--gris-borde);flex-shrink:0">›</div>
+          </div>
+        </div>`).join("")}
+    </div>`).join("");
+
+  // Render sidebar A-Z
+  if(sidebar){
+    const TODAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    sidebar.innerHTML = TODAS.map(l => {
+      const activa = letrasPresentes.includes(l);
+      return `<span onclick="${activa?`document.getElementById('az-${l}')?.scrollIntoView({behavior:'smooth',block:'start'})`:''}" style="font-size:10px;font-weight:${activa?'900':'400'};color:${activa?'var(--azul)':'#ccc'};cursor:${activa?'pointer':'default'};padding:1px 5px;border-radius:4px;line-height:1.5;${activa?'':'opacity:.5'}" ${activa?`onmouseenter="this.style.background='#EEF4FF'" onmouseleave="this.style.background=''"`:''}>
+        ${l}</span>`;
+    }).join("");
+  }
+}
+
+function switchClienteTab(tab) {
+  const isAgenda = tab === "agenda";
+  document.getElementById("panel-agenda").style.display = isAgenda ? "" : "none";
+  document.getElementById("panel-ranking").style.display = isAgenda ? "none" : "";
+  document.getElementById("tab-agenda").style.background = isAgenda ? "var(--azul)" : "#fff";
+  document.getElementById("tab-agenda").style.color = isAgenda ? "var(--amarillo)" : "var(--azul)";
+  document.getElementById("tab-ranking").style.background = isAgenda ? "#fff" : "var(--azul)";
+  document.getElementById("tab-ranking").style.color = isAgenda ? "var(--azul)" : "var(--amarillo)";
+  const azSb = document.getElementById("az-sidebar");
+  if(azSb) azSb.style.display = isAgenda ? "flex" : "none";
+  if (!isAgenda) renderRankingClientes();
+}
+
+function renderRankingClientes() {
+  const el = document.getElementById("lista-ranking");
+  const map = new Map();
+  D.orders.forEach(o => {
+    const nombre = (o.nombre||"").trim();
+    if(!nombre) return;
+    const k = nombre.toLowerCase();
+    if(!map.has(k)) map.set(k, {nombre, cel:o.cel, dni:o.dni, total:0, ordenes:0, ultima:o.fecha||""});
+    const r = map.get(k);
+    r.total += parseFloat(o.total||0);
+    r.ordenes += 1;
+    if((o.fecha||"") > r.ultima) r.ultima = o.fecha;
+  });
+  const ranking = [...map.values()].sort((a,b)=>b.total-a.total).slice(0,20);
+  if(!ranking.length){el.innerHTML=`<div class="empty"><span>🏆</span>Sin datos todavía</div>`;return;}
+
+  const medalias = ["🥇","🥈","🥉"];
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--suave);margin-bottom:12px;text-align:center">Top 20 clientes por gasto total histórico</div>
+    ${ranking.map((c,i)=>{
+      const pct = ranking[0].total > 0 ? (c.total / ranking[0].total * 100).toFixed(0) : 0;
+      const barColor = i===0?"#F59E0B":i===1?"#94A3B8":i===2?"#B45309":"var(--azul)";
+      return `<div class="card" onclick="verFichaCliente('${encodeURIComponent(c.nombre)}')" style="cursor:pointer;margin-bottom:8px;transition:background .15s;${i<3?'border-left:4px solid '+barColor:''}" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:${i<3?'26px':'15px'};font-weight:900;min-width:32px;text-align:center;color:${i<3?barColor:'var(--suave)'}">${i<3?medalias[i]:`#${i+1}`}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:15px">${c.nombre}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <div style="flex:1;background:#EEF4FF;border-radius:99px;height:6px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:${barColor};border-radius:99px;transition:width .3s"></div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--suave);margin-top:3px;display:flex;gap:10px">
+              <span>📋 ${c.ordenes} orden${c.ordenes!==1?"es":""}</span>
+              ${c.ultima?`<span>📅 Última: ${fmtDate(c.ultima)}</span>`:""}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:16px;font-weight:900;color:${i<3?barColor:'var(--azul)'}">$${num(c.total)}</div>
+          </div>
         </div>
-        <div style="flex:1;min-width:0">
-          <div class="card-name">${c.nombre}</div>
-          <div class="card-meta">${c.cel?`<span>📞 ${c.cel}</span>`:""} ${c.dni?`<span>🪪 ${c.dni}</span>`:""} <span>${c.orders.length} orden${c.orders.length!==1?"es":""}</span></div>
-        </div>
-        <div style="font-size:22px;color:var(--gris-borde);flex-shrink:0">›</div>
-      </div>
-    </div>`;
-  }).join("");
+      </div>`;
+    }).join("")}`;
 }
 
 function verFichaCliente(nombreEnc) {
