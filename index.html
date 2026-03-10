@@ -1215,6 +1215,8 @@ function verFichaCliente(nombreEnc) {
       const idx = D.orders.findIndex(x => x.id === o.id);
       const badge = getEstadoBadge(o.estado);
       const saldoO = parseFloat(o.total||0) - parseFloat(o.aCuenta||0);
+      const hasL = o.lEsf||o.lEsfI, hasC = o.cEsf||o.cEsfI;
+      const hasReceta = hasL || hasC;
       return `<div class="card" onclick="closeModal();setTimeout(()=>verDetalle(${idx}),100)" style="cursor:pointer;margin-bottom:8px;border-left:4px solid var(--azul);transition:background .15s" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="flex:1;min-width:0">
@@ -1223,6 +1225,7 @@ function verFichaCliente(nombreEnc) {
             <div style="font-size:12px;color:var(--suave);margin-top:2px">
               ${o.tipoTrabajo?`<span>${o.tipoTrabajo}</span>`:""}
               ${o.tratamiento?` · ✨ ${o.tratamiento}`:""}
+              ${o.armazonDesc?` · 🕶️ ${o.armazonDesc}`:""}
               ${o.oSocial?` · 🏥 ${o.oSocial}`:""}
             </div>
           </div>
@@ -1231,6 +1234,56 @@ function verFichaCliente(nombreEnc) {
             ${o.pagado?`<div style="font-size:11px;color:#2E7D32;font-weight:700">✅ Pagado</div>`:saldoO>0?`<div style="font-size:11px;color:#E65100;font-weight:700">⏳ Saldo $${num(saldoO)}</div>`:o.ctaCte?`<div style="font-size:11px;color:#E65100;font-weight:700">📒 Cta.Cte</div>`:""}
           </div>
         </div>
+        ${hasReceta?`
+        <div style="margin-top:10px;border-top:1px solid var(--gris-borde);padding-top:10px">
+          <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📐 Receta</div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:var(--gris)">
+                  <th style="padding:4px 6px;text-align:left;font-size:10px;color:var(--suave);font-weight:700;border-radius:6px 0 0 0"></th>
+                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Esf</th>
+                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Cil</th>
+                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Eje</th>
+                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Add</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${hasL?`<tr><td colspan="5" style="background:linear-gradient(90deg,var(--azul),#2563eb);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;letter-spacing:1px">LEJOS</td></tr>
+                <tr style="border-bottom:1px solid var(--gris-borde)">
+                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OD</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lEsf)}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lCil)}</td>
+                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.lEje||"—"}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lAdd)}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--gris-borde)">
+                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OI</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lEsfI)}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lCilI)}</td>
+                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.lEjeI||"—"}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lAddI)}</td>
+                </tr>`:""}
+                ${hasC?`<tr><td colspan="5" style="background:linear-gradient(90deg,#4527A0,#6A1B9A);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;letter-spacing:1px">CERCA</td></tr>
+                <tr style="border-bottom:1px solid var(--gris-borde)">
+                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OD</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cEsf)}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cCil)}</td>
+                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.cEje||"—"}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cAdd)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OI</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cEsfI)}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cCilI)}</td>
+                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.cEjeI||"—"}</td>
+                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cAddI)}</td>
+                </tr>`:""}
+              </tbody>
+            </table>
+          </div>
+          ${detectarCondicion(o)}
+        </div>`:""}
       </div>`;
     }).join("")}
     <button class="btn-cancel" onclick="closeModal()">← Volver</button>
