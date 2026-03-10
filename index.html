@@ -2949,6 +2949,60 @@ function saveCajasVentas(v) {
   push({ type: "SAVE_DATA", key: "VENTAS", value: JSON.stringify(v) }); // siempre, incluso vacío
 }
 
+// Helper: genera el bloque de cuotas+tarjeta para cualquier modal de venta
+function renderTarjetaWrap(prefix, cfg) {
+  const tarjetas = cfg.tarjetasCredito || [];
+  return `
+  <div id="${prefix}-tarjeta-wrap" style="display:none;margin-top:2px">
+    <div style="display:flex;gap:8px">
+      <div class="field" style="flex:1;margin-bottom:0">
+        <label>Cuotas</label>
+        <select id="${prefix}-cuotas" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+          <option value="">— Cuotas —</option>
+          <option value="1 cuota">1 cuota</option>
+          <option value="3 cuotas s/i">3 cuotas s/i</option>
+          <option value="5 cuotas s/i">5 cuotas s/i</option>
+          <option value="6 cuotas s/i">6 cuotas s/i</option>
+          <option value="12 cuotas">12 cuotas</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;margin-bottom:0">
+        <label>Tarjeta</label>
+        <select id="${prefix}-tarjeta" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+          <option value="">— Tarjeta —</option>
+          ${tarjetas.map(t=>`<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Toggle visibilidad del bloque tarjeta para modales de venta rápida/LC
+function onPagoVentaChange(val, prefix) {
+  const wrap = document.getElementById(prefix + "-tarjeta-wrap");
+  if (!wrap) return;
+  const esTarjeta = val === "Tarjeta crédito";
+  wrap.style.display = esTarjeta ? "block" : "none";
+  if (!esTarjeta) {
+    const sc = document.getElementById(prefix + "-cuotas");
+    const st = document.getElementById(prefix + "-tarjeta");
+    if (sc) sc.value = "";
+    if (st) st.value = "";
+  }
+}
+
+// Arma el string completo de forma de pago (con cuotas y tarjeta si aplica)
+function buildPagoString(prefix) {
+  const base = document.getElementById(prefix + "-pago")?.value || "";
+  if (base !== "Tarjeta crédito") return base;
+  const cuotas  = (document.getElementById(prefix + "-cuotas")?.value || "").trim();
+  const tarjeta = (document.getElementById(prefix + "-tarjeta")?.value || "").trim();
+  let result = base;
+  if (cuotas)  result += " " + cuotas;
+  if (tarjeta) result += " — " + tarjeta;
+  return result;
+}
+
 function ventaRapida(tipo) {
   const cfg = getCfg();
   const esAccesorio = tipo === "accesorio";
@@ -2990,12 +3044,13 @@ function ventaRapida(tipo) {
 
     <div class="field">
       <label>Forma de pago</label>
-      <select id="venta-pago" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+      <select id="venta-pago" onchange="onPagoVentaChange(this.value,'venta')" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
         <option value="">— Seleccioná —</option>
         ${(cfg.formaPago||[]).map(p => `<option value="${p}">${p}</option>`).join("")}
         <option value="Sin cargo">Sin cargo</option>
       </select>
     </div>
+    ${renderTarjetaWrap("venta", cfg)}
 
     <div class="field">
       <label>Notas (opcional)</label>
@@ -3137,13 +3192,14 @@ function ventaLC() {
       </div>
       <div class="field">
         <label>Forma de pago</label>
-        <select id="lc-pago" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+        <select id="lc-pago" onchange="onPagoVentaChange(this.value,'lc')" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
           <option value="">— Seleccioná —</option>
           ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
           <option value="Sin cargo">Sin cargo</option>
         </select>
       </div>
     </div>
+    ${renderTarjetaWrap("lc", cfg)}
 
     <div class="field">
       <label>Notas (opcional)</label>
@@ -3215,8 +3271,9 @@ function guardarVentaLC() {
   if (tipo !== "par" && tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
   const precio = parseFloat(getRawMonto(document.getElementById("lc-precio"))) || parseFloat(document.getElementById("lc-precio")?.value) || 0;
   if (!precio) { toast("⚠ Ingresá el precio"); return; }
-  const pago = document.getElementById("lc-pago")?.value || "";
-  if (!pago) { toast("⚠ Seleccioná la forma de pago"); return; }
+  const pagoBase = document.getElementById("lc-pago")?.value || "";
+  if (!pagoBase) { toast("⚠ Seleccioná la forma de pago"); return; }
+  const pago = buildPagoString("lc");
   const notas = document.getElementById("lc-notas")?.value.trim() || "";
   const vendedoraVenta = document.getElementById("lc-vendedora")?.value.trim() || "";
 
@@ -3252,13 +3309,14 @@ function guardarVentaRapida(tipo) {
   const item = itemCustom || itemSel;
   const precio = parseFloat(getRawMonto(document.getElementById("venta-precio"))) || parseFloat(document.getElementById("venta-precio")?.value) || 0;
   const cantidad = parseInt(document.getElementById("venta-cantidad")?.value) || 1;
-  const pago = document.getElementById("venta-pago")?.value || "";
+  const pagoBase = document.getElementById("venta-pago")?.value || "";
+  const pago = buildPagoString("venta");
   const notas = document.getElementById("venta-notas")?.value.trim() || "";
   const vendedoraVenta = document.getElementById("venta-vendedora")?.value.trim() || "";
 
   if (!item) { toast("⚠ Seleccioná o escribí el producto"); return; }
   if (!precio) { toast("⚠ Ingresá el precio"); return; }
-  if (!pago) { toast("⚠ Seleccioná la forma de pago"); return; }
+  if (!pagoBase) { toast("⚠ Seleccioná la forma de pago"); return; }
 
   const total = precio * cantidad;
   const venta = {
