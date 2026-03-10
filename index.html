@@ -462,7 +462,8 @@ const DEFAULT_CONFIG = {
   vendedores:   [],
   doctores:     [],
   laboratorios: [],
-  marcasLC: ["Acuvue Oasys","Acuvue Moist","Air Optix","Dailies Total 1","Biotrue ONEday","PureVision","SofLens","Clariti"]
+  marcasLC: ["Acuvue Oasys","Acuvue Moist","Air Optix","Dailies Total 1","Biotrue ONEday","PureVision","SofLens","Clariti"],
+  liquidosLC: ["Arlyt Express 120ml","Arlyt Express 360ml","Renu 60ml","Renu 120ml","Renu 360ml","Biotrue 60ml","Biotrue 120ml","Biotrue 360ml","Solo-Care Aqua 90ml","Solo-Care Aqua 360ml"]
 };
 
 function getCfg() {
@@ -961,6 +962,7 @@ function renderConfig() {
     seccion("Doctores", "🩺", "doctores", "Ej: Dr. García...") +
     seccion("Laboratorios", "🏭", "laboratorios", "Ej: Visión Plus, Optica Lab...") +
     seccion("Marcas de Lentes de Contacto", "👁️", "marcasLC", "Ej: Acuvue, Air Optix...") +
+    seccion("Soluciones / Líquidos LC", "💧", "liquidosLC", "Ej: Arlyt Express 120ml...") +
     seccion("Tratamientos", "✨", "tratamientos", "Ej: Orgánico Blue HD...") +
     seccion("Obras Sociales", "🏥", "obraSocial", "Ej: PAMI, OSDE...") +
     seccion("Tipos de Lente", "🔭", "lentes", "Ej: Progresivo...") +
@@ -3085,6 +3087,22 @@ function selTipoLC(value) {
   actualizarCamposLC();
 }
 
+function toggleLcLiquido(e, label) {
+  e.preventDefault();
+  const cb = label.querySelector("input[type=checkbox]");
+  const cbox = label.querySelector(".cbox");
+  const isChecked = label.classList.contains("checked");
+  if (isChecked) {
+    label.classList.remove("checked");
+    cb.checked = false;
+    cbox.textContent = "";
+  } else {
+    label.classList.add("checked");
+    cb.checked = true;
+    cbox.textContent = "✓";
+  }
+}
+
 function selVentaItem(e, label, value) {
   e.preventDefault();
   document.querySelectorAll("input[name='venta-item']").forEach(r => {
@@ -3184,20 +3202,42 @@ function ventaLC() {
       </div>
     </div>
 
-    <div class="g2">
-      <div class="field">
-        <label>Precio $</label>
-        <input id="lc-precio" type="number" inputmode="decimal" placeholder="0"
-          style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+    <div class="field">
+      <label>Precio $</label>
+      <input id="lc-precio" type="number" inputmode="decimal" placeholder="0"
+        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+    </div>
+
+    <!-- Líquidos / Soluciones -->
+    <div class="fsec" style="margin-top:8px">
+      <div class="fsec-tit">💧 Líquidos multipropósito <span style="font-size:10px;font-weight:600;color:var(--suave);text-transform:none">(opcional)</span></div>
+      <div id="lc-liquidos-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+        ${(cfg.liquidosLC||[]).map((liq,i)=>`
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="check-item" onclick="toggleLcLiquido(event,this)" data-liq="${i}"
+              style="flex:1;margin-bottom:0;padding:8px 12px">
+              <input type="checkbox" name="lc-liq" value="${liq}">
+              <span class="cbox"></span>
+              <span class="clabel" style="font-size:13px">${liq}</span>
+            </label>
+            <input type="number" id="lc-liq-qty-${i}" inputmode="numeric" placeholder="1" value="1" min="1"
+              style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:8px;font-size:14px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+          </div>`).join("")}
       </div>
-      <div class="field">
-        <label>Forma de pago</label>
-        <select id="lc-pago" onchange="onPagoVentaChange(this.value,'lc')" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-          <option value="">— Seleccioná —</option>
-          ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
-          <option value="Sin cargo">Sin cargo</option>
-        </select>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="lc-liq-custom" placeholder="Otro líquido..." style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 12px;font-size:13px;background:var(--gris);font-family:inherit;outline:none">
+        <input type="number" id="lc-liq-custom-qty" inputmode="numeric" placeholder="1" value="1" min="1"
+          style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px;font-size:13px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
       </div>
+    </div>
+
+    <div class="field">
+      <label>Forma de pago</label>
+      <select id="lc-pago" onchange="onPagoVentaChange(this.value,'lc')" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+        <option value="">— Seleccioná —</option>
+        ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
+        <option value="Sin cargo">Sin cargo</option>
+      </select>
     </div>
     ${renderTarjetaWrap("lc", cfg)}
 
@@ -3277,13 +3317,30 @@ function guardarVentaLC() {
   const notas = document.getElementById("lc-notas")?.value.trim() || "";
   const vendedoraVenta = document.getElementById("lc-vendedora")?.value.trim() || "";
 
+  // Recolectar líquidos seleccionados
+  const liquidosSeleccionados = [];
+  document.querySelectorAll("#lc-liquidos-lista .check-item.checked input[type=checkbox]").forEach((cb, idx) => {
+    const label = cb.closest(".check-item");
+    const dataIdx = label?.dataset.liq;
+    const qtyEl = document.getElementById(`lc-liq-qty-${dataIdx}`);
+    const qty = parseInt(qtyEl?.value) || 1;
+    liquidosSeleccionados.push({ nombre: cb.value, cantidad: qty });
+  });
+  const liqCustomNombre = document.getElementById("lc-liq-custom")?.value.trim() || "";
+  const liqCustomQty = parseInt(document.getElementById("lc-liq-custom-qty")?.value) || 1;
+  if (liqCustomNombre) liquidosSeleccionados.push({ nombre: liqCustomNombre, cantidad: liqCustomQty });
+
   const tipoLabel = { par:"Par completo", od:"Medio par OD", oi:"Medio par OI", "2medios":"2 medios pares" }[tipo];
   let gradDesc = "";
   if (tipo === "par" || tipo === "2medios") gradDesc = `OD ${gradOD} / OI ${gradOI}`;
   else if (tipo === "od") gradDesc = `OD ${gradOD}`;
   else if (tipo === "oi") gradDesc = `OI ${gradOI}`;
 
-  const item = `${marca} · ${tipoLabel} · ${gradDesc}`;
+  let item = `${marca} · ${tipoLabel} · ${gradDesc}`;
+  if (liquidosSeleccionados.length > 0) {
+    const liqDesc = liquidosSeleccionados.map(l => l.cantidad > 1 ? `${l.cantidad}x ${l.nombre}` : l.nombre).join(", ");
+    item += ` + ${liqDesc}`;
+  }
 
   const venta = {
     id: uid(), fecha: getHoy(),
@@ -3292,6 +3349,7 @@ function guardarVentaLC() {
     item, marca, tipoLC: tipo, gradOD, gradOI,
     precio, cantidad: 1, total: precio, pago
   };
+  if (liquidosSeleccionados.length > 0) venta.liquidosLC = liquidosSeleccionados;
   if (notas) venta.notas = notas;
   if (vendedoraVenta) venta.vendedora = vendedoraVenta;
 
