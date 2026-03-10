@@ -248,13 +248,24 @@
     <button class="nav-item"        id="nav-fidelizacion" onclick="setTab('fidelizacion',this)"><span class="nav-icon">⭐</span><span>Fidelizar</span></button>
     <button class="nav-item"        id="nav-mensajes"    onclick="setTab('mensajes',this)">    <span class="nav-icon">💬</span><span>Mensajes</span></button>
     <div id="nav-admin-group" style="display:none">
-      <div id="nav-admin-label" style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Administración</div>
-      <button class="nav-item" id="nav-stats" onclick="setTab('stats',this)"><span class="nav-icon">📊</span><span>Estadísticas</span></button>
-      <button class="nav-item" id="nav-finanzas" onclick="checkAdmin(()=>renderFinanzas(),'nav-finanzas','finanzas')"><span class="nav-icon">💰</span><span>Finanzas</span></button>
-      <button class="nav-item" id="nav-administracion" onclick="setTab('administracion',this)"><span class="nav-icon">🏦</span><span>Administración</span></button>
-      <button class="nav-item" id="nav-admin" onclick="setTab('admin',this)" style="margin-top:8px;background:linear-gradient(135deg,rgba(245,232,124,.15),rgba(245,232,124,.05));border-top:1px solid rgba(255,255,255,.1)">
-        <span class="nav-icon">🏆</span><span style="color:var(--amarillo);font-weight:900">Panel CEO</span>
+      <div style="margin:10px 10px 6px;height:1px;background:linear-gradient(90deg,transparent,rgba(245,232,124,.4),transparent)"></div>
+      <div style="padding:4px 16px 8px;font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:2px;opacity:.8">Solo Admin</div>
+      <button class="nav-item" id="nav-admin" onclick="setTab('admin',this)" style="background:linear-gradient(135deg,rgba(245,232,124,.12),rgba(245,232,124,.04))">
+        <span class="nav-icon">🏆</span><span style="color:#F5E87C;font-weight:900">Panel CEO</span>
       </button>
+      <button class="nav-item" id="nav-sueldos" onclick="setTab('sueldos',this)">
+        <span class="nav-icon">👥</span><span style="color:rgba(255,255,255,.9)">Sueldos</span>
+      </button>
+      <button class="nav-item" id="nav-cheques" onclick="setTab('cheques',this)">
+        <span class="nav-icon">📄</span><span style="color:rgba(255,255,255,.9)">Cheques</span>
+      </button>
+      <button class="nav-item" id="nav-proveedores" onclick="setTab('proveedores',this)">
+        <span class="nav-icon">🏭</span><span style="color:rgba(255,255,255,.9)">Proveedores</span>
+      </button>
+      <button class="nav-item" id="nav-estadisticas" onclick="setTab('estadisticas',this)">
+        <span class="nav-icon">📊</span><span style="color:rgba(255,255,255,.9)">Estadísticas</span>
+      </button>
+      <div style="margin:8px 10px 4px;height:1px;background:linear-gradient(90deg,transparent,rgba(245,232,124,.2),transparent)"></div>
     </div>
     <button class="nav-item" id="nav-config" onclick="setTab('config',this)" style="border-top:1px solid rgba(255,255,255,.08);margin-top:4px"><span class="nav-icon">⚙️</span><span>Configuración</span></button>
   </div>
@@ -384,6 +395,22 @@
 
 <div id="screen-administracion" class="screen">
   <div id="administracion-body"></div>
+</div>
+
+<div id="screen-sueldos" class="screen" style="padding:0;background:#080F1E;min-height:100vh">
+  <div id="sueldos-body"></div>
+</div>
+
+<div id="screen-cheques" class="screen" style="padding:0;background:#080F1E;min-height:100vh">
+  <div id="cheques-body"></div>
+</div>
+
+<div id="screen-proveedores" class="screen" style="padding:0;background:#080F1E;min-height:100vh">
+  <div id="proveedores-body"></div>
+</div>
+
+<div id="screen-estadisticas" class="screen" style="padding:0;background:#080F1E;min-height:100vh">
+  <div id="estadisticas-body"></div>
 </div>
 
 
@@ -856,6 +883,10 @@ function setTab(t,btn) {
   if(t==="ordenes")      renderOrdenes();
   if(t==="finanzas")     renderFinanzas();
   if(t==="administracion") renderAdministracion();
+  if(t==="sueldos")      renderAdminSueldosDark();
+  if(t==="cheques")      renderAdminChequesDark();
+  if(t==="proveedores")  renderAdminProveedoresDark();
+  if(t==="estadisticas") renderEstadisticasDark();
 
   // Sync con Sheets → re-render con datos frescos
   syncSheets().then(() => {
@@ -872,6 +903,10 @@ function setTab(t,btn) {
     if(t==="admin")        renderAdminPanel();
     if(t==="finanzas")     renderFinanzas();
     if(t==="administracion") renderAdministracion();
+    if(t==="sueldos")      renderAdminSueldosDark();
+    if(t==="cheques")      renderAdminChequesDark();
+    if(t==="proveedores")  renderAdminProveedoresDark();
+    if(t==="estadisticas") renderEstadisticasDark();
   });
 }
 
@@ -6254,6 +6289,619 @@ function adminConfirmarEliminarEmpleado(id) {
   saveEmpleados(getEmpleados().filter(e=>e.id!==id));
   document.getElementById("overlay").classList.remove("open");
   renderAdministracion();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DARK GLASS HELPERS — shared across admin screens
+// ══════════════════════════════════════════════════════════════
+const DG = {
+  screen: `background:#080F1E;min-height:100vh`,
+  header: (icon, label, title, extra="") => `
+    <div style="background:linear-gradient(160deg,#050C18 0%,#080F1E 60%,#0D1F3C 100%);padding:20px 16px 16px;position:sticky;top:0;z-index:50;box-shadow:0 4px 32px rgba(0,0,0,.6),0 1px 0 rgba(74,158,255,.15)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${extra?'14px':'0'}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#F5E87C,#E8C900);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 12px rgba(245,232,124,.35)">${icon}</div>
+          <div>
+            <div style="color:#F5E87C;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px">${label}</div>
+            <div style="color:#fff;font-size:18px;font-weight:900;letter-spacing:-.3px">${title}</div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 12px;text-align:right">
+          <div style="color:#F5E87C;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Hoy</div>
+          <div style="color:#fff;font-size:12px;font-weight:700">${new Date().toLocaleDateString("es-AR",{day:"numeric",month:"short"})}</div>
+        </div>
+      </div>
+      ${extra}
+    </div>
+    <div style="background:#080F1E;padding:14px 14px 100px">`,
+  card: `background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px`,
+  cardDanger: `background:rgba(198,40,40,.06);backdrop-filter:blur(12px);border:1px solid rgba(198,40,40,.3);box-shadow:0 8px 32px rgba(0,0,0,.4);border-radius:16px;padding:16px;margin-bottom:12px`,
+  cardSuccess: `background:rgba(52,211,153,.06);backdrop-filter:blur(12px);border:1px solid rgba(52,211,153,.25);box-shadow:0 8px 32px rgba(0,0,0,.4);border-radius:16px;padding:16px;margin-bottom:12px`,
+  sectionTitle: (t) => `<div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">${t}</div>`,
+  input: `border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;background:rgba(255,255,255,.06);color:#fff;width:100%;box-sizing:border-box`,
+  select: `border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:rgba(15,25,50,.9);color:#fff;width:100%;box-sizing:border-box`,
+  btn: `background:linear-gradient(135deg,#1B4FA8,#2563EB);color:#F5E87C;border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;width:100%`,
+  btnSm: (bg, color, txt) => `<button style="background:${bg};color:${color};border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">${txt}</button>`,
+  label: (t) => `<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">${t}</div>`,
+  divider: `<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(74,158,255,.25),transparent);margin:16px 0"></div>`,
+  kpi: (icon, label, val, sub="", color="#4A9EFF") => `
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(74,158,255,.2);border-radius:14px;padding:14px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-8px;right:-8px;width:50px;height:50px;background:${color};opacity:.07;border-radius:50%"></div>
+      <div style="font-size:18px;margin-bottom:6px">${icon}</div>
+      <div style="font-size:9px;font-weight:700;color:#F5E87C;text-transform:uppercase;letter-spacing:.8px">${label}</div>
+      <div style="font-size:18px;font-weight:900;color:#fff;margin-top:3px">${val}</div>
+      ${sub ? `<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">${sub}</div>` : ""}
+    </div>`
+};
+
+// ══════════════════════════════════════════════════════════════
+// SUELDOS — DARK GLASS
+// ══════════════════════════════════════════════════════════════
+function renderAdminSueldosDark() {
+  const el = document.getElementById("sueldos-body");
+  if (!el) return;
+  const empleados = getEmpleados();
+  const pagos = getPagosSueldos();
+  const hoy = new Date();
+  const mesActual = hoy.getMonth(), anioActual = hoy.getFullYear();
+  const mesesFull = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  const calcDeuda = (emp) => {
+    const pagosEmp = pagos.filter(p => p.empleadoId === emp.id);
+    const fechaInicio = emp.fechaIngreso ? new Date(emp.fechaIngreso+"T12:00:00") : new Date(anioActual, mesActual, 1);
+    let deuda = 0, anioIt = fechaInicio.getFullYear(), mesIt = fechaInicio.getMonth();
+    while (anioIt < anioActual || (anioIt === anioActual && mesIt <= mesActual)) {
+      const pagado = pagosEmp.filter(p=>p.mes===mesIt&&p.anio===anioIt).reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+      deuda += (parseFloat(emp.salario)||0) - pagado;
+      mesIt++; if (mesIt>11){mesIt=0;anioIt++;}
+    }
+    return deuda;
+  };
+
+  const totalMensual = empleados.reduce((a,e)=>a+(parseFloat(e.salario)||0),0);
+  const totalPagadoMes = empleados.reduce((a,e)=>{
+    return a + pagos.filter(p=>p.empleadoId===e.id&&p.mes===mesActual&&p.anio===anioActual).reduce((s,p)=>s+(parseFloat(p.monto)||0),0);
+  },0);
+  const totalDeuda = empleados.reduce((a,e)=>a+Math.max(0,calcDeuda(e)),0);
+
+  const tarjetas = empleados.length === 0
+    ? `<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,.4)"><div style="font-size:40px;margin-bottom:12px">👥</div><div>Sin empleados registrados</div></div>`
+    : empleados.map(emp => {
+        const salario = parseFloat(emp.salario)||0;
+        const pagadoMes = pagos.filter(p=>p.empleadoId===emp.id&&p.mes===mesActual&&p.anio===anioActual).reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+        const restante = salario - pagadoMes;
+        const deudaTotal = calcDeuda(emp);
+        const pct = salario>0 ? Math.min(100,Math.round(pagadoMes/salario*100)) : 0;
+        const pagosDelMes = pagos.filter(p=>p.empleadoId===emp.id&&p.mes===mesActual&&p.anio===anioActual).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+        return `
+          <div style="${DG.card}">
+            <!-- Header empleado -->
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+              <div>
+                <div style="font-size:16px;font-weight:900;color:#fff">${emp.nombre}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,.5)">${emp.rol||""} ${emp.comision?`· ${emp.comision}% comisión`:""}</div>
+              </div>
+              <button onclick="adminEditarEmpleadoDark('${emp.id}')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer">✏️</button>
+            </div>
+
+            <!-- Barra progreso -->
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+                <span style="color:rgba(255,255,255,.6)">${mesesFull[mesActual]} ${anioActual}</span>
+                <span style="color:${restante>0?'#FB923C':'#34D399'};font-weight:800">${restante>0?`Resta $${num(restante)}`:'✅ Completo'}</span>
+              </div>
+              <div style="background:rgba(255,255,255,.08);border-radius:8px;height:8px;overflow:hidden">
+                <div style="background:${pct>=100?'linear-gradient(90deg,#34D399,#059669)':'linear-gradient(90deg,#4A9EFF,#1B4FA8)'};width:${pct}%;height:8px;border-radius:8px;transition:width .4s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px;color:rgba(255,255,255,.4)">
+                <span>Pagado: <strong style="color:#4A9EFF">$${num(pagadoMes)}</strong></span>
+                <span>Sueldo: <strong style="color:#fff">$${num(salario)}</strong></span>
+              </div>
+            </div>
+
+            ${deudaTotal > 0.01 ? `<div style="background:rgba(198,40,40,.12);border:1px solid rgba(198,40,40,.3);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:#EF5350;font-weight:700">⚠️ Deuda acumulada: $${num(Math.round(deudaTotal))}</div>` : ""}
+
+            <!-- Registrar pago -->
+            <div style="background:rgba(255,255,255,.03);border:1px solid rgba(74,158,255,.15);border-radius:12px;padding:12px;margin-bottom:10px">
+              <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Registrar pago</div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <div style="flex:1;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(74,158,255,.2);border-radius:9px;padding:0 12px">
+                  <span style="font-size:12px;color:rgba(255,255,255,.4)">$</span>
+                  <input type="number" id="spd-monto-${emp.id}" placeholder="${num(Math.max(0,restante)||salario)}" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:9px 0;font-family:inherit;background:transparent;color:#fff">
+                </div>
+                <select id="spd-metodo-${emp.id}" style="flex:0 0 120px;background:rgba(15,25,50,.9);border:1px solid rgba(74,158,255,.2);border-radius:9px;padding:9px 8px;font-size:12px;font-family:inherit;outline:none;color:#fff">
+                  <option>Efectivo</option>
+                  <option>Transferencia</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px">
+                <input id="spd-notas-${emp.id}" placeholder="Notas..." style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(74,158,255,.2);border-radius:9px;padding:9px 12px;font-size:12px;font-family:inherit;outline:none;color:#fff">
+                <button onclick="adminGuardarPagoSueldoDark('${emp.id}')" style="background:linear-gradient(135deg,#1B4FA8,#2563EB);color:#F5E87C;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:900;cursor:pointer">＋</button>
+              </div>
+            </div>
+
+            <!-- Historial del mes -->
+            ${pagosDelMes.length > 0 ? `
+              <div>
+                <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Pagos de ${mesesFull[mesActual]}</div>
+                ${pagosDelMes.map(p=>`
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+                    <div>
+                      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.85)">${new Date(p.fecha+"T12:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"short"})}</div>
+                      <div style="font-size:11px;color:rgba(255,255,255,.4)">${p.metodoPago||""} ${p.notas?`· ${p.notas}`:""}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="font-size:14px;font-weight:900;color:#34D399">$${num(parseFloat(p.monto)||0)}</div>
+                      <button onclick="adminEliminarPagoSueldo('${p.id}');renderAdminSueldosDark()" style="background:none;border:none;cursor:pointer;font-size:16px;color:rgba(255,255,255,.2);padding:2px">×</button>
+                    </div>
+                  </div>`).join("")}
+              </div>` : ""}
+          </div>`;
+      }).join("");
+
+  const formEmpleado = `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("➕ Agregar empleado")}
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          ${DG.label("Nombre completo")}
+          <input id="aed-nombre" placeholder="Nombre..." style="${DG.input}">
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            ${DG.label("Rol")}
+            <input id="aed-rol" placeholder="Vendedora, Óptico..." style="${DG.input}">
+          </div>
+          <div style="flex:0 0 110px">
+            ${DG.label("Comisión")}
+            <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:0 12px">
+              <input id="aed-comision" type="number" min="0" max="100" placeholder="0" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent;color:#fff">
+              <span style="font-size:11px;color:rgba(255,255,255,.4)">%</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          ${DG.label("Sueldo base")}
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:0 12px">
+            <span style="font-size:13px;color:rgba(255,255,255,.4)">$</span>
+            <input id="aed-salario" type="number" min="0" placeholder="0" style="flex:1;border:none;outline:none;font-size:15px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent;color:#fff">
+          </div>
+        </div>
+        <div>
+          ${DG.label("Fecha de ingreso")}
+          <input id="aed-ingreso" type="date" value="${hoy.toISOString().split('T')[0]}" style="${DG.input}">
+        </div>
+        <button onclick="adminGuardarEmpleadoDark()" style="${DG.btn}">Agregar empleado</button>
+      </div>
+    </div>`;
+
+  const resumenKpis = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${DG.kpi("👥","Empleados",empleados.length+" personas","","#A78BFA")}
+      ${DG.kpi("💰","Masa salarial","$"+num(totalMensual),"mensual","#4A9EFF")}
+      ${DG.kpi("✅","Pagado este mes","$"+num(totalPagadoMes),"","#34D399")}
+      ${DG.kpi("⚠️","Deuda total","$"+num(Math.round(totalDeuda)),"acumulada","#EF5350")}
+    </div>`;
+
+  el.innerHTML = DG.header("👥","Panel Admin","Sueldos") + resumenKpis + tarjetas + formEmpleado + "</div>";
+}
+
+function adminGuardarEmpleadoDark() {
+  const nombre = document.getElementById("aed-nombre")?.value?.trim();
+  const salario = parseFloat(document.getElementById("aed-salario")?.value);
+  if (!nombre || !salario) { toast("Completá nombre y sueldo"); return; }
+  const emps = getEmpleados();
+  emps.push({ id:Date.now().toString(), nombre, rol:document.getElementById("aed-rol")?.value?.trim()||"", salario, comision:parseFloat(document.getElementById("aed-comision")?.value)||0, fechaIngreso:document.getElementById("aed-ingreso")?.value||new Date().toISOString().split("T")[0] });
+  saveEmpleados(emps);
+  toast("✅ Empleado agregado");
+  renderAdminSueldosDark();
+}
+
+function adminGuardarPagoSueldoDark(empId) {
+  const monto = parseFloat(document.getElementById(`spd-monto-${empId}`)?.value);
+  if (!monto) { toast("Ingresá un monto"); return; }
+  const pagos = getPagosSueldos();
+  const hoy = new Date();
+  pagos.push({ id:Date.now().toString(), empleadoId:empId, fecha:hoy.toISOString().split("T")[0], mes:hoy.getMonth(), anio:hoy.getFullYear(), monto, metodoPago:document.getElementById(`spd-metodo-${empId}`)?.value||"Efectivo", notas:document.getElementById(`spd-notas-${empId}`)?.value?.trim()||"" });
+  savePagosSueldos(pagos);
+  toast("✅ Pago registrado");
+  renderAdminSueldosDark();
+}
+
+function adminEditarEmpleadoDark(id) {
+  const emps = getEmpleados();
+  const emp = emps.find(e=>e.id===id);
+  if (!emp) return;
+  document.getElementById("modal-body").innerHTML = `
+    <div style="font-size:16px;font-weight:900;margin-bottom:16px">✏️ Editar empleado</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="eed-nombre" value="${emp.nombre||""}" placeholder="Nombre" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none">
+      <input id="eed-rol" value="${emp.rol||""}" placeholder="Rol" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 12px">
+          <span style="font-size:12px;color:var(--suave)">$</span>
+          <input id="eed-salario" type="number" value="${emp.salario||""}" placeholder="Sueldo" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+        </div>
+        <div style="flex:0 0 110px;display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 12px">
+          <input id="eed-comision" type="number" value="${emp.comision||""}" placeholder="0" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+          <span style="font-size:12px;color:var(--suave)">% com.</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button onclick="adminActualizarEmpleadoDark('${id}')" style="flex:1;background:var(--azul);color:var(--amarillo);border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer">Guardar</button>
+        <button onclick="if(confirm('¿Eliminar?')){saveEmpleados(getEmpleados().filter(e=>e.id!=='${id}'));document.getElementById('overlay').classList.remove('open');renderAdminSueldosDark()}" style="flex:0 0 56px;background:#FDECEA;color:#C62828;border:none;border-radius:11px;padding:13px;font-size:20px;cursor:pointer">🗑</button>
+      </div>
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+function adminActualizarEmpleadoDark(id) {
+  const emps = getEmpleados();
+  const emp = emps.find(e=>e.id===id);
+  if (!emp) return;
+  emp.nombre = document.getElementById("eed-nombre")?.value?.trim()||emp.nombre;
+  emp.rol = document.getElementById("eed-rol")?.value?.trim()||emp.rol;
+  emp.salario = parseFloat(document.getElementById("eed-salario")?.value)||emp.salario;
+  emp.comision = parseFloat(document.getElementById("eed-comision")?.value)||0;
+  saveEmpleados(emps);
+  document.getElementById("overlay").classList.remove("open");
+  toast("✅ Actualizado");
+  renderAdminSueldosDark();
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHEQUES — DARK GLASS
+// ══════════════════════════════════════════════════════════════
+function renderAdminChequesDark() {
+  const el = document.getElementById("cheques-body");
+  if (!el) return;
+  const cheques = getAdminData("cheques");
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const en7 = new Date(hoy); en7.setDate(en7.getDate()+7);
+  const en30 = new Date(hoy); en30.setDate(en30.getDate()+30);
+
+  const pendientes = cheques.filter(c=>!["debitado","cancelado"].includes(c.estado));
+  const totalPend = pendientes.reduce((a,c)=>a+(parseFloat(c.monto)||0),0);
+  const prox7 = pendientes.filter(c=>{const d=new Date(c.vencimiento+"T12:00:00");return d>=hoy&&d<=en7;});
+  const prox30 = pendientes.filter(c=>{const d=new Date(c.vencimiento+"T12:00:00");return d>=hoy&&d<=en30;});
+  const vencidos = pendientes.filter(c=>{const d=new Date(c.vencimiento+"T12:00:00");return d<hoy;});
+
+  const badgeCheque = (c) => {
+    const d = new Date(c.vencimiento+"T12:00:00");
+    if (c.estado==="debitado") return {color:"#34D399",label:"✅ Debitado"};
+    if (c.estado==="cancelado") return {color:"rgba(255,255,255,.3)",label:"❌ Cancelado"};
+    if (d<hoy) return {color:"#EF5350",label:"🔴 Vencido"};
+    const diff=Math.round((d-hoy)/(1000*60*60*24));
+    if (diff===0) return {color:"#FB923C",label:"🟠 Hoy"};
+    if (diff<=7) return {color:"#FBBF24",label:`⚠️ ${diff}d`};
+    return {color:"#4A9EFF",label:`📅 ${diff}d`};
+  };
+
+  const kpis = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${DG.kpi("💸","Exposición total","$"+num(totalPend),pendientes.length+" cheques","#EF5350")}
+      ${DG.kpi("⚠️","Próximos 7 días","$"+num(prox7.reduce((a,c)=>a+(parseFloat(c.monto)||0),0)),prox7.length+" cheques","#FBBF24")}
+      ${DG.kpi("📅","Próximos 30 días","$"+num(prox30.reduce((a,c)=>a+(parseFloat(c.monto)||0),0)),prox30.length+" cheques","#4A9EFF")}
+      ${DG.kpi("🔴","Vencidos","$"+num(vencidos.reduce((a,c)=>a+(parseFloat(c.monto)||0),0)),vencidos.length+" cheques","#EF5350")}
+    </div>`;
+
+  const lista = cheques.length === 0
+    ? `<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,.4)"><div style="font-size:40px;margin-bottom:12px">📄</div><div>Sin cheques registrados</div></div>`
+    : [...cheques].sort((a,b)=>{
+        const ord = {vencido:0,pendiente:1,debitado:2,cancelado:3};
+        const da=new Date(a.vencimiento+"T12:00:00"),db=new Date(b.vencimiento+"T12:00:00");
+        const ea=da<hoy&&!["debitado","cancelado"].includes(a.estado)?"vencido":a.estado;
+        const eb=db<hoy&&!["debitado","cancelado"].includes(b.estado)?"vencido":b.estado;
+        if ((ord[ea]||0)!==(ord[eb]||0)) return (ord[ea]||0)-(ord[eb]||0);
+        return da-db;
+      }).map(c => {
+        const {color, label} = badgeCheque(c);
+        const hayBanco = c.cbu||c.alias||c.titular;
+        const isDone = ["debitado","cancelado"].includes(c.estado);
+        return `
+          <div style="background:rgba(255,255,255,.04);border:1px solid ${isDone?'rgba(255,255,255,.08)':`rgba(${c.estado==='pendiente'&&new Date(c.vencimiento+'T12:00:00')<hoy?'198,40,40':'74,158,255'},.25)`};border-radius:16px;margin-bottom:10px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.06)">
+              <div>
+                <div style="font-size:14px;font-weight:900;color:#fff">${c.destinatario||"Sin destinatario"}</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+                  <span style="font-size:11px;font-weight:800;color:${color}">${label}</span>
+                  ${c.banco?`<span style="font-size:11px;color:rgba(255,255,255,.4)">🏦 ${c.banco}</span>`:""}
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:18px;font-weight:900;color:${color}">$${num(parseFloat(c.monto)||0)}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,.4)">Vence: ${c.vencimiento||"—"}</div>
+              </div>
+            </div>
+            ${hayBanco?`
+              <div style="padding:10px 14px;background:rgba(0,0,0,.2)">
+                ${c.titular?`<div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><span style="color:rgba(255,255,255,.35)">Titular:</span> <strong>${c.titular}</strong></div>`:""}
+                ${c.cuit?`<div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><span style="color:rgba(255,255,255,.35)">CUIT:</span> <strong>${c.cuit}</strong></div>`:""}
+                ${c.cbu?`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                  <div style="font-size:12px;color:rgba(255,255,255,.6)"><span style="color:rgba(255,255,255,.35)">CBU:</span> <strong style="font-family:monospace;font-size:11px">${c.cbu}</strong></div>
+                  <button onclick="adminCopiar('${c.cbu}','CBU')" style="background:rgba(74,158,255,.2);color:#4A9EFF;border:1px solid rgba(74,158,255,.3);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer">Copiar</button>
+                </div>`:""}
+                ${c.alias?`<div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:12px;color:rgba(255,255,255,.6)"><span style="color:rgba(255,255,255,.35)">Alias:</span> <strong>${c.alias}</strong></div>
+                  <button onclick="adminCopiar('${c.alias}','Alias')" style="background:rgba(74,158,255,.2);color:#4A9EFF;border:1px solid rgba(74,158,255,.3);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer">Copiar</button>
+                </div>`:""}
+              </div>` : ""}
+            ${c.notas?`<div style="padding:8px 14px;font-size:12px;color:rgba(255,255,255,.4)">📝 ${c.notas}</div>`:""}
+            <div style="display:flex;gap:8px;padding:10px 14px">
+              ${!isDone?`
+                <button onclick="adminCambiarEstadoCheque('${c.id}','debitado');renderAdminChequesDark()" style="flex:1;background:rgba(52,211,153,.12);color:#34D399;border:1px solid rgba(52,211,153,.3);border-radius:9px;padding:8px;font-size:12px;font-weight:800;cursor:pointer">✅ Debitado</button>
+                <button onclick="adminCambiarEstadoCheque('${c.id}','cancelado');renderAdminChequesDark()" style="flex:1;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px;font-size:12px;font-weight:800;cursor:pointer">❌ Cancelar</button>
+              `:`<div style="font-size:12px;color:rgba(255,255,255,.3);padding:4px 0">Cheque ${c.estado}</div>`}
+              <button onclick="adminEliminarCheque('${c.id}');renderAdminChequesDark()" style="background:none;border:none;cursor:pointer;font-size:18px;color:rgba(255,255,255,.15);padding:6px">×</button>
+            </div>
+          </div>`;
+      }).join("");
+
+  const form = `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("➕ Emitir cheque")}
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>${DG.label("Destinatario / Proveedor")}<input id="chd-dest" placeholder="A quién va dirigido..." style="${DG.input}"></div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">${DG.label("Fecha emisión")}<input id="chd-emision" type="date" value="${new Date().toISOString().split('T')[0]}" style="${DG.input}"></div>
+          <div style="flex:1">${DG.label("Fecha vencimiento")}<input id="chd-venc" type="date" style="${DG.input}"></div>
+        </div>
+        <div>${DG.label("Monto")}
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:0 13px">
+            <span style="font-size:13px;color:rgba(255,255,255,.4)">$</span>
+            <input id="chd-monto" type="number" min="0" placeholder="0" style="flex:1;border:none;outline:none;font-size:15px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent;color:#fff">
+          </div>
+        </div>
+        <div>${DG.label("Banco")}<input id="chd-banco" placeholder="Galicia, Nación, BBVA..." style="${DG.input}"></div>
+        ${DG.divider}
+        <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px">Datos bancarios del destinatario</div>
+        <div>${DG.label("Titular")}<input id="chd-titular" placeholder="Nombre del titular" style="${DG.input}"></div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">${DG.label("CUIT")}<input id="chd-cuit" placeholder="XX-XXXXXXXX-X" style="${DG.input}"></div>
+        </div>
+        <div>${DG.label("CBU (22 dígitos)")}<input id="chd-cbu" maxlength="22" placeholder="0000000000000000000000" style="${DG.input};font-family:monospace"></div>
+        <div>${DG.label("Alias")}<input id="chd-alias" placeholder="alias.banco.mp" style="${DG.input}"></div>
+        <div>${DG.label("Notas")}<input id="chd-notas" placeholder="Opcional..." style="${DG.input}"></div>
+        <button onclick="adminGuardarChequeDark()" style="${DG.btn}">Registrar cheque</button>
+      </div>
+    </div>`;
+
+  el.innerHTML = DG.header("📄","Panel Admin","Cheques") + kpis + lista + form + "</div>";
+}
+
+function adminGuardarChequeDark() {
+  const dest = document.getElementById("chd-dest")?.value?.trim();
+  const monto = parseFloat(document.getElementById("chd-monto")?.value);
+  const venc = document.getElementById("chd-venc")?.value;
+  if (!dest||!monto||!venc) { toast("Completá destinatario, monto y vencimiento"); return; }
+  const cheques = getAdminData("cheques");
+  cheques.push({ id:Date.now().toString(), destinatario:dest, fechaEmision:document.getElementById("chd-emision")?.value||"", vencimiento:venc, monto, banco:document.getElementById("chd-banco")?.value?.trim()||"", titular:document.getElementById("chd-titular")?.value?.trim()||"", cuit:document.getElementById("chd-cuit")?.value?.trim()||"", cbu:document.getElementById("chd-cbu")?.value?.trim()||"", alias:document.getElementById("chd-alias")?.value?.trim()||"", notas:document.getElementById("chd-notas")?.value?.trim()||"", estado:"pendiente" });
+  saveAdminData("cheques",cheques);
+  toast("✅ Cheque registrado");
+  renderAdminChequesDark();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROVEEDORES — DARK GLASS
+// ══════════════════════════════════════════════════════════════
+function renderAdminProveedoresDark() {
+  const el = document.getElementById("proveedores-body");
+  if (!el) return;
+  const pagos = getAdminData("pagos_prov");
+  const hoy = new Date();
+
+  const totalARS = pagos.filter(p=>p.moneda!=="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+  const totalUSD = pagos.filter(p=>p.moneda==="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+  const provs = [...new Set(pagos.map(p=>p.proveedor))];
+
+  const kpis = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${DG.kpi("🏭","Proveedores",provs.length+" activos","","#A78BFA")}
+      ${DG.kpi("🧾","Total ARS","$"+num(totalARS),"pagado","#4A9EFF")}
+      ${DG.kpi("💵","Total USD","U$D "+num(totalUSD),"pagado","#34D399")}
+      ${DG.kpi("📋","Registros",pagos.length+" pagos","","#FB923C")}
+    </div>`;
+
+  const porProv = {};
+  pagos.forEach(p=>{ if(!porProv[p.proveedor]) porProv[p.proveedor]=[]; porProv[p.proveedor].push(p); });
+
+  const lista = pagos.length === 0
+    ? `<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,.4)"><div style="font-size:40px;margin-bottom:12px">🏭</div><div>Sin pagos registrados</div></div>`
+    : Object.entries(porProv).sort((a,b)=>a[0].localeCompare(b[0])).map(([prov, ps]) => {
+        const tARS = ps.filter(p=>p.moneda!=="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+        const tUSD = ps.filter(p=>p.moneda==="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+        return `
+          <div style="${DG.card}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:14px;font-weight:900;color:#fff">🏭 ${prov}</div>
+              <div style="text-align:right">
+                ${tARS>0?`<div style="font-size:13px;font-weight:800;color:#4A9EFF">$${num(tARS)}</div>`:""}
+                ${tUSD>0?`<div style="font-size:13px;font-weight:800;color:#34D399">U$D ${num(tUSD)}</div>`:""}
+              </div>
+            </div>
+            ${ps.sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(p=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.85)">${p.fecha?new Date(p.fecha+"T12:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"short",year:"numeric"}):""}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,.4)">${p.metodoPago||""} ${p.notas?`· ${p.notas}`:""}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="font-size:14px;font-weight:900;color:${p.moneda==='USD'?'#34D399':'#4A9EFF'}">${p.moneda==="USD"?"U$D ":"$"}${num(parseFloat(p.monto)||0)}</div>
+                  <button onclick="adminEliminarPago('${p.id}');renderAdminProveedoresDark()" style="background:none;border:none;cursor:pointer;font-size:16px;color:rgba(255,255,255,.2)">×</button>
+                </div>
+              </div>`).join("")}
+          </div>`;
+      }).join("");
+
+  const form = `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("➕ Registrar pago a proveedor")}
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>${DG.label("Proveedor")}<input id="apd-prov" placeholder="Nombre del proveedor..." style="${DG.input}"></div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">${DG.label("Fecha")}<input id="apd-fecha" type="date" value="${hoy.toISOString().split('T')[0]}" style="${DG.input}"></div>
+          <div style="flex:0 0 100px">
+            ${DG.label("Moneda")}
+            <select id="apd-moneda" style="${DG.select}"><option value="ARS">$ ARS</option><option value="USD">U$D</option></select>
+          </div>
+        </div>
+        <div>${DG.label("Monto")}
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:0 13px">
+            <span style="font-size:13px;color:rgba(255,255,255,.4)">$</span>
+            <input id="apd-monto" type="number" min="0" placeholder="0" style="flex:1;border:none;outline:none;font-size:15px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent;color:#fff">
+          </div>
+        </div>
+        <div>${DG.label("Método de pago")}<select id="apd-metodo" style="${DG.select}"><option value="">— Seleccionar —</option><option>Efectivo</option><option>Transferencia</option><option>Cheque</option><option>Tarjeta débito</option><option>Tarjeta crédito</option></select></div>
+        <div>${DG.label("Notas")}<input id="apd-notas" placeholder="Opcional..." style="${DG.input}"></div>
+        <button onclick="adminGuardarPagoDark()" style="${DG.btn}">Guardar pago</button>
+      </div>
+    </div>`;
+
+  el.innerHTML = DG.header("🏭","Panel Admin","Proveedores") + kpis + lista + form + "</div>";
+}
+
+function adminGuardarPagoDark() {
+  const prov = document.getElementById("apd-prov")?.value?.trim();
+  const monto = parseFloat(document.getElementById("apd-monto")?.value);
+  const fecha = document.getElementById("apd-fecha")?.value;
+  if (!prov||!monto||!fecha) { toast("Completá proveedor, monto y fecha"); return; }
+  const pagos = getAdminData("pagos_prov");
+  pagos.push({ id:Date.now().toString(), proveedor:prov, fecha, monto, moneda:document.getElementById("apd-moneda")?.value||"ARS", metodoPago:document.getElementById("apd-metodo")?.value||"", notas:document.getElementById("apd-notas")?.value?.trim()||"" });
+  saveAdminData("pagos_prov",pagos);
+  toast("✅ Pago registrado");
+  renderAdminProveedoresDark();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ESTADÍSTICAS — DARK GLASS
+// ══════════════════════════════════════════════════════════════
+function renderEstadisticasDark() {
+  const el = document.getElementById("estadisticas-body");
+  if (!el) return;
+  const hoy = new Date();
+  const mes = hoy.getMonth(), anio = hoy.getFullYear();
+  const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const mesesFull = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  const getOrds = (m,a) => D.orders.filter(o=>{ if(!o.fecha) return false; const d=new Date(o.fecha+"T12:00:00"); return d.getMonth()===m&&d.getFullYear()===a; });
+  const curOrds = getOrds(mes,anio);
+  const prevOrds = getOrds(mes===0?11:mes-1, mes===0?anio-1:anio);
+
+  const fact = (os) => os.reduce((a,o)=>a+(parseFloat(o.total)||0),0);
+  const facCur = fact(curOrds), facPrev = fact(prevOrds);
+  const deltaPct = facPrev>0 ? Math.round((facCur-facPrev)/facPrev*100) : null;
+  const ticketCur = curOrds.length ? facCur/curOrds.length : 0;
+
+  // Últimos 12 meses
+  const ultimos12 = Array.from({length:12},(_,i)=>{
+    const offset=11-i;
+    const m2=((mes-offset)+120)%12;
+    const a2=anio+Math.floor((mes-offset)/12);
+    const os=getOrds(m2,a2);
+    return { label:meses[m2]+"'"+String(a2).slice(2), mes:m2, anio:a2, fact:fact(os), count:os.length, ticket:os.length?fact(os)/os.length:0 };
+  });
+  const maxFact = Math.max(...ultimos12.map(x=>x.fact),1);
+  const maxCount = Math.max(...ultimos12.map(x=>x.count),1);
+
+  // Por vendedora
+  const cfg = getCfg();
+  const porVend = {};
+  curOrds.forEach(o=>{ const v=o.vendedora||"Sin asignar"; if(!porVend[v]) porVend[v]={count:0,fact:0}; porVend[v].count++; porVend[v].fact+=(parseFloat(o.total)||0); });
+  const vendRanking = Object.entries(porVend).sort((a,b)=>b[1].fact-a[1].fact);
+  const maxVendFact = vendRanking[0]?.[1]?.fact||1;
+
+  // Por obra social
+  const porOS = {};
+  curOrds.forEach(o=>{ const os=o.oSocial||"Particular"; if(!porOS[os]) porOS[os]=0; porOS[os]+=(parseFloat(o.total)||0); });
+  const osRanking = Object.entries(porOS).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // Por forma de pago
+  const porFP = {};
+  curOrds.forEach(o=>{ const fp=o.formaPago||"No especificado"; if(!porFP[fp]) porFP[fp]=0; porFP[fp]+=(parseFloat(o.total)||0); });
+  const fpEntries = Object.entries(porFP).sort((a,b)=>b[1]-a[1]);
+  const maxFP = fpEntries[0]?.[1]||1;
+
+  const kpis = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${DG.kpi("💰","Facturado "+mesesFull[mes],"$"+num(Math.round(facCur)), deltaPct!==null?`${deltaPct>=0?"▲":"▼"} ${Math.abs(deltaPct)}% vs mes ant.`:"","#4A9EFF")}
+      ${DG.kpi("🧾","Órdenes del mes",curOrds.length+"",`vs ${prevOrds.length} mes ant.`,"#34D399")}
+      ${DG.kpi("🎯","Ticket promedio","$"+num(Math.round(ticketCur)),"por orden","#A78BFA")}
+      ${DG.kpi("📋","Total histórico",D.orders.length+" órdenes","","#FB923C")}
+    </div>`;
+
+  const barChart12 = `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("📈 Facturación — últimos 12 meses")}
+      <div style="overflow-x:auto;scrollbar-width:none">
+        <div style="display:flex;align-items:flex-end;gap:5px;height:120px;min-width:340px">
+          ${ultimos12.map((m2,i)=>`
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:26px">
+              <div style="font-size:8px;font-weight:700;color:${i===11?'#F5E87C':'rgba(255,255,255,.5)'};white-space:nowrap">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
+              <div style="width:100%;background:${i===11?'linear-gradient(180deg,#4A9EFF,#1B4FA8)':'rgba(74,158,255,.15)'};border-radius:4px 4px 0 0;height:${Math.max(m2.fact/maxFact*95,m2.fact>0?3:0)}px"></div>
+              <div style="font-size:8px;color:rgba(255,255,255,.65);font-weight:600;white-space:nowrap">${m2.label}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>`;
+
+  const barCount12 = `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("🧾 Órdenes — últimos 12 meses")}
+      <div style="overflow-x:auto;scrollbar-width:none">
+        <div style="display:flex;align-items:flex-end;gap:5px;height:90px;min-width:340px">
+          ${ultimos12.map((m2,i)=>`
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:26px">
+              <div style="font-size:9px;font-weight:700;color:${i===11?'#34D399':'rgba(52,211,153,.5)'}">${m2.count||''}</div>
+              <div style="width:100%;background:${i===11?'linear-gradient(180deg,#34D399,#059669)':'rgba(52,211,153,.15)'};border-radius:4px 4px 0 0;height:${Math.max(m2.count/maxCount*70,m2.count>0?3:0)}px"></div>
+              <div style="font-size:8px;color:rgba(255,255,255,.65);font-weight:600">${m2.label}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>`;
+
+  const rankingVend = vendRanking.length===0 ? "" : `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("👥 Ranking vendedoras — "+mesesFull[mes])}
+      ${vendRanking.map(([v,d],i)=>`
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="color:#fff;font-weight:700">${["🥇","🥈","🥉"][i]||"·"} ${v}</span>
+            <span style="color:#F5E87C;font-weight:900">$${num(Math.round(d.fact))} <span style="color:rgba(255,255,255,.4);font-size:11px;font-weight:400">(${d.count})</span></span>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:6px;height:6px">
+            <div style="background:linear-gradient(90deg,#4A9EFF,#A78BFA);width:${Math.round(d.fact/maxVendFact*100)}%;height:6px;border-radius:6px"></div>
+          </div>
+        </div>`).join("")}
+    </div>`;
+
+  const rankingOS = osRanking.length===0 ? "" : `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("🏥 Por obra social — "+mesesFull[mes])}
+      ${osRanking.map(([os,v])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+          <span style="font-size:13px;color:rgba(255,255,255,.8)">${os}</span>
+          <span style="font-size:13px;font-weight:900;color:#4A9EFF">$${num(Math.round(v))}</span>
+        </div>`).join("")}
+    </div>`;
+
+  const rankingFP = fpEntries.length===0 ? "" : `
+    <div style="${DG.card}">
+      ${DG.sectionTitle("💳 Por forma de pago — "+mesesFull[mes])}
+      ${fpEntries.map(([fp,v])=>`
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="color:rgba(255,255,255,.8)">${fp}</span>
+            <span style="font-weight:800;color:#F5E87C">$${num(Math.round(v))}</span>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:5px;height:5px">
+            <div style="background:linear-gradient(90deg,#F5E87C,#E8C900);width:${Math.round(v/maxFP*100)}%;height:5px;border-radius:5px"></div>
+          </div>
+        </div>`).join("")}
+    </div>`;
+
+  el.innerHTML = DG.header("📊","Panel Admin","Estadísticas") + kpis + barChart12 + barCount12 + rankingVend + rankingOS + rankingFP + "</div>";
 }
 </script>
 </body>
