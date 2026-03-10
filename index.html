@@ -111,14 +111,13 @@
   /* Tabla graduación en formulario */
   .gtbl-wrap { overflow-x: auto; }
   .gtbl { width: 100%; border-collapse: collapse; min-width: 300px; }
-  .gtbl th { background: var(--azul); color: var(--amarillo); padding: 8px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .4px; border: 1px solid var(--azul-dark); text-align: center; font-weight: 800; }
-  .gtbl td { border: 1px solid var(--gris-borde); padding: 2px; vertical-align: middle; }
+  .gtbl th { background: var(--azul); color: var(--amarillo); padding: 8px 4px; font-size: 10px; font-weight:800; text-transform: uppercase; letter-spacing: .4px; border: 1px solid var(--azul-dark); text-align: center; }
+  .gtbl td { border: 1px solid var(--gris-borde); padding: 2px; vertical-align:middle; }
   .gtbl .rl { background: var(--azul-light); color: var(--azul); font-weight: 900; font-size: 14px; text-align: center; padding: 7px 4px; width: 28px; }
   .gtbl input { width: 100%; border: none; background: transparent; font-size: 14px; text-align: center; padding: 8px 3px; font-family: inherit; color: var(--texto); outline: none; }
   .gtbl input:focus { background: #EEF3FF; border-radius: 4px; }
-  .grad-cell { display:flex; flex-direction:column; align-items:center; gap:3px; width:100%; padding:4px 3px; }
-  .grad-val { flex:1; border:none; background:transparent; font-size:14px; text-align:center; padding:8px 2px; font-family:inherit; color:var(--texto); outline:none; -webkit-appearance:none; appearance:none; }
-  .grad-val:focus { background:#EEF3FF; }
+  .grad-cell { display:flex; flex-direction:column; align-items:center; width:100%; }
+
 
   /* Checkboxes */
   .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
@@ -1011,13 +1010,13 @@ function verDetalle(idx) {
     ${(hasL||hasC)?`<div class="fsec">
       <div class="fsec-tit">📐 Receta Óptica</div>
       <div class="gtbl-wrap"><table class="gtbl" style="pointer-events:none">
-        <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-        ${hasL?`<tr><td colspan="5" style="background:linear-gradient(90deg,#1B4FA8 0%,#2563eb 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔭 LEJOS</td></tr>
-        <tr><td class="rl">OD</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.lEsf)}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.lCil)}</td><td style="text-align:center;padding:6px 4px;font-weight:700">${o.lEje||"—"}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.lAdd)}</td></tr>
-        <tr><td class="rl">OI</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.lEsfI)}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.lCilI)}</td><td style="text-align:center;padding:6px 4px;font-weight:700">${o.lEjeI||"—"}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.lAddI)}</td></tr>`:""}
-        ${hasC?`<tr><td colspan="5" style="background:linear-gradient(90deg,#1B4FA8 0%,#2563eb 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔬 CERCA</td></tr>
-        <tr><td class="rl">OD</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.cEsf)}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.cCil)}</td><td style="text-align:center;padding:6px 4px;font-weight:700">${o.cEje||"—"}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.cAdd)}</td></tr>
-        <tr><td class="rl">OI</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.cEsfI)}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.cCilI)}</td><td style="text-align:center;padding:6px 4px;font-weight:700">${o.cEjeI||"—"}</td><td style="text-align:center;padding:6px 4px">${signGradColor(o.cAddI)}</td></tr>`:""}
+        <tr><th style="width:32px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+        ${hasL?`<tr><td colspan="5" style="background:linear-gradient(90deg,var(--azul) 0%,#2563eb 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔭 LEJOS</td></tr>
+        <tr><td class="rl">OD</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.lEsf)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.lCil)}</td><td style="text-align:center;padding:7px 4px;font-weight:700;color:var(--texto)">${o.lEje||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.lAdd)}</td></tr>
+        <tr><td class="rl">OI</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.lEsfI)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.lCilI)}</td><td style="text-align:center;padding:7px 4px;font-weight:700;color:var(--texto)">${o.lEjeI||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.lAddI)}</td></tr>`:""}
+        ${hasC?`<tr><td colspan="5" style="background:linear-gradient(90deg,var(--azul) 0%,#2563eb 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔬 CERCA</td></tr>
+        <tr><td class="rl">OD</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cEsf)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cCil)}</td><td style="text-align:center;padding:7px 4px;font-weight:700;color:var(--texto)">${o.cEje||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cAdd)}</td></tr>
+        <tr><td class="rl">OI</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cEsfI)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cCilI)}</td><td style="text-align:center;padding:7px 4px;font-weight:700;color:var(--texto)">${o.cEjeI||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cAddI)}</td></tr>`:""}
       </table></div>
     </div>`:""}
 
@@ -4408,57 +4407,53 @@ function gradCell(id, val, tipo) {
   const nums = gradNums(tipo);
   const numOpts = ['', ...nums].map(n => `<option value="${n}" ${n===num?'selected':''}>${n||'—'}</option>`).join('');
 
-  const showNum = (signo === "+" || signo === "-") ? "flex" : "none";
-  const showNeutro = signo === "N" ? "flex" : "none";
-  const showEmpty = (!signo) ? "flex" : "none";
+  // Estilos de botones de signo
+  const bStyle = (active, color) => active
+    ? `background:${color};color:#fff;font-weight:900;font-size:13px;border:none;cursor:pointer;width:26px;height:26px;border-radius:6px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.2);`
+    : `background:#e8eaf0;color:#999;font-weight:900;font-size:13px;border:none;cursor:pointer;width:26px;height:26px;border-radius:6px;flex-shrink:0;`;
 
-  // Botones de signo: —, N (si aplica), −, +
-  const btnBase = `position:relative;z-index:1;border:none;cursor:pointer;font-size:13px;font-weight:900;padding:0;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;`;
-  const btnActive = `background:var(--azul);color:#fff;box-shadow:0 2px 6px rgba(27,79,168,.3);`;
-  const btnInactive = `background:var(--gris-borde);color:var(--suave);`;
+  const btnVacio = `<button type="button" onclick="onGradSigno('${id}','${tipo}','')"  style="${bStyle(signo==='','#888')}" title="Sin valor">—</button>`;
+  const btnN     = (tipo==='esf'||tipo==='cil') ? `<button type="button" onclick="onGradSigno('${id}','${tipo}','N')"  style="${bStyle(signo==='N','#1565C0')};font-size:11px;" title="Neutro">N</button>` : '';
+  const btnMenos = tipo!=='add' ? `<button type="button" onclick="onGradSigno('${id}','${tipo}','-')"  style="${bStyle(signo==='-','#C62828')}" title="Negativo">−</button>` : '';
+  const btnMas   = `<button type="button" onclick="onGradSigno('${id}','${tipo}','+')"  style="${bStyle(signo==='+','#2E7D32')}" title="Positivo">+</button>`;
 
-  const btnVacio = `<button type="button" id="${id}-btn-vacio" onclick="onGradSigno('${id}','${tipo}','')" style="${btnBase}${signo===''?btnActive:btnInactive}" title="Sin valor">—</button>`;
-  const btnN = (tipo==='esf'||tipo==='cil') ? `<button type="button" id="${id}-btn-N" onclick="onGradSigno('${id}','${tipo}','N')" style="${btnBase}${signo==='N'?btnActive:btnInactive};font-size:11px;" title="Neutro">N</button>` : '';
-  const btnMenos = tipo!=='add' ? `<button type="button" id="${id}-btn-menos" onclick="onGradSigno('${id}','${tipo}','-')" style="${btnBase}${signo==='-'?'background:#C62828;color:#fff;box-shadow:0 2px 6px rgba(198,40,40,.3);':btnInactive}" title="Negativo">−</button>` : '';
-  const btnMas = `<button type="button" id="${id}-btn-mas" onclick="onGradSigno('${id}','${tipo}','+')" style="${btnBase}${signo==='+'?'background:#2E7D32;color:#fff;box-shadow:0 2px 6px rgba(46,125,50,.3);':btnInactive}" title="Positivo">+</button>`;
-
-  return `<div class="grad-cell" id="${id}-wrap" style="flex-direction:column;gap:3px;padding:4px 3px;">
-    <div style="display:flex;gap:3px;justify-content:center">${btnVacio}${btnN}${btnMenos}${btnMas}</div>
-    <div id="${id}-numrow" style="display:${showNum};justify-content:center">
-      <select id="${id}" style="border:1.5px solid var(--gris-borde);border-radius:7px;background:var(--gris);font-size:13px;font-weight:800;text-align:center;padding:5px 2px;font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;width:62px">
+  return `<div class="grad-cell" id="${id}-wrap" data-signo="${signo}" style="flex-direction:column;align-items:center;gap:4px;padding:5px 2px;">
+    <div style="display:flex;gap:3px;justify-content:center;">${btnVacio}${btnN}${btnMenos}${btnMas}</div>
+    <div style="display:${(signo==='+'||signo==='-')?'block':'none'}" id="${id}-numrow">
+      <select id="${id}" style="border:1.5px solid var(--gris-borde);border-radius:7px;background:var(--gris);font-size:13px;font-weight:700;text-align:center;padding:4px 2px;font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;width:64px;margin-top:2px;">
         ${numOpts}
       </select>
     </div>
-    <div id="${id}-neutro" style="display:${showNeutro};justify-content:center;font-size:11px;font-weight:800;color:#1565C0;padding:4px 2px">Neutro</div>
-    <div id="${id}-empty" style="display:${showEmpty};justify-content:center;font-size:11px;color:var(--suave);padding:4px 2px">—</div>
+    <div id="${id}-neutro" style="display:${signo==='N'?'block':'none'};font-size:11px;font-weight:800;color:#1565C0;padding:3px 2px;">Neutro</div>
   </div>`;
 }
 
 function onGradSigno(id, tipo, signo) {
   const wrap = document.getElementById(id+"-wrap");
   if (!wrap) return;
-  const sel = document.getElementById(id);
-  const numrow = document.getElementById(id+"-numrow");
-  const neutro = document.getElementById(id+"-neutro");
-  const empty  = document.getElementById(id+"-empty");
+  // Guardar el signo en data-signo para que gGrad() lo lea de forma confiable
+  wrap.setAttribute("data-signo", signo);
 
-  // Actualizar botones visualmente
-  const btnBase = `position:relative;z-index:1;border:none;cursor:pointer;font-size:13px;font-weight:900;padding:0;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;`;
-  const inact = `background:var(--gris-borde);color:var(--suave);`;
-  const bv = wrap.querySelector(`#${id}-btn-vacio`);
-  const bn = wrap.querySelector(`#${id}-btn-N`);
-  const bm = wrap.querySelector(`#${id}-btn-menos`);
-  const bp = wrap.querySelector(`#${id}-btn-mas`);
-  if (bv) bv.style.cssText = btnBase + (signo===''?`background:var(--azul);color:#fff;box-shadow:0 2px 6px rgba(27,79,168,.3);`:inact);
-  if (bn) bn.style.cssText = btnBase + `font-size:11px;` + (signo==='N'?`background:var(--azul);color:#fff;box-shadow:0 2px 6px rgba(27,79,168,.3);`:inact);
-  if (bm) bm.style.cssText = btnBase + (signo==='-'?`background:#C62828;color:#fff;box-shadow:0 2px 6px rgba(198,40,40,.3);`:inact);
-  if (bp) bp.style.cssText = btnBase + (signo==='+'?`background:#2E7D32;color:#fff;box-shadow:0 2px 6px rgba(46,125,50,.3);`:inact);
+  const sel     = document.getElementById(id);
+  const numrow  = document.getElementById(id+"-numrow");
+  const neutro  = document.getElementById(id+"-neutro");
 
-  // Mostrar/ocultar secciones
-  if (numrow) numrow.style.display = (signo==='+'||signo==='-') ? 'flex' : 'none';
-  if (neutro) neutro.style.display = signo==='N' ? 'flex' : 'none';
-  if (empty)  empty.style.display  = signo===''  ? 'flex' : 'none';
+  if (numrow) numrow.style.display  = (signo==='+'||signo==='-') ? 'block' : 'none';
+  if (neutro) neutro.style.display  = signo==='N' ? 'block' : 'none';
   if (sel && signo==='') sel.value = '';
+
+  // Redibujar botones con color correcto
+  const bStyle = (active, color) => active
+    ? `background:${color};color:#fff;font-weight:900;font-size:13px;border:none;cursor:pointer;width:26px;height:26px;border-radius:6px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.2);`
+    : `background:#e8eaf0;color:#999;font-weight:900;font-size:13px;border:none;cursor:pointer;width:26px;height:26px;border-radius:6px;flex-shrink:0;`;
+  const btns = wrap.querySelectorAll("button[type=button]");
+  btns.forEach(btn => {
+    const label = btn.textContent.trim();
+    if (label === '—') btn.style.cssText = bStyle(signo==='','#888');
+    else if (label === 'N')  btn.style.cssText = bStyle(signo==='N','#1565C0') + 'font-size:11px;';
+    else if (label === '−')  btn.style.cssText = bStyle(signo==='-','#C62828');
+    else if (label === '+')  btn.style.cssText = bStyle(signo==='+','#2E7D32');
+  });
 }
 
 function vendedoraSelect(id, selected) {
@@ -4843,17 +4838,8 @@ function g(id){const el=document.getElementById(id);return el?el.value.trim():""
 function gGrad(id) {
   const wrap = document.getElementById(id+"-wrap");
   if (!wrap) return g(id);
-  // Determinar signo activo por el botón con color de fondo azul/verde/rojo
-  let signo = "";
-  const bv = wrap.querySelector(`#${id}-btn-vacio`);
-  const bn = wrap.querySelector(`#${id}-btn-N`);
-  const bm = wrap.querySelector(`#${id}-btn-menos`);
-  const bp = wrap.querySelector(`#${id}-btn-mas`);
-  if (bn && bn.style.background && bn.style.background.includes("var(--azul)")) signo = "N";
-  else if (bm && bm.style.background && bm.style.background.includes("#C62828")) signo = "-";
-  else if (bp && bp.style.background && bp.style.background.includes("#2E7D32")) signo = "+";
-  else signo = "";
-
+  // Leer signo desde data-signo (siempre actualizado por onGradSigno)
+  const signo = wrap.getAttribute("data-signo") || "";
   if (signo === "N") return "Neutro";
   if (signo === "" ) return "";
   const num = g(id);
@@ -4898,14 +4884,16 @@ function signGrad(v) {
   return String(v);
 }
 function signGradColor(v) {
-  if (!v || v === "" || v === "—") return `<span style="color:var(--suave)">—</span>`;
-  if (v === "Neutro" || v === "PL") return `<span style="color:#1565C0;font-weight:800;font-size:12px">Neutro</span>`;
-  const n = parseFloat(String(v).replace(",","."));
+  if (!v || v === "" || v === "—") return `<span style="color:#bbb">—</span>`;
+  if (v === "Neutro" || v === "PL") return `<span style="color:#1565C0;font-weight:800;font-size:11px">Neutro</span>`;
+  const s = String(v);
+  const n = parseFloat(s.replace(",","."));
   if (isNaN(n)) return `<span style="font-weight:800">${v}</span>`;
-  const formatted = String(v).startsWith("+") || String(v).startsWith("-") ? v : (n >= 0 ? "+"+v : v);
-  if (n > 0) return `<span style="color:#2E7D32;font-weight:800;font-size:14px">${formatted}</span>`;
-  if (n < 0) return `<span style="color:#C62828;font-weight:800;font-size:14px">${formatted}</span>`;
-  return `<span style="font-weight:800">${formatted}</span>`;
+  // Asegurar que tenga signo explícito
+  const display = s.startsWith("+") || s.startsWith("-") ? s : (n >= 0 ? "+"+s : s);
+  if (n > 0) return `<span style="color:#2E7D32;font-weight:800">${display}</span>`;
+  if (n < 0) return `<span style="color:#C62828;font-weight:800">${display}</span>`;
+  return `<span style="font-weight:800">${display}</span>`;
 }
 function fmtDate(d){if(!d)return"";try{return new Date(d+"T12:00:00").toLocaleDateString("es-AR");}catch{return d;}}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
