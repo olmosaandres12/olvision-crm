@@ -1018,6 +1018,7 @@ function verDetalle(idx) {
         <tr><td class="rl">OD</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cEsf)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cCil)}</td><td style="text-align:center;padding:7px 4px;font-weight:700;color:var(--texto)">${o.cEje||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cAdd)}</td></tr>
         <tr><td class="rl">OI</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cEsfI)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cCilI)}</td><td style="text-align:center;padding:7px 4px;font-weight:700;color:var(--texto)">${o.cEjeI||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.cAddI)}</td></tr>`:""}
       </table></div>
+      ${detectarCondicion(o)}
     </div>`:""}
 
     ${(tipos.length||o.tratamiento||o.armazonDesc)?`<div class="fsec">
@@ -4899,6 +4900,62 @@ function bindMontoField(el) {
   el.addEventListener("blur", function() { liveFormat(this); });
   if (el.value) liveFormat(el);
 }
+function detectarCondicion(o) {
+  // Extrae el valor numérico de un campo de graduación (ej: "-2.50" → -2.5, "Neutro" → 0)
+  function valNum(s) {
+    if (!s || s === "" || s === "—") return null;
+    if (s === "Neutro" || s === "PL") return 0;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+
+  const esfOD = valNum(o.lEsf),  esfOI = valNum(o.lEsfI);
+  const cilOD = valNum(o.lCil),  cilOI = valNum(o.lCilI);
+  const addOD = valNum(o.lAdd),  addOI = valNum(o.lAddI);
+
+  const condiciones = [];
+  const ojos = [];
+
+  // Miopía: esfera negativa en lejos
+  const miopia = [];
+  if (esfOD !== null && esfOD < 0) miopia.push("OD");
+  if (esfOI !== null && esfOI < 0) miopia.push("OI");
+  if (miopia.length) condiciones.push({ label: "Miopía", icon: "👁️", color: "#1565C0", bg: "#E3F2FD", desc: "Dificultad para ver de lejos", ojos: miopia });
+
+  // Hipermetropía: esfera positiva en lejos
+  const hiper = [];
+  if (esfOD !== null && esfOD > 0) hiper.push("OD");
+  if (esfOI !== null && esfOI > 0) hiper.push("OI");
+  if (hiper.length) condiciones.push({ label: "Hipermetropía", icon: "🔆", color: "#2E7D32", bg: "#E8F5E9", desc: "Dificultad para ver de cerca", ojos: hiper });
+
+  // Astigmatismo: cilindro presente (distinto de 0 y no nulo)
+  const astig = [];
+  if (cilOD !== null && cilOD !== 0) astig.push("OD");
+  if (cilOI !== null && cilOI !== 0) astig.push("OI");
+  if (astig.length) condiciones.push({ label: "Astigmatismo", icon: "🌀", color: "#6A1B9A", bg: "#F3E5F5", desc: "Curvatura irregular de la córnea", ojos: astig });
+
+  // Presbicia: adición presente (add > 0)
+  const presby = [];
+  if (addOD !== null && addOD > 0) presby.push("OD");
+  if (addOI !== null && addOI > 0) presby.push("OI");
+  if (presby.length) condiciones.push({ label: "Presbicia", icon: "📖", color: "#E65100", bg: "#FFF3E0", desc: "Dificultad para enfocar de cerca (vista cansada)", ojos: presby });
+
+  if (!condiciones.length) return "";
+
+  return `<div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">
+    ${condiciones.map(c => `
+      <div style="background:${c.bg};border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">${c.icon}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:800;color:${c.color}">${c.label}
+            <span style="font-size:11px;font-weight:600;color:${c.color};opacity:.8;margin-left:6px">${c.ojos.join(" / ")}</span>
+          </div>
+          <div style="font-size:11px;color:${c.color};opacity:.75;margin-top:1px">${c.desc}</div>
+        </div>
+      </div>`).join("")}
+  </div>`;
+}
+
 function signGrad(v) {
   if (!v || v === "" || v === "—") return "—";
   const n = parseFloat(String(v).replace(",","."));
