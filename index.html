@@ -250,6 +250,7 @@
     <div id="nav-admin-group" style="display:none">
       <div id="nav-admin-label" style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Administración</div>
       <button class="nav-item" id="nav-stats" onclick="setTab('stats',this)"><span class="nav-icon">📊</span><span>Estadísticas</span></button>
+      <button class="nav-item" id="nav-finanzas" onclick="checkAdmin(()=>renderFinanzas(),'nav-finanzas','finanzas')"><span class="nav-icon">💰</span><span>Finanzas</span></button>
       <button class="nav-item" id="nav-admin" onclick="setTab('admin',this)" style="margin-top:8px;background:linear-gradient(135deg,rgba(245,232,124,.15),rgba(245,232,124,.05));border-top:1px solid rgba(255,255,255,.1)">
         <span class="nav-icon">🏆</span><span style="color:var(--amarillo);font-weight:900">Panel CEO</span>
       </button>
@@ -376,6 +377,10 @@
   <div id="caja-body"></div>
 </div>
 
+<div id="screen-finanzas" class="screen">
+  <div id="finanzas-body"></div>
+</div>
+
 
 <div id="toast"></div>
 
@@ -400,7 +405,7 @@ const DEFAULT_CONFIG = {
   tratamientos:["Orgánico Blanco","Orgánico Blue","Blue c/HD","HD","Fotocromático","Policarbonato","Mineral","Poli con AR","Orgánico Blue Fotocromático","Bifocal Flat Top Blanco","Bifocal Flat Top Blue","Bifocal Fotocromático","Bifocal Criptock"],
   armazon:     ["Armazon Nuevo","Armazon Usado"],
   obraSocial:  ["OSDE","PAMI","Swiss Medical","Galeno","Medife","Sancor Salud","IOMA","APROSS","DOSEP"],
-  formaPago:   ["Efectivo","Tarjeta débito","Tarjeta crédito","Transferencia","Cuotas","Mixto"],
+  formaPago:   ["Efectivo","Tarjeta débito","Tarjeta crédito 1 cuota","Tarjeta crédito 3 cuotas s/i","Tarjeta crédito 5 cuotas s/i","Tarjeta crédito 6 cuotas s/i","Transferencia","Mixto"],
   vendedores:   [],
   doctores:     [],
   laboratorios: [],
@@ -457,8 +462,8 @@ async function init() {
   renderCaja();
   await syncSheets();
   renderCaja();
-  // Auto-sync cada 3 minutos
-  setInterval(syncSheets, 3 * 60 * 1000);
+  // Auto-sync cada 5 minutos
+  setInterval(syncSheets, 5 * 60 * 1000);
   // Eventos de conectividad
   window.addEventListener('online', () => { drainQueue(); syncSheets(); updateOnlineStatus(); });
   // Sync al volver de background (iPhone/Android desde otra app o pantalla apagada)
@@ -486,25 +491,12 @@ function showSyncIndicator() {
   ind.style.opacity = "1";
   return ind;
 }
-let lastSyncTime = null;
-
 function hideSyncIndicator(ok) {
   const ind = document.getElementById("sync-indicator");
   if (!ind) return;
-  if (ok) lastSyncTime = Date.now();
   ind.textContent = ok ? "✅ Actualizado" : "⚠️ Sin conexión";
   ind.style.background = ok ? "#2E7D32" : "#E65100";
-  setTimeout(() => { ind.style.opacity = "0"; updateOnlineStatus(); }, 1800);
-}
-
-function getLastSyncLabel() {
-  if (!lastSyncTime) return null;
-  const mins = Math.floor((Date.now() - lastSyncTime) / 60000);
-  if (mins < 1) return "hace menos de 1 min";
-  if (mins === 1) return "hace 1 min";
-  if (mins < 60) return `hace ${mins} min`;
-  const hs = Math.floor(mins / 60);
-  return `hace ${hs}h`;
+  setTimeout(() => { ind.style.opacity = "0"; }, 1800);
 }
 
 function updateOnlineStatus() {
@@ -512,30 +504,20 @@ function updateOnlineStatus() {
   if (!badge) {
     badge = document.createElement('div');
     badge.id = 'online-badge';
-    badge.style.cssText = 'position:fixed;bottom:70px;right:12px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:800;z-index:9999;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:default';
+    badge.style.cssText = 'position:fixed;bottom:70px;right:12px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:800;z-index:9999;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15)';
     document.body.appendChild(badge);
   }
   const pendientes = JSON.parse(localStorage.getItem('olvision_queue') || '[]').length;
-  const syncLabel = getLastSyncLabel();
   if (navigator.onLine) {
-    if (pendientes) {
-      badge.textContent = `🔄 ${pendientes} pendientes`;
-      badge.style.background = '#FFF3E0';
-      badge.style.color = '#E65100';
-    } else {
-      badge.textContent = syncLabel ? `🟢 ${syncLabel}` : '🟢 En línea';
-      badge.style.background = '#E8F5E9';
-      badge.style.color = '#2E7D32';
-    }
+    badge.textContent = pendientes ? `🔄 ${pendientes} pendientes` : '🟢 En línea';
+    badge.style.background = pendientes ? '#FFF3E0' : '#E8F5E9';
+    badge.style.color = pendientes ? '#E65100' : '#2E7D32';
   } else {
     badge.textContent = pendientes ? `🔴 Sin conexión · ${pendientes} en cola` : '🔴 Sin conexión';
     badge.style.background = '#FDECEA';
     badge.style.color = '#C62828';
   }
 }
-
-// Actualizar el label de tiempo cada minuto
-setInterval(updateOnlineStatus, 60 * 1000);
 
 async function syncSheets() {
   const ind = showSyncIndicator();
@@ -551,6 +533,15 @@ async function syncSheets() {
         const cfgRemoto = JSON.parse(cfgRow[1]);
         const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), cfgRemoto);
         localStorage.setItem("olvision_config", JSON.stringify(merged));
+      } catch(e) {}
+    }
+
+    // ── Costos config ──
+    const costosRow = rows.find(r => Array.isArray(r) && r[0] === "COSTOS_CONFIG");
+    if (costosRow && costosRow[1]) {
+      try {
+        const costosRemoto = JSON.parse(costosRow[1]);
+        localStorage.setItem("olvision_costos_config", JSON.stringify(costosRemoto));
       } catch(e) {}
     }
 
@@ -857,6 +848,7 @@ function setTab(t,btn) {
   if(t==="caja")         renderCaja();
   if(t==="pendientes")   renderPendientes();
   if(t==="ordenes")      renderOrdenes();
+  if(t==="finanzas")     renderFinanzas();
 
   // Sync con Sheets → re-render con datos frescos
   syncSheets().then(() => {
@@ -871,6 +863,7 @@ function setTab(t,btn) {
     if(t==="mensajes")     renderMensajes();
     if(t==="config")       renderConfig();
     if(t==="admin")        renderAdminPanel();
+    if(t==="finanzas")     renderFinanzas();
   });
 }
 
@@ -5000,6 +4993,567 @@ function signGradColor(v) {
 }
 function fmtDate(d){if(!d)return"";try{return new Date(d+"T12:00:00").toLocaleDateString("es-AR");}catch{return d;}}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
+
+// ═══════════════════════════════════════════════════════
+//  FINANZAS — Sistema de costos + resumen financiero
+// ═══════════════════════════════════════════════════════
+
+// ── Persistencia configuración de costos ──
+function getCostosCfg() {
+  try {
+    const s = localStorage.getItem("olvision_costos_config");
+    if (s) return JSON.parse(s);
+  } catch {}
+  return { laboratorios: [], armazones: [], costoFinanciero: {} };
+}
+function saveCostosCfg(cfg) {
+  localStorage.setItem("olvision_costos_config", JSON.stringify(cfg));
+  push({ type: "SAVE_DATA", key: "COSTOS_CONFIG", value: JSON.stringify(cfg) });
+}
+
+// ── Calcular costo estimado de una orden ──
+function calcCostoOrden(o, costosCfg) {
+  let costo = 0;
+
+  // 1. Costo de laboratorio: buscar por laboratorio y tratamiento
+  const labs = costosCfg.laboratorios || [];
+  const lab = labs.find(l => l.nombre && o.laboratorio &&
+    l.nombre.toLowerCase().trim() === o.laboratorio.toLowerCase().trim());
+  if (lab && lab.tratamientos) {
+    // Buscar por tratamiento exacto
+    const trat = (lab.tratamientos || []).find(t => t.nombre && o.tratamiento &&
+      t.nombre.toLowerCase().trim() === o.tratamiento.toLowerCase().trim());
+    if (trat) costo += parseFloat(trat.costo) || 0;
+    else {
+      // Fallback: usar el costo "genérico" del laboratorio si existe
+      if (lab.costoBase) costo += parseFloat(lab.costoBase) || 0;
+    }
+  } else if (labs.length === 1 && labs[0].tratamientos) {
+    // Si hay un solo lab configurado, usarlo aunque no matchee exacto
+    const trat = (labs[0].tratamientos || []).find(t => t.nombre && o.tratamiento &&
+      t.nombre.toLowerCase().trim() === o.tratamiento.toLowerCase().trim());
+    if (trat) costo += parseFloat(trat.costo) || 0;
+  }
+
+  // 2. Costo de armazón
+  const armazones = costosCfg.armazones || [];
+  if (o.armazonDesc) {
+    const arm = armazones.find(a => a.nombre && o.armazonDesc &&
+      o.armazonDesc.toLowerCase().includes(a.nombre.toLowerCase()));
+    if (arm) costo += parseFloat(arm.costo) || 0;
+  }
+
+  // 3. Costo financiero (% sobre el total)
+  const cf = costosCfg.costoFinanciero || {};
+  if (o.formaPago && cf[o.formaPago]) {
+    const pct = parseFloat(cf[o.formaPago]) || 0;
+    costo += (parseFloat(o.total) || 0) * pct / 100;
+  }
+
+  return Math.round(costo);
+}
+
+function renderFinanzas() {
+  const el = document.getElementById("finanzas-body");
+  if (!el) return;
+
+  const hoy = new Date();
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const mesActual  = hoy.getMonth();
+  const anioActual = hoy.getFullYear();
+
+  // Leer selecciones actuales (o defaults)
+  const modo     = document.getElementById("fin-modo")?.value    || "mensual";
+  const selMes   = parseInt(document.getElementById("fin-mes")?.value  ?? mesActual);
+  const selAnio  = parseInt(document.getElementById("fin-anio")?.value ?? anioActual);
+  const finTab   = document.getElementById("fin-tab")?.value || "resumen";
+
+  // Años disponibles en órdenes
+  const anios = [...new Set(D.orders.map(o => o.fecha ? new Date(o.fecha+"T12:00:00").getFullYear() : null).filter(Boolean))].sort((a,b)=>b-a);
+  if (!anios.includes(anioActual)) anios.unshift(anioActual);
+
+  const costosCfg = getCostosCfg();
+
+  // ── Filtrar órdenes según modo ──
+  const filtrar = (anio, mes) => D.orders.filter(o => {
+    if (!o.fecha) return false;
+    const d = new Date(o.fecha+"T12:00:00");
+    if (modo === "anual") return d.getFullYear() === anio;
+    return d.getMonth() === mes && d.getFullYear() === anio;
+  });
+
+  const ords     = filtrar(selAnio, selMes);
+  const ordsPrev = modo === "anual"
+    ? filtrar(selAnio - 1, selMes)
+    : filtrar(selMes === 0 ? selAnio - 1 : selAnio, selMes === 0 ? 11 : selMes - 1);
+
+  // ── Ventas rápidas del período ──
+  const todasVentas = getCajasVentas();
+  const filtrarV = (anio, mes) => todasVentas.filter(v => {
+    if (!v.fecha) return false;
+    const d = new Date(v.fecha+"T12:00:00");
+    if (modo === "anual") return d.getFullYear() === anio;
+    return d.getMonth() === mes && d.getFullYear() === anio;
+  });
+  const ventasPeriodo = filtrarV(selAnio, selMes);
+  const ventasPrev    = modo === "anual"
+    ? filtrarV(selAnio - 1, selMes)
+    : filtrarV(selMes === 0 ? selAnio - 1 : selAnio, selMes === 0 ? 11 : selMes - 1);
+
+  // ── Calcular métricas (usa calcCostoOrden si no hay costo manual) ──
+  const calc = (os, vs) => {
+    const facturadoOrdenes = os.reduce((a,o) => a + (parseFloat(o.total)||0), 0);
+    const cobradoOrdenes   = os.reduce((a,o) => a + (parseFloat(o.aCuenta)||0), 0);
+    const saldoPendiente   = os.reduce((a,o) => (!o.pagado ? a + (parseFloat(o.saldo)||0) : a), 0);
+
+    // Costo: usa campo manual si existe, sino estima
+    const costoLabArm = os.reduce((a,o) => {
+      const manual = parseFloat(o.costo);
+      if (!isNaN(manual) && manual > 0) return a + manual;
+      return a + calcCostoOrden(o, costosCfg);
+    }, 0);
+
+    // IIBB: % fijo sobre facturado del período
+    const pctIIBB   = parseFloat(costosCfg.iibb) || 0;
+    const costoIIBB = Math.round(facturadoOrdenes * pctIIBB / 100);
+    const costoOrdenes = costoLabArm + costoIIBB;
+
+    const margenBruto  = facturadoOrdenes - costoOrdenes;
+    const pctMargen    = facturadoOrdenes > 0 ? Math.round(margenBruto / facturadoOrdenes * 100) : 0;
+    const tieneCostos  = costoOrdenes > 0;
+
+    const ventasAccesorios = vs.filter(v=>v.tipo==="accesorio").reduce((a,v)=>a+(parseFloat(v.monto)||0),0);
+    const ventasTaller     = vs.filter(v=>v.tipo==="taller").reduce((a,v)=>a+(parseFloat(v.monto)||0),0);
+    const cobrosSaldo      = vs.filter(v=>v.tipo==="saldo").reduce((a,v)=>a+(parseFloat(v.monto)||0),0);
+    const ingresoTotal     = cobradoOrdenes + ventasAccesorios + ventasTaller + cobrosSaldo;
+    const cantOrdenes      = os.length;
+    const ticketMedio      = cantOrdenes > 0 ? facturadoOrdenes / cantOrdenes : 0;
+    const pctPagado        = facturadoOrdenes > 0 ? Math.round(cobradoOrdenes / facturadoOrdenes * 100) : 0;
+
+    return { facturadoOrdenes, cobradoOrdenes, saldoPendiente, costoLabArm, costoIIBB, costoOrdenes,
+             margenBruto, pctMargen, tieneCostos, ventasAccesorios, ventasTaller, cobrosSaldo,
+             ingresoTotal, cantOrdenes, ticketMedio, pctPagado };
+  };
+
+  const cur  = calc(ords, ventasPeriodo);
+  const prev = calc(ordsPrev, ventasPrev);
+
+  const $ = (n) => `$${num(n)}`;
+  const pctDelta = (c, p) => {
+    if (!p || p === 0) return "";
+    const d = Math.round((c - p) / p * 100);
+    const col = d >= 0 ? "#2E7D32" : "#C62828";
+    return `<span style="font-size:11px;font-weight:800;color:${col};margin-left:5px">${d>=0?"▲":"▼"} ${Math.abs(d)}%</span>`;
+  };
+
+  const periodoLabel = modo === "anual" ? `Año ${selAnio}` : `${meses[selMes]} ${selAnio}`;
+  const prevLabel    = modo === "anual" ? `Año ${selAnio-1}` : `${meses[selMes===0?11:selMes-1]} ${selMes===0?selAnio-1:selAnio}`;
+
+  // ─── HEADER + SELECTORES (siempre visible) ───
+  const header = `
+    <div style="background:var(--azul);padding:20px 16px 16px;margin:-16px -16px 0">
+      <div style="color:rgba(255,255,255,.75);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">💰 Finanzas</div>
+      <div style="color:#fff;font-size:18px;font-weight:900;margin-bottom:14px">${periodoLabel}</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select id="fin-modo" onchange="renderFinanzas()" style="flex:1;border:none;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;font-family:inherit;outline:none;-webkit-appearance:none">
+          <option value="mensual" ${modo==="mensual"?"selected":""} style="color:#000">Mensual</option>
+          <option value="anual"   ${modo==="anual"?"selected":""}   style="color:#000">Anual</option>
+        </select>
+        ${modo==="mensual" ? `
+        <select id="fin-mes" onchange="renderFinanzas()" style="flex:2;border:none;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;font-family:inherit;outline:none;-webkit-appearance:none">
+          ${meses.map((m,i)=>`<option value="${i}" ${i===selMes?"selected":""} style="color:#000">${m}</option>`).join("")}
+        </select>` : ""}
+        <select id="fin-anio" onchange="renderFinanzas()" style="flex:0 0 82px;border:none;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;font-family:inherit;outline:none;-webkit-appearance:none">
+          ${anios.map(a=>`<option value="${a}" ${a===selAnio?"selected":""} style="color:#000">${a}</option>`).join("")}
+        </select>
+      </div>
+      <!-- Pestañas internas -->
+      <div style="display:flex;gap:6px">
+        ${[["resumen","📊 Resumen"],["costos","⚙️ Costos"]].map(([v,l])=>`
+          <button onclick="document.getElementById('fin-tab').value='${v}';renderFinanzas()"
+            style="flex:1;padding:8px 4px;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;
+            background:${finTab===v?"#fff":"rgba(255,255,255,.15)"};color:${finTab===v?"var(--azul)":"#fff"};font-family:inherit">${l}</button>
+        `).join("")}
+      </div>
+      <input type="hidden" id="fin-tab" value="${finTab}">
+    </div>
+    <div style="height:16px"></div>`;
+
+  // ─── TAB RESUMEN ───
+  const tabResumen = () => {
+    const kpiCard = (emoji, label, valor, prevValor, sub="", color="var(--azul)") => `
+      <div style="background:var(--blanco);border-radius:14px;padding:16px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);flex:1;min-width:140px">
+        <div style="font-size:20px;margin-bottom:4px">${emoji}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">${label}</div>
+        <div style="font-size:22px;font-weight:900;color:${color};line-height:1.2">${valor}</div>
+        <div style="font-size:11px;color:var(--suave);margin-top:3px">${sub}${pctDelta(parseFloat(String(valor).replace(/[^0-9.-]/g,"")), prevValor)}</div>
+      </div>`;
+
+    const barrasMensuales = () => {
+      if (modo !== "anual") return "";
+      const datosMes = Array(12).fill(0).map((_,i) => {
+        const os = D.orders.filter(o => {
+          if (!o.fecha) return false;
+          const d = new Date(o.fecha+"T12:00:00");
+          return d.getMonth() === i && d.getFullYear() === selAnio;
+        });
+        return os.reduce((a,o) => a + (parseFloat(o.total)||0), 0);
+      });
+      const maxVal = Math.max(...datosMes, 1);
+      return `
+        <div style="background:var(--blanco);border-radius:14px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
+          <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:14px">📊 Facturación mensual ${selAnio}</div>
+          <div style="display:flex;align-items:flex-end;gap:5px;height:80px">
+            ${datosMes.map((v,i) => {
+              const h = maxVal > 0 ? Math.max(Math.round(v/maxVal*72), v>0?4:0) : 0;
+              const esActual = i === mesActual && selAnio === anioActual;
+              return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+                <div style="font-size:9px;color:var(--suave);font-weight:700">${v>0?'$'+num(v):''}</div>
+                <div style="width:100%;height:${h}px;background:${esActual?"var(--azul)":"#C5D8F8"};border-radius:4px 4px 0 0;min-height:${v>0?4:0}px"></div>
+                <div style="font-size:9px;color:${esActual?"var(--azul)":"var(--suave)"};font-weight:${esActual?900:600}">${meses[i].slice(0,3)}</div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>`;
+    };
+
+    const desglosePago = () => {
+      const counts = {}, montos = {};
+      ords.forEach(o => {
+        const fp = o.formaPago || "No especificado";
+        counts[fp] = (counts[fp]||0) + 1;
+        montos[fp] = (montos[fp]||0) + (parseFloat(o.total)||0);
+      });
+      const entries = Object.entries(montos).sort((a,b)=>b[1]-a[1]);
+      const maxV = entries[0]?.[1] || 1;
+      if (!entries.length) return `<div style="color:var(--suave);font-size:13px;padding:8px 0">Sin datos</div>`;
+      return entries.map(([k,v]) => {
+        const cf = costosCfg.costoFinanciero?.[k];
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+            <span style="font-weight:600">${k}${cf ? `<span style="font-size:10px;color:#E65100;margin-left:4px">(+${cf}%)</span>` : ""}</span>
+            <span style="font-weight:800;color:var(--azul)">${$(v)} <span style="font-size:11px;color:#999;font-weight:400">(${counts[k]})</span></span>
+          </div>
+          <div style="background:#eee;border-radius:6px;height:7px">
+            <div style="background:var(--azul);width:${Math.round(v/maxV*100)}%;height:7px;border-radius:6px"></div>
+          </div>
+        </div>`;
+      }).join("");
+    };
+
+    const desgloseVentas = () => [
+      { label:"Órdenes cobradas", monto:cur.cobradoOrdenes, prev:prev.cobradoOrdenes, emoji:"📋" },
+      { label:"Accesorios",       monto:cur.ventasAccesorios, prev:prev.ventasAccesorios, emoji:"🕶️" },
+      { label:"Taller",           monto:cur.ventasTaller, prev:prev.ventasTaller, emoji:"🔧" },
+      { label:"Cobros cta. cte.", monto:cur.cobrosSaldo, prev:prev.cobrosSaldo, emoji:"📒" },
+    ].map(it => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gris-borde)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">${it.emoji}</span>
+          <span style="font-size:13px;font-weight:600">${it.label}</span>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:900;color:var(--azul)">${$(it.monto)}</div>
+          <div style="font-size:11px;color:var(--suave)">${$(it.prev)} ant.${pctDelta(it.monto, it.prev)}</div>
+        </div>
+      </div>`).join("");
+
+    const hayCostosCfg = (costosCfg.laboratorios||[]).length > 0 || (costosCfg.armazones||[]).length > 0;
+
+    return `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        ${kpiCard("🧾","Facturado", $(cur.facturadoOrdenes), prev.facturadoOrdenes, `${cur.cantOrdenes} órdenes`)}
+        ${kpiCard("💵","Cobrado", $(cur.ingresoTotal), prev.ingresoTotal, `${cur.pctPagado}% facturado`,"#2E7D32")}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        ${kpiCard("⏳","Saldo pendiente", $(cur.saldoPendiente), prev.saldoPendiente, "por cobrar","#E65100")}
+        ${kpiCard("🎫","Ticket medio", $(cur.ticketMedio), prev.ticketMedio, "por orden")}
+      </div>
+
+      ${cur.tieneCostos ? `
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:900;color:var(--azul)">📈 Margen bruto estimado</div>
+          <div style="font-size:10px;color:var(--suave);background:var(--gris);padding:3px 8px;border-radius:20px">
+            ${hayCostosCfg ? "según tabla de costos" : "costos manuales en órdenes"}
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1;text-align:center;padding:12px 8px;background:#FDECEA;border-radius:10px">
+            <div style="font-size:10px;color:#C62828;font-weight:700;text-transform:uppercase;margin-bottom:2px">Costo total</div>
+            <div style="font-size:20px;font-weight:900;color:#C62828">${$(cur.costoOrdenes)}</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:12px 8px;background:#E8F5E9;border-radius:10px">
+            <div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase;margin-bottom:2px">Margen bruto</div>
+            <div style="font-size:20px;font-weight:900;color:#2E7D32">${$(cur.margenBruto)}</div>
+          </div>
+        </div>
+        ${(cur.costoLabArm > 0 || cur.costoIIBB > 0) ? `
+        <div style="background:var(--gris);border-radius:9px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;margin-bottom:7px">Desglose de costos</div>
+          ${cur.costoLabArm > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+            <span>🏭 Lab + armazón</span><span style="font-weight:800;color:#C62828">${$(cur.costoLabArm)}</span>
+          </div>` : ""}
+          ${cur.costoIIBB > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px">
+            <span>🏛️ IIBB (${costosCfg.iibb}%)</span><span style="font-weight:800;color:#C62828">${$(cur.costoIIBB)}</span>
+          </div>` : ""}
+        </div>` : ""}
+        <div style="background:#eee;border-radius:8px;height:12px;overflow:hidden">
+          <div style="background:#2E7D32;width:${Math.max(0,Math.min(100,cur.pctMargen))}%;height:12px;border-radius:8px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:5px">
+          <span style="color:#C62828;font-weight:700">Costo ${100-cur.pctMargen}%</span>
+          <span style="color:#2E7D32;font-weight:700">Margen ${cur.pctMargen}%</span>
+        </div>
+      </div>` : `
+      <div style="background:#FFF8E1;border:1.5px solid #FFE082;border-radius:14px;padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:#795548;margin-bottom:6px">💡 Activá el cálculo de margen</div>
+        <div style="font-size:12px;color:#795548;line-height:1.6">
+          Configurá los costos por tratamiento y armazón en la pestaña <strong>⚙️ Costos</strong> para ver el margen bruto automáticamente — sin que las vendedoras tengan que cargar nada.
+        </div>
+        <button onclick="document.getElementById('fin-tab').value='costos';renderFinanzas()"
+          style="margin-top:10px;background:#F57F17;color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:800;cursor:pointer">
+          Ir a configurar costos →
+        </button>
+      </div>`}
+
+      ${barrasMensuales()}
+
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
+        <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:4px">💼 Desglose de ingresos</div>
+        <div style="font-size:11px;color:var(--suave);margin-bottom:12px">vs ${prevLabel}</div>
+        ${desgloseVentas()}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 0">
+          <span style="font-size:14px;font-weight:900">Total cobrado</span>
+          <span style="font-size:18px;font-weight:900;color:#2E7D32">${$(cur.ingresoTotal)}</span>
+        </div>
+      </div>
+
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:24px">
+        <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:12px">💳 Facturación por forma de pago</div>
+        ${desglosePago()}
+      </div>`;
+  };
+
+  // ─── TAB COSTOS ───
+  const tabCostos = () => {
+    const cfg = getCostosCfg();
+    const labs = cfg.laboratorios || [];
+    const arms = cfg.armazones || [];
+    const cfin = cfg.costoFinanciero || {};
+    const cfgApp = getCfg();
+    const todosLabs = cfgApp.laboratorios || [];
+    const todosTrats = cfgApp.tratamientos || [];
+    const todasFormas = cfgApp.formaPago || [];
+
+    // Render laboratorio
+    const renderLab = (lab, li) => {
+      const trats = lab.tratamientos || [];
+      return `
+        <div style="background:var(--gris);border-radius:12px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:900;color:var(--azul)">🏭 ${lab.nombre}</div>
+            <button onclick="finEliminarLab(${li})" style="background:none;border:none;cursor:pointer;font-size:18px;color:#bbb">×</button>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--suave);margin-bottom:8px;text-transform:uppercase">Costo por tratamiento</div>
+          ${todosTrats.map(tr => {
+            const t = trats.find(x=>x.nombre===tr) || { nombre:tr, costo:"" };
+            const ti = trats.findIndex(x=>x.nombre===tr);
+            return `
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+                <div style="flex:1;font-size:13px;font-weight:600;color:#333">${tr}</div>
+                <div style="display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:110px">
+                  <span style="font-size:12px;color:var(--suave);font-weight:700">$</span>
+                  <input type="number" min="0" value="${t.costo}"
+                    placeholder="0"
+                    onchange="finActualizarTrat(${li},'${tr}',this.value)"
+                    style="border:none;outline:none;font-size:14px;font-weight:700;width:70px;padding:8px 0;font-family:inherit;background:transparent">
+                </div>
+              </div>`;
+          }).join("")}
+        </div>`;
+    };
+
+    return `
+      <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:4px">⚙️ Configuración de costos</div>
+      <div style="font-size:12px;color:var(--suave);margin-bottom:16px;line-height:1.5">
+        Estos costos son solo visibles para vos. El sistema los usa para calcular el margen bruto automáticamente en cada orden.
+      </div>
+
+      <!-- LABORATORIOS -->
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
+        <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:12px">🏭 Laboratorios y costos por tratamiento</div>
+        ${labs.length === 0 ? `<div style="color:var(--suave);font-size:13px;margin-bottom:12px">Aún no agregaste laboratorios.</div>` : labs.map((l,i) => renderLab(l,i)).join("")}
+        ${labs.length < 5 && todosLabs.length > 0 ? `
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <select id="fin-add-lab" style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+              <option value="">— Seleccionar laboratorio —</option>
+              ${todosLabs.filter(l => !labs.find(x=>x.nombre===l)).map(l=>`<option>${l}</option>`).join("")}
+            </select>
+            <button onclick="finAgregarLab()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:9px;padding:9px 16px;font-size:14px;font-weight:800;cursor:pointer">＋</button>
+          </div>` : labs.length < 5 ? `
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="fin-add-lab-txt" placeholder="Nombre del laboratorio" style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+            <button onclick="finAgregarLabTxt()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:9px;padding:9px 16px;font-size:14px;font-weight:800;cursor:pointer">＋</button>
+          </div>` : ""}
+      </div>
+
+      <!-- ARMAZONES -->
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
+        <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:4px">🕶️ Costo por armazón (marca/proveedor)</div>
+        <div style="font-size:12px;color:var(--suave);margin-bottom:12px">El sistema busca si el campo "Armazón" de la orden contiene este texto.</div>
+        ${arms.map((a,i) => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="flex:1;font-size:13px;font-weight:700;background:var(--gris);border-radius:9px;padding:9px 12px">${a.nombre}</div>
+            <div style="display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:120px">
+              <span style="font-size:12px;color:var(--suave);font-weight:700">$</span>
+              <input type="number" min="0" value="${a.costo}"
+                onchange="finActualizarArm(${i},this.value)"
+                style="border:none;outline:none;font-size:14px;font-weight:700;width:70px;padding:8px 0;font-family:inherit;background:transparent">
+            </div>
+            <button onclick="finEliminarArm(${i})" style="background:none;border:none;cursor:pointer;font-size:18px;color:#bbb">×</button>
+          </div>`).join("")}
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="fin-add-arm-nom" placeholder="Marca o proveedor (ej: Prada, ArmaNuevo)" style="flex:2;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+          <div style="display:flex;align-items:center;gap:3px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;flex:1">
+            <span style="font-size:12px;color:var(--suave);font-weight:700">$</span>
+            <input id="fin-add-arm-val" type="number" min="0" placeholder="0" style="border:none;outline:none;font-size:14px;font-weight:700;width:60px;padding:8px 0;font-family:inherit;background:transparent">
+          </div>
+          <button onclick="finAgregarArm()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:9px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer">＋</button>
+        </div>
+      </div>
+
+      <!-- COSTO FINANCIERO -->
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
+        <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:4px">💳 Costo financiero por forma de pago</div>
+        <div style="font-size:12px;color:var(--suave);margin-bottom:12px">% que se suma al costo de cada orden según cómo pagó el cliente.</div>
+        ${todasFormas.map(fp => {
+          const val = cfin[fp] || "";
+          return `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div style="flex:1;font-size:13px;font-weight:700">${fp}</div>
+              <div style="display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:100px">
+                <input type="number" min="0" max="100" step="0.5" value="${val}" placeholder="0"
+                  onchange="finActualizarCostoFin('${fp}',this.value)"
+                  style="border:none;outline:none;font-size:14px;font-weight:700;width:55px;padding:8px 0;font-family:inherit;background:transparent">
+                <span style="font-size:12px;color:var(--suave);font-weight:700">%</span>
+              </div>
+            </div>`;
+        }).join("")}
+      </div>
+
+      <!-- IIBB -->
+      <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:24px">
+        <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:4px">🏛️ Ingresos Brutos (IIBB)</div>
+        <div style="font-size:12px;color:var(--suave);margin-bottom:14px;line-height:1.5">
+          % fijo sobre el total facturado del período. Se muestra como costo en el resumen de margen.
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:14px;font-weight:700;flex:1">Alícuota IIBB</div>
+          <div style="display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 14px;width:120px">
+            <input type="number" min="0" max="20" step="0.1" value="${cfg.iibb || ""}" placeholder="0"
+              onchange="finActualizarIIBB(this.value)"
+              id="fin-iibb-input"
+              style="border:none;outline:none;font-size:16px;font-weight:800;width:60px;padding:10px 0;font-family:inherit;background:transparent">
+            <span style="font-size:13px;color:var(--suave);font-weight:700">%</span>
+          </div>
+        </div>
+        ${cfg.iibb ? `<div style="margin-top:10px;font-size:12px;color:#2E7D32;font-weight:700;background:#E8F5E9;border-radius:8px;padding:8px 12px">
+          ✓ Aplicando ${cfg.iibb}% de IIBB sobre lo facturado del período seleccionado
+        </div>` : ""}
+      </div>`;
+  };
+
+  el.innerHTML = header + (finTab === "costos" ? tabCostos() : tabResumen());
+}
+
+// ── Funciones de edición de costos (llamadas desde inputs) ──
+function finActualizarTrat(labIdx, tratNombre, valor) {
+  const cfg = getCostosCfg();
+  const lab = cfg.laboratorios[labIdx];
+  if (!lab) return;
+  lab.tratamientos = lab.tratamientos || [];
+  const ti = lab.tratamientos.findIndex(t => t.nombre === tratNombre);
+  if (ti >= 0) lab.tratamientos[ti].costo = parseFloat(valor) || 0;
+  else lab.tratamientos.push({ nombre: tratNombre, costo: parseFloat(valor) || 0 });
+  saveCostosCfg(cfg);
+}
+
+function finActualizarArm(idx, valor) {
+  const cfg = getCostosCfg();
+  if (cfg.armazones[idx]) cfg.armazones[idx].costo = parseFloat(valor) || 0;
+  saveCostosCfg(cfg);
+}
+
+function finActualizarCostoFin(formaPago, valor) {
+  const cfg = getCostosCfg();
+  cfg.costoFinanciero = cfg.costoFinanciero || {};
+  const v = parseFloat(valor);
+  if (!v || v === 0) delete cfg.costoFinanciero[formaPago];
+  else cfg.costoFinanciero[formaPago] = v;
+  saveCostosCfg(cfg);
+}
+
+function finAgregarLab() {
+  const sel = document.getElementById("fin-add-lab");
+  const nombre = sel?.value?.trim();
+  if (!nombre) return;
+  const cfg = getCostosCfg();
+  cfg.laboratorios = cfg.laboratorios || [];
+  if (cfg.laboratorios.find(l => l.nombre === nombre)) return;
+  cfg.laboratorios.push({ nombre, tratamientos: [] });
+  saveCostosCfg(cfg);
+  renderFinanzas();
+}
+
+function finAgregarLabTxt() {
+  const inp = document.getElementById("fin-add-lab-txt");
+  const nombre = inp?.value?.trim();
+  if (!nombre) return;
+  const cfg = getCostosCfg();
+  cfg.laboratorios = cfg.laboratorios || [];
+  if (cfg.laboratorios.find(l => l.nombre === nombre)) return;
+  cfg.laboratorios.push({ nombre, tratamientos: [] });
+  saveCostosCfg(cfg);
+  renderFinanzas();
+}
+
+function finEliminarLab(idx) {
+  const cfg = getCostosCfg();
+  cfg.laboratorios.splice(idx, 1);
+  saveCostosCfg(cfg);
+  renderFinanzas();
+}
+
+function finAgregarArm() {
+  const nom = document.getElementById("fin-add-arm-nom")?.value?.trim();
+  const val = parseFloat(document.getElementById("fin-add-arm-val")?.value) || 0;
+  if (!nom) return;
+  const cfg = getCostosCfg();
+  cfg.armazones = cfg.armazones || [];
+  cfg.armazones.push({ nombre: nom, costo: val });
+  saveCostosCfg(cfg);
+  renderFinanzas();
+}
+
+function finEliminarArm(idx) {
+  const cfg = getCostosCfg();
+  cfg.armazones.splice(idx, 1);
+  saveCostosCfg(cfg);
+  renderFinanzas();
+}
+
+function finActualizarIIBB(valor) {
+  const cfg = getCostosCfg();
+  const v = parseFloat(valor);
+  if (!v || v === 0) delete cfg.iibb;
+  else cfg.iibb = v;
+  saveCostosCfg(cfg);
+  // Actualizar badge de confirmación sin re-renderizar toda la pantalla
+  const badge = document.querySelector("#fin-iibb-input")?.parentElement?.parentElement;
+  // Re-render para actualizar el resumen de margen
+  renderFinanzas();
+}
 
 // init() se llama desde doLogin()
 </script>
