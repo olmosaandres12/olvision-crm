@@ -4401,6 +4401,8 @@ function gradCell(id, val, tipo) {
   if (valStr === "Neutro" || valStr === "PL") { signo = "N"; num = ""; }
   else if (valStr.startsWith("+")) { signo = "+"; num = valStr.slice(1); }
   else if (valStr.startsWith("-")) { signo = "-"; num = valStr.slice(1); }
+  // Normalizar num a 2 decimales para que coincida con las opciones del select
+  if (num) { const n = parseFloat(num.replace(",",".")); if (!isNaN(n)) num = n.toFixed(2); }
 
   const nums = gradNums(tipo);
   const numOpts = ['', ...nums].map(n => `<option value="${n}" ${n===num?'selected':''}>${n||'—'}</option>`).join('');
