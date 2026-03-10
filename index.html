@@ -190,6 +190,13 @@
   button[style*="background:#FDECEA"] { transition: all .15s ease !important; }
   button[style*="background:#FDECEA"]:hover { filter: brightness(.92); transform: scale(1.03); }
   button[style*="background:#FDECEA"]:active { transform: scale(.95); }
+  /* Admin panel dark background + glass card glow */
+  #admin-panel-body { background: #080F1E; }
+  #admin-tab-content [style*="backdrop-filter"] { transition: box-shadow .2s ease, border-color .2s ease; }
+  #admin-tab-content [style*="backdrop-filter"]:hover {
+    border-color: rgba(74,158,255,.5) !important;
+    box-shadow: 0 0 0 1px rgba(74,158,255,.2), 0 8px 40px rgba(0,0,0,.5), 0 0 28px rgba(74,158,255,.14), inset 0 1px 0 rgba(255,255,255,.1) !important;
+  }
 </style>
 </head>
 <body>
@@ -233,18 +240,18 @@
 
   <!-- Nav items -->
   <div style="flex:1;overflow-y:auto;padding:10px 0">
-    <div style="padding:6px 14px 4px;font-size:9px;font-weight:800;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px">Operaciones</div>
+    <div style="padding:6px 14px 4px;font-size:9px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1.5px">Operaciones</div>
     <button class="nav-item active" id="nav-caja"        onclick="setTab('caja',this)">        <span class="nav-icon">💵</span><span>Caja</span></button>
     <button class="nav-item"        id="nav-ordenes"     onclick="setTab('ordenes',this)">     <span class="nav-icon">📋</span><span>Órdenes</span></button>
     <button class="nav-item"        id="nav-pendientes"  onclick="setTab('pendientes',this)">  <span class="nav-icon">⏳</span><span>Pendientes</span></button>
     <button class="nav-item"        id="nav-clientes"    onclick="setTab('clientes',this)">    <span class="nav-icon">👤</span><span>Clientes</span></button>
     <button class="nav-item"        id="nav-osocial"     onclick="setTab('osocial',this)">     <span class="nav-icon">🏥</span><span>Obra Social</span></button>
     <button class="nav-item"        id="nav-ctacte"      onclick="setTab('ctacte',this)">      <span class="nav-icon">📒</span><span>Cta. Corriente</span></button>
-    <div style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Fidelización</div>
+    <div style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Fidelización</div>
     <button class="nav-item"        id="nav-fidelizacion" onclick="setTab('fidelizacion',this)"><span class="nav-icon">⭐</span><span>Fidelizar</span></button>
     <button class="nav-item"        id="nav-mensajes"    onclick="setTab('mensajes',this)">    <span class="nav-icon">💬</span><span>Mensajes</span></button>
     <div id="nav-admin-group" style="display:none">
-      <div id="nav-admin-label" style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Administración</div>
+      <div id="nav-admin-label" style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Administración</div>
       <button class="nav-item" id="nav-stats" onclick="setTab('stats',this)"><span class="nav-icon">📊</span><span>Estadísticas</span></button>
       <button class="nav-item" id="nav-admin" onclick="setTab('admin',this)" style="margin-top:8px;background:linear-gradient(135deg,rgba(245,232,124,.15),rgba(245,232,124,.05));border-top:1px solid rgba(255,255,255,.1)">
         <span class="nav-icon">🏆</span><span style="color:var(--amarillo);font-weight:900">Panel CEO</span>
@@ -1703,37 +1710,40 @@ let adminTab = "dashboard";
 function renderAdminPanel() {
   const el = document.getElementById("admin-panel-body");
 
-  // Estilos del panel
   el.innerHTML = `
-    <!-- Admin Header -->
-    <div style="background:linear-gradient(135deg,#0D1F3C,#1B4FA8);padding:16px 16px 0;position:sticky;top:0;z-index:50">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div>
-          <div style="color:var(--amarillo);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px">Panel de Control</div>
-          <div style="color:#fff;font-size:20px;font-weight:900">🏆 CEO Dashboard</div>
+    <!-- Admin Header dark -->
+    <div style="background:linear-gradient(160deg,#050C18 0%,#080F1E 60%,#0D1F3C 100%);padding:20px 16px 0;position:sticky;top:0;z-index:50;box-shadow:0 4px 32px rgba(0,0,0,.6),0 1px 0 rgba(74,158,255,.15)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#F5E87C,#E8C900);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 12px rgba(245,232,124,.35)">🏆</div>
+          <div>
+            <div style="color:#F5E87C;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px">Panel de Control</div>
+            <div style="color:#fff;font-size:18px;font-weight:900;letter-spacing:-.3px">CEO Dashboard</div>
+          </div>
         </div>
-        <div style="color:rgba(255,255,255,.5);font-size:12px;text-align:right">
-          ${new Date().toLocaleDateString("es-AR",{day:"numeric",month:"long",year:"numeric"})}
+        <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 12px;text-align:right">
+          <div style="color:#F5E87C;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Hoy</div>
+          <div style="color:#fff;font-size:12px;font-weight:700">${new Date().toLocaleDateString("es-AR",{day:"numeric",month:"short",year:"numeric"})}</div>
         </div>
       </div>
-      <!-- Admin Tabs -->
-      <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:0">
+      <!-- Admin Tabs pill-style -->
+      <div style="display:flex;gap:3px;overflow-x:auto;padding-bottom:0;scrollbar-width:none">
         ${[
-          {id:"dashboard", label:"📊 Dashboard"},
-          {id:"ventas",    label:"💰 Ventas"},
-          {id:"equipo",    label:"👥 Equipo"},
-          {id:"productos", label:"🔭 Productos"},
-          {id:"ordenes",   label:"📋 Órdenes"}
+          {id:"dashboard", label:"Dashboard", icon:"📊"},
+          {id:"ventas",    label:"Ventas",    icon:"💰"},
+          {id:"equipo",    label:"Equipo",    icon:"👥"},
+          {id:"productos", label:"Productos", icon:"🔭"},
+          {id:"ordenes",   label:"Órdenes",   icon:"📋"}
         ].map(t=>`
           <button onclick="switchAdminTab('${t.id}')" id="atab-${t.id}"
-            style="padding:8px 14px;border:none;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;
-            background:${adminTab===t.id?'var(--gris)':'rgba(255,255,255,.1)'};
-            color:${adminTab===t.id?'var(--azul)':'rgba(255,255,255,.7)'}">
-            ${t.label}
+            style="padding:9px 14px;border:none;border-radius:10px 10px 0 0;font-size:12px;font-weight:${adminTab===t.id?'800':'600'};cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:5px;
+            background:${adminTab===t.id?'#F2F5FB':'transparent'};
+            color:${adminTab===t.id?'var(--azul-dark)':'rgba(255,255,255,.78)'}">
+            <span>${t.icon}</span><span>${t.label}</span>
           </button>`).join("")}
       </div>
     </div>
-    <div id="admin-tab-content" style="padding:14px 14px 80px">
+    <div id="admin-tab-content" style="background:#080F1E;min-height:calc(100vh - 130px);padding:14px 14px 80px">
       ${renderAdminTab(adminTab)}
     </div>
   `;
@@ -1803,13 +1813,14 @@ function renderDashboard() {
     return Math.round((cur-prev)/prev*100);
   };
 
-  const kpiCard = (emoji, label, valor, prev, prefix="", color="#1B4FA8") => {
+  const kpiCard = (emoji, label, valor, prev, prefix="", color="#1B4FA8", darkBg="#1B2E54") => {
     const pct = pctChange(parseFloat(valor), parseFloat(prev));
-    const badge = pct!==null ? `<div style="font-size:11px;font-weight:800;color:${pct>=0?'#2E7D32':'#C62828'};margin-top:2px">${pct>=0?'▲':'▼'} ${Math.abs(pct)}% vs mes ant.</div>` : "";
-    return `<div class="card" style="padding:14px;border-top:3px solid ${color}">
-      <div style="font-size:20px;margin-bottom:6px">${emoji}</div>
-      <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.5px">${label}</div>
-      <div style="font-size:22px;font-weight:900;color:${color};margin-top:2px">${prefix}${typeof valor==="number"?num(valor.toFixed(0)):valor}</div>
+    const badge = pct!==null ? `<div style="display:inline-flex;align-items:center;gap:3px;background:${pct>=0?'rgba(46,125,50,.15)':'rgba(198,40,40,.12)'};border:1px solid ${pct>=0?'rgba(46,125,50,.3)':'rgba(198,40,40,.3)'};border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;color:${pct>=0?'#4CAF50':'#EF5350'};margin-top:4px">${pct>=0?'▲':'▼'} ${Math.abs(pct)}%</div>` : "";
+    return `<div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;background:${color};opacity:.08;border-radius:50%"></div>
+      <div style="font-size:22px;margin-bottom:8px">${emoji}</div>
+      <div style="font-size:10px;font-weight:700;color:#F5E87C;text-transform:uppercase;letter-spacing:.8px">${label}</div>
+      <div style="font-size:20px;font-weight:900;color:#fff;margin-top:4px;letter-spacing:-.5px">${prefix}${typeof valor==="number"?num(valor.toFixed(0)):valor}</div>
       ${badge}
     </div>`;
   };
@@ -1817,48 +1828,47 @@ function renderDashboard() {
   return `
     <!-- KPIs principales -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      ${kpiCard("💰","Facturación "+mesesFull[mes], facturaCur, facturaPrev, "$", "#1B4FA8")}
-      ${kpiCard("🧾","Órdenes del mes", curOrds.length, prevOrds.length, "", "#2E7D32")}
-      ${kpiCard("🎯","Ticket promedio", ticketCur, ticketPrev, "$", "#6A1B9A")}
-      ${kpiCard("📅","Órdenes hoy", hoyOrds.length, null, "", "#E65100")}
+      ${kpiCard("💰","Facturación "+mesesFull[mes], facturaCur, facturaPrev, "$", "#4A9EFF")}
+      ${kpiCard("🧾","Órdenes del mes", curOrds.length, prevOrds.length, "", "#34D399")}
+      ${kpiCard("🎯","Ticket promedio", ticketCur, ticketPrev, "$", "#A78BFA")}
+      ${kpiCard("📅","Órdenes hoy", hoyOrds.length, null, "", "#FB923C")}
     </div>
 
     <!-- Clientes nuevos vs recurrentes -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">👥 Clientes este mes</div>
-      <div style="display:flex;gap:12px">
-        <div style="flex:1;background:#E8F5E9;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#2E7D32;text-transform:uppercase">Nuevos</div>
-          <div style="font-size:26px;font-weight:900;color:#2E7D32">${nuevos}</div>
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">👥 Clientes este mes</div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:9px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:.5px">Nuevos</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">${nuevos}</div>
         </div>
-        <div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#1565C0;text-transform:uppercase">Recurrentes</div>
-          <div style="font-size:26px;font-weight:900;color:#1565C0">${recurrentes}</div>
+        <div style="flex:1;background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.2);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:9px;font-weight:800;color:#4A9EFF;text-transform:uppercase;letter-spacing:.5px">Recurrentes</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">${recurrentes}</div>
         </div>
-        <div style="flex:1;background:var(--azul-light);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;font-weight:700;color:var(--azul);text-transform:uppercase">Total</div>
-          <div style="font-size:26px;font-weight:900;color:var(--azul)">${curOrds.length}</div>
+        <div style="flex:1;background:rgba(245,232,124,.06);border:1px solid rgba(245,232,124,.15);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:.5px">Total</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">${curOrds.length}</div>
         </div>
       </div>
     </div>
 
     <!-- Gráfico 6 meses -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:14px">📈 Facturación últimos 6 meses</div>
-      <div style="display:flex;align-items:flex-end;gap:6px;height:120px">
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">📈 Facturación últimos 6 meses</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:110px">
         ${ultimos6.map((m2,i)=>`
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-            <div style="font-size:10px;font-weight:700;color:var(--azul)">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
-            <div style="width:100%;background:${i===5?'var(--azul)':'var(--azul-light)'};border-radius:6px 6px 0 0;height:${Math.max(m2.fact/maxFact*90,4)}px;transition:height .4s"></div>
-            <div style="font-size:10px;color:var(--suave);font-weight:700">${m2.label}</div>
-            <div style="font-size:9px;color:var(--suave)">${m2.count}órd</div>
+            <div style="font-size:9px;font-weight:700;color:${i===5?'#F5E87C':'rgba(255,255,255,.65)'}">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
+            <div style="width:100%;background:${i===5?'linear-gradient(180deg,#4A9EFF,#1B4FA8)':'rgba(74,158,255,.15)'};border-radius:5px 5px 0 0;height:${Math.max(m2.fact/maxFact*85,4)}px;transition:height .4s"></div>
+            <div style="font-size:9px;color:rgba(255,255,255,.72);font-weight:600">${m2.label}</div>
           </div>`).join("")}
       </div>
     </div>
 
-    <!-- Promedio órdenes por día -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">⏱ Ritmo del mes</div>
+    <!-- Ritmo del mes -->
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">⏱ Ritmo del mes</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         ${(()=>{
           const diasTranscurridos = Math.max(hoy.getDate(), 1);
@@ -1867,20 +1877,20 @@ function renderDashboard() {
           const proyeccion = Math.round(promDia * diasMes);
           const proyFact = Math.round((facturaCur / diasTranscurridos) * diasMes);
           return `
-            <div style="background:var(--gris);border-radius:10px;padding:10px;text-align:center">
-              <div style="font-size:9px;font-weight:700;color:var(--suave);text-transform:uppercase">Prom/día</div>
-              <div style="font-size:20px;font-weight:900;color:var(--azul)">${promDia}</div>
-              <div style="font-size:9px;color:var(--suave)">órdenes</div>
+            <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#F5E87C;text-transform:uppercase">Prom/día</div>
+              <div style="font-size:22px;font-weight:900;color:#4A9EFF;margin-top:4px">${promDia}</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.6)">órdenes</div>
             </div>
-            <div style="background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#2E7D32;text-transform:uppercase">Proyección</div>
-              <div style="font-size:20px;font-weight:900;color:#2E7D32">${proyeccion}</div>
-              <div style="font-size:9px;color:#2E7D32">órd al cierre</div>
+            <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.18);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#34D399;text-transform:uppercase">Proyección</div>
+              <div style="font-size:22px;font-weight:900;color:#34D399;margin-top:4px">${proyeccion}</div>
+              <div style="font-size:9px;color:rgba(52,211,153,.6)">al cierre</div>
             </div>
-            <div style="background:#EDE7F6;border-radius:10px;padding:10px;text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#6A1B9A;text-transform:uppercase">Proy. $</div>
-              <div style="font-size:16px;font-weight:900;color:#6A1B9A">$${num(proyFact)}</div>
-              <div style="font-size:9px;color:#6A1B9A">estimado</div>
+            <div style="background:rgba(245,232,124,.05);border:1px solid rgba(245,232,124,.15);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#F5E87C;text-transform:uppercase">Proy. $</div>
+              <div style="font-size:14px;font-weight:900;color:#F5E87C;margin-top:4px">$${num(proyFact)}</div>
+              <div style="font-size:9px;color:rgba(245,232,124,.5)">estimado</div>
             </div>`;
         })()}
       </div>
@@ -1922,48 +1932,48 @@ function renderAdminVentas() {
 
   return `
     <!-- Gráfico 12 meses facturación -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:14px">💰 Facturación mensual (12 meses)</div>
-      <div style="overflow-x:auto">
-        <div style="display:flex;align-items:flex-end;gap:5px;height:130px;min-width:320px">
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">💰 Facturación mensual (12 meses)</div>
+      <div style="overflow-x:auto;scrollbar-width:none">
+        <div style="display:flex;align-items:flex-end;gap:5px;height:120px;min-width:320px">
           ${ultimos12.map((m2,i)=>`
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:28px">
-              <div style="font-size:8px;font-weight:700;color:var(--azul);white-space:nowrap">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
-              <div style="width:100%;background:${i===11?'var(--azul)':'var(--azul-light)'};border-radius:4px 4px 0 0;height:${Math.max(m2.fact/maxFact*100,3)}px"></div>
-              <div style="font-size:8px;color:var(--suave);font-weight:700;white-space:nowrap">${m2.label}</div>
+              <div style="font-size:8px;font-weight:700;color:${i===11?'#F5E87C':'rgba(255,255,255,.6)'};white-space:nowrap">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
+              <div style="width:100%;background:${i===11?'linear-gradient(180deg,#4A9EFF,#1B4FA8)':'rgba(74,158,255,.15)'};border-radius:4px 4px 0 0;height:${Math.max(m2.fact/maxFact*95,3)}px"></div>
+              <div style="font-size:8px;color:rgba(255,255,255,.72);font-weight:600;white-space:nowrap">${m2.label}</div>
             </div>`).join("")}
         </div>
       </div>
     </div>
 
     <!-- Órdenes por mes -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:14px">🧾 Órdenes por mes</div>
-      <div style="overflow-x:auto">
-        <div style="display:flex;align-items:flex-end;gap:5px;height:100px;min-width:320px">
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">🧾 Órdenes por mes</div>
+      <div style="overflow-x:auto;scrollbar-width:none">
+        <div style="display:flex;align-items:flex-end;gap:5px;height:90px;min-width:320px">
           ${ultimos12.map((m2,i)=>`
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:28px">
-              <div style="font-size:9px;font-weight:700;color:#2E7D32">${m2.count||''}</div>
-              <div style="width:100%;background:${i===11?'#2E7D32':'#E8F5E9'};border-radius:4px 4px 0 0;height:${Math.max(m2.count/maxCount*80,3)}px"></div>
-              <div style="font-size:8px;color:var(--suave);font-weight:700">${m2.label}</div>
+              <div style="font-size:9px;font-weight:700;color:${i===11?'#34D399':'rgba(52,211,153,.5)'}">${m2.count||''}</div>
+              <div style="width:100%;background:${i===11?'linear-gradient(180deg,#34D399,#059669)':'rgba(52,211,153,.15)'};border-radius:4px 4px 0 0;height:${Math.max(m2.count/maxCount*70,3)}px"></div>
+              <div style="font-size:8px;color:rgba(255,255,255,.72);font-weight:600">${m2.label}</div>
             </div>`).join("")}
         </div>
       </div>
     </div>
 
     <!-- Ticket promedio histórico -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">🎯 Ticket promedio histórico</div>
-      <div style="overflow-x:auto">
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🎯 Ticket promedio histórico</div>
+      <div style="overflow-x:auto;scrollbar-width:none">
         <div style="display:flex;gap:8px;min-width:320px">
           ${ultimos12.filter(m2=>m2.count>0).map((m2,i,arr)=>{
             const maxT = Math.max(...arr.map(x=>x.ticket),1);
             return `<div style="flex:1;text-align:center;min-width:40px">
-              <div style="font-size:9px;font-weight:800;color:#6A1B9A">$${num(Math.round(m2.ticket/1000))}k</div>
-              <div style="width:100%;background:#EDE7F6;border-radius:4px;margin:3px 0;height:60px;display:flex;align-items:flex-end">
-                <div style="width:100%;background:#6A1B9A;border-radius:4px;height:${Math.max(m2.ticket/maxT*60,3)}px"></div>
+              <div style="font-size:9px;font-weight:800;color:#A78BFA">$${num(Math.round(m2.ticket/1000))}k</div>
+              <div style="width:100%;background:rgba(167,139,250,.1);border-radius:4px;margin:3px 0;height:55px;display:flex;align-items:flex-end">
+                <div style="width:100%;background:linear-gradient(180deg,#A78BFA,#7C3AED);border-radius:4px;height:${Math.max(m2.ticket/maxT*55,3)}px"></div>
               </div>
-              <div style="font-size:8px;color:var(--suave)">${m2.label}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.78)">${m2.label}</div>
             </div>`;
           }).join("")}
         </div>
@@ -1971,14 +1981,14 @@ function renderAdminVentas() {
     </div>
 
     <!-- Evolución semanal -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:14px">📅 Evolución semanal (8 semanas)</div>
-      <div style="display:flex;align-items:flex-end;gap:6px;height:100px">
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">📅 Evolución semanal (8 semanas)</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:90px">
         ${semanas.map((s,i)=>`
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-            <div style="font-size:9px;font-weight:700;color:#E65100">${s.count||''}</div>
-            <div style="width:100%;background:${i===7?'#E65100':'#FFF3E0'};border-radius:4px 4px 0 0;height:${Math.max(s.fact/maxSem*80,3)}px"></div>
-            <div style="font-size:9px;color:var(--suave);font-weight:600">${s.label}</div>
+            <div style="font-size:9px;font-weight:700;color:${i===7?'#FB923C':'rgba(251,146,60,.5)'}">${s.count||''}</div>
+            <div style="width:100%;background:${i===7?'linear-gradient(180deg,#FB923C,#EA580C)':'rgba(251,146,60,.15)'};border-radius:4px 4px 0 0;height:${Math.max(s.fact/maxSem*75,3)}px"></div>
+            <div style="font-size:9px;color:rgba(255,255,255,.72);font-weight:600">${s.label}</div>
           </div>`).join("")}
       </div>
     </div>
@@ -2011,7 +2021,7 @@ function renderAdminEquipo() {
   const mesCur = hoy.getMonth()+"-"+hoy.getFullYear();
   const mesPrev = (hoy.getMonth()===0?11:hoy.getMonth()-1)+"-"+(hoy.getMonth()===0?hoy.getFullYear()-1:hoy.getFullYear());
 
-  if (!entries.length) return `<div class="empty"><span>👥</span>Todavía no hay datos de vendedoras.<br>Completá el campo "Vendedora" al cargar órdenes.</div>`;
+  if (!entries.length) return `<div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:40px 20px;text-align:center;color:rgba(255,255,255,.78)"><span style="font-size:36px;display:block;margin-bottom:10px">👥</span>Todavía no hay datos de vendedoras.<br>Completá el campo "Vendedora" al cargar órdenes.</div>`;
 
   // Últimos 6 meses para comparativa
   const ultimos6meses = Array.from({length:6},(_,i)=>{
@@ -2023,47 +2033,46 @@ function renderAdminEquipo() {
 
   return `
     <!-- Ranking vendedoras -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">🏆 Ranking general</div>
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🏆 Ranking general</div>
       ${entries.map(([nombre, d], i) => {
         const curMes = d.byMes[mesCur]||0;
         const prevMes = d.byMes[mesPrev]||0;
         const pct = prevMes ? Math.round((curMes-prevMes)/prevMes*100) : null;
         const medals = ["🥇","🥈","🥉"];
-        return `<div style="padding:12px 0;border-bottom:1px solid var(--gris-borde)">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:20px">${medals[i]||"👤"}</span>
-              <div>
-                <div style="font-weight:800;font-size:15px">${nombre}</div>
-                <div style="font-size:12px;color:var(--suave)">${d.ordenes} órdenes totales</div>
-              </div>
+        const accentColors = ["#F5E87C","rgba(255,255,255,.5)","rgba(180,120,60,.8)"];
+        return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;background:rgba(255,255,255,.06);border:1px solid ${accentColors[i]||'rgba(255,255,255,.1)'};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">${medals[i]||"👤"}</div>
+            <div>
+              <div style="font-weight:800;font-size:14px;color:#fff">${nombre}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.78)">${d.ordenes} órdenes totales</div>
             </div>
-            <div style="text-align:right">
-              <div style="font-weight:900;font-size:16px;color:var(--azul)">$${num(d.total.toFixed(0))}</div>
-              <div style="font-size:11px;color:var(--suave)">Este mes: $${num(curMes.toFixed(0))}</div>
-              ${pct!==null?`<div style="font-size:11px;font-weight:800;color:${pct>=0?'#2E7D32':'#C62828'}">${pct>=0?'▲':'▼'}${Math.abs(pct)}%</div>`:""}
-            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:900;font-size:15px;color:#4A9EFF">$${num(d.total.toFixed(0))}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.78)">Este mes: $${num(curMes.toFixed(0))}</div>
+            ${pct!==null?`<div style="font-size:10px;font-weight:800;color:${pct>=0?'#34D399':'#EF5350'}">${pct>=0?'▲':'▼'}${Math.abs(pct)}%</div>`:""}
           </div>
         </div>`;
       }).join("")}
     </div>
 
     <!-- Comparativa por mes -->
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">📊 Comparativa por vendedora (6 meses)</div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:320px">
-          <tr style="background:var(--azul)">
-            <th style="color:var(--amarillo);padding:7px 8px;text-align:left;border-radius:6px 0 0 0">Vendedora</th>
-            ${ultimos6meses.map(m=>` <th style="color:var(--amarillo);padding:7px 6px;text-align:center">${m.label}</th>`).join("")}
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">📊 Comparativa por vendedora (6 meses)</div>
+      <div style="overflow-x:auto;scrollbar-width:none">
+        <table style="width:100%;border-collapse:collapse;min-width:280px;font-size:12px">
+          <tr>
+            <th style="padding:8px 6px;text-align:left;font-size:10px;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Vendedora</th>
+            ${ultimos6meses.map(m2=>`<th style="padding:8px 4px;text-align:center;font-size:10px;color:rgba(255,255,255,.35);font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">${m2.label}</th>`).join("")}
           </tr>
-          ${entries.map(([nombre,d])=>`
-            <tr style="border-bottom:1px solid var(--gris-borde)">
-              <td style="padding:8px;font-weight:700">${nombre}</td>
-              ${ultimos6meses.map(m=>{
-                const v = d.byMes[m.key]||0;
-                return `<td style="padding:8px 6px;text-align:center;color:${v>0?'var(--azul)':'var(--suave)'}">
+          ${entries.map(([nombre, d])=>`
+            <tr>
+              <td style="padding:10px 6px;font-weight:700;color:#fff;white-space:nowrap">${nombre}</td>
+              ${ultimos6meses.map(m2=>{
+                const v = d.byMes[m2.key]||0;
+                return `<td style="padding:10px 6px;text-align:center;color:${v>0?'#4A9EFF':'rgba(255,255,255,.2)'}">
                   ${v>0?'$'+num(Math.round(v/1000))+'k':'—'}
                 </td>`;
               }).join("")}
@@ -2104,33 +2113,33 @@ function renderAdminProductos() {
     const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
     const max = entries[0]?.[1]||1;
     return entries.map(([k,v])=>`
-      <div style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
-          <span style="font-weight:600">${k}</span>
-          <span style="font-weight:800;color:${color}">${v} <span style="font-size:10px;color:var(--suave);font-weight:400">(${Math.round(v/total*100)}%)</span></span>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <span style="font-weight:600;color:#fff">${k}</span>
+          <span style="font-weight:800;color:${color}">${v} <span style="font-size:10px;color:rgba(255,255,255,.6);font-weight:400">${Math.round(v/total*100)}%</span></span>
         </div>
-        <div style="background:#eee;border-radius:6px;height:8px">
-          <div style="background:${color};width:${Math.round(v/max*100)}%;height:8px;border-radius:6px"></div>
+        <div style="background:rgba(255,255,255,.06);border-radius:6px;height:7px;overflow:hidden">
+          <div style="background:${color};width:${Math.round(v/max*100)}%;height:7px;border-radius:6px;transition:width .4s"></div>
         </div>
-      </div>`).join("") || `<div style="color:var(--suave);font-size:13px">Sin datos este mes</div>`;
+      </div>`).join("") || `<div style="color:rgba(255,255,255,.6);font-size:13px">Sin datos este mes</div>`;
   };
 
   return `
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">🚀 Motores de venta (este mes)</div>
-      ${barras(motorMes, "#1B4FA8", ordMes.length||1)}
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🚀 Motores de venta (este mes)</div>
+      ${barras(motorMes, "#4A9EFF", ordMes.length||1)}
     </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">✨ Tratamientos más vendidos (este mes)</div>
-      ${barras(tratMes, "#6A1B9A", ordMes.length||1)}
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✨ Tratamientos más vendidos (este mes)</div>
+      ${barras(tratMes, "#A78BFA", ordMes.length||1)}
     </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">🏥 Obras sociales (este mes)</div>
-      ${barras(osMes, "#E65100", ordMes.length||1)}
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🏥 Obras sociales (este mes)</div>
+      ${barras(osMes, "#FB923C", ordMes.length||1)}
     </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:12px">✨ Tratamientos históricos (todos)</div>
-      ${barras(tratTotal, "#1565C0", ordTotal.length||1)}
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✨ Tratamientos históricos (todos)</div>
+      ${barras(tratTotal, "#34D399", ordTotal.length||1)}
     </div>
   `;
 }
@@ -2164,56 +2173,58 @@ function renderAdminOrdenes() {
   const topClientes = Object.values(clienteMap).sort((a,b)=>b.total-a.total).slice(0,8);
 
   return `
-    ${sinRetirar.length?`<div class="card" style="margin-bottom:12px;border-left:4px solid #F57F17">
-      <div class="fsec-tit" style="margin-bottom:10px;color:#E65100">⏰ Sin retirar hace +7 días (${sinRetirar.length})</div>
+    ${sinRetirar.length?`<div style="background:rgba(251,146,60,.06);backdrop-filter:blur(12px);border:1px solid rgba(251,146,60,.3);box-shadow:0 0 0 1px rgba(251,146,60,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,200,100,.06);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#FB923C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">⏰ Sin retirar hace +7 días (${sinRetirar.length})</div>
       ${sinRetirar.slice(0,6).map(o=>{
         const idx=D.orders.findIndex(x=>x.id===o.id);
         const dias=Math.floor((hoy-new Date(o.fecha+"T12:00:00"))/86400000);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris-borde)">
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
           <div>
-            <div style="font-weight:700">${o.nombre||"—"}</div>
-            <div style="font-size:12px;color:var(--suave)">Hace ${dias} días · ${fmtDate(o.fecha)}</div>
+            <div style="font-weight:700;color:#fff">${o.nombre||"—"}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.78)">Hace ${dias} días · ${fmtDate(o.fecha)}</div>
           </div>
           <div style="display:flex;gap:6px">
-            ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="background:#E7F9EE;color:#25D366;border-radius:7px;padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none">📲</a>`:""}
+            ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);color:#25D366;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none">📲</a>`:""}
             <button onclick="marcarRetirado(${D.orders.findIndex(x=>x.id===o.id)});switchAdminTab('ordenes')" class="btn-green" style="font-size:12px;padding:5px 9px">✅</button>
           </div>
         </div>`;
       }).join("")}
     </div>`:""}
 
-    <div class="card" style="margin-bottom:12px">
-      <div class="fsec-tit" style="margin-bottom:10px">🏆 Top clientes por facturación</div>
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">🏆 Top clientes por facturación</div>
       ${topClientes.map((c,i)=>{
         const medals=["🥇","🥈","🥉"];
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris-borde)">
+        const accentColors=["#F5E87C","rgba(255,255,255,.5)","rgba(180,120,60,.8)"];
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
           <div style="display:flex;align-items:center;gap:8px">
-            <span>${medals[i]||"👤"}</span>
+            <div style="width:32px;height:32px;background:rgba(255,255,255,.05);border:1px solid ${accentColors[i]||'rgba(255,255,255,.1)'};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">${medals[i]||"👤"}</div>
             <div>
-              <div style="font-weight:700;font-size:14px">${c.nombre}</div>
-              <div style="font-size:11px;color:var(--suave)">${c.ordenes} órd.</div>
+              <div style="font-weight:700;font-size:13px;color:#fff">${c.nombre}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.78)">${c.ordenes} órd.</div>
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-weight:900;color:var(--azul)">$${num(c.total.toFixed(0))}</div>
+            <div style="font-weight:900;color:#4A9EFF;font-size:14px">$${num(c.total.toFixed(0))}</div>
             ${c.cel?`<a href="https://wa.me/549${String(c.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="font-size:11px;color:#25D366;text-decoration:none">📲 WA</a>`:""}
           </div>
         </div>`;
       }).join("")}
     </div>
 
-    ${deudas.length?`<div class="card" style="margin-bottom:12px;border-left:4px solid #E65100">
-      <div class="fsec-tit" style="margin-bottom:4px;color:#E65100">📒 Deuda total: $${num(totalDeuda.toFixed(0))}</div>
-      <div style="font-size:12px;color:var(--suave);margin-bottom:10px">${deudas.length} cuentas abiertas</div>
+    ${deudas.length?`<div style="background:rgba(251,146,60,.06);backdrop-filter:blur(12px);border:1px solid rgba(251,146,60,.3);box-shadow:0 0 0 1px rgba(251,146,60,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,200,100,.06);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#FB923C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">📒 Deuda total</div>
+      <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:4px">$${num(totalDeuda.toFixed(0))}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:12px">${deudas.length} cuentas abiertas</div>
       ${deudas.slice(0,6).map(o=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris-borde)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
           <div>
-            <div style="font-weight:700">${o.nombre||"—"}</div>
-            <div style="font-size:11px;color:var(--suave)">N°${o.num} · ${fmtDate(o.fecha)}</div>
+            <div style="font-weight:700;color:#fff">${o.nombre||"—"}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.78)">N°${o.num} · ${fmtDate(o.fecha)}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-weight:900;color:#E65100">$${num(o.saldoN.toFixed(0))}</span>
-            ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="background:#E7F9EE;color:#25D366;border-radius:7px;padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none">📲</a>`:""}
+            <span style="font-weight:900;color:#FB923C;font-size:14px">$${num(o.saldoN.toFixed(0))}</span>
+            ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);color:#25D366;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none">📲</a>`:""}
           </div>
         </div>`).join("")}
     </div>`:""}
