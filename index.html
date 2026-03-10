@@ -5494,11 +5494,30 @@ function renderFinanzas() {
       <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">
         <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:4px">💳 Costo financiero por forma de pago</div>
         <div style="font-size:12px;color:var(--suave);margin-bottom:12px">% que se suma al costo de cada orden según cómo pagó el cliente.</div>
-        ${todasFormas.map(fp => {
+        ${todasFormas.filter(fp => fp !== "Tarjeta crédito").map(fp => {
           const val = cfin[fp] || "";
           return `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
               <div style="flex:1;font-size:13px;font-weight:700">${fp}</div>
+              <div style="display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:100px">
+                <input type="number" min="0" max="100" step="0.5" value="${val}" placeholder="0"
+                  onchange="finActualizarCostoFin('${fp}',this.value)"
+                  style="border:none;outline:none;font-size:14px;font-weight:700;width:55px;padding:8px 0;font-family:inherit;background:transparent">
+                <span style="font-size:12px;color:var(--suave);font-weight:700">%</span>
+              </div>
+            </div>`;
+        }).join("")}
+        <div style="display:flex;align-items:center;gap:8px;margin:14px 0 10px">
+          <div style="flex:1;height:1px;background:var(--gris-borde)"></div>
+          <div style="font-size:12px;font-weight:800;color:var(--azul);white-space:nowrap;padding:0 8px">💳 Tarjeta crédito</div>
+          <div style="flex:1;height:1px;background:var(--gris-borde)"></div>
+        </div>
+        ${["Tarjeta crédito 1 cuota","Tarjeta crédito 3 cuotas s/i","Tarjeta crédito 5 cuotas s/i","Tarjeta crédito 6 cuotas s/i","Tarjeta crédito 12 cuotas"].map(fp => {
+          const label = fp.replace("Tarjeta crédito ","");
+          const val = cfin[fp] || "";
+          return `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div style="flex:1;font-size:13px;font-weight:700;padding-left:10px;color:var(--oscuro)">${label}</div>
               <div style="display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:100px">
                 <input type="number" min="0" max="100" step="0.5" value="${val}" placeholder="0"
                   onchange="finActualizarCostoFin('${fp}',this.value)"
