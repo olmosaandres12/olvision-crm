@@ -251,6 +251,7 @@
       <div id="nav-admin-label" style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Administración</div>
       <button class="nav-item" id="nav-stats" onclick="setTab('stats',this)"><span class="nav-icon">📊</span><span>Estadísticas</span></button>
       <button class="nav-item" id="nav-finanzas" onclick="checkAdmin(()=>renderFinanzas(),'nav-finanzas','finanzas')"><span class="nav-icon">💰</span><span>Finanzas</span></button>
+      <button class="nav-item" id="nav-administracion" onclick="setTab('administracion',this)"><span class="nav-icon">🏦</span><span>Administración</span></button>
       <button class="nav-item" id="nav-admin" onclick="setTab('admin',this)" style="margin-top:8px;background:linear-gradient(135deg,rgba(245,232,124,.15),rgba(245,232,124,.05));border-top:1px solid rgba(255,255,255,.1)">
         <span class="nav-icon">🏆</span><span style="color:var(--amarillo);font-weight:900">Panel CEO</span>
       </button>
@@ -379,6 +380,10 @@
 
 <div id="screen-finanzas" class="screen">
   <div id="finanzas-body"></div>
+</div>
+
+<div id="screen-administracion" class="screen">
+  <div id="administracion-body"></div>
 </div>
 
 
@@ -850,6 +855,7 @@ function setTab(t,btn) {
   if(t==="pendientes")   renderPendientes();
   if(t==="ordenes")      renderOrdenes();
   if(t==="finanzas")     renderFinanzas();
+  if(t==="administracion") renderAdministracion();
 
   // Sync con Sheets → re-render con datos frescos
   syncSheets().then(() => {
@@ -865,6 +871,7 @@ function setTab(t,btn) {
     if(t==="config")       renderConfig();
     if(t==="admin")        renderAdminPanel();
     if(t==="finanzas")     renderFinanzas();
+    if(t==="administracion") renderAdministracion();
   });
 }
 
@@ -5643,6 +5650,611 @@ function finActualizarIIBB(valor) {
 }
 
 // init() se llama desde doLogin()
+
+// ══════════════════════════════════════════════════════
+// MÓDULO ADMINISTRACIÓN — Proveedores, Cheques, Sueldos
+// ══════════════════════════════════════════════════════
+
+// ── Storage helpers ──
+function getAdminData(key) {
+  try { const s = localStorage.getItem("olvision_admin_"+key); return s ? JSON.parse(s) : []; }
+  catch { return []; }
+}
+function saveAdminData(key, data) {
+  localStorage.setItem("olvision_admin_"+key, JSON.stringify(data));
+  push({ type:"SAVE_DATA", key:"ADMIN_"+key.toUpperCase(), value: JSON.stringify(data) });
+}
+function getAdminConfig(key, def) {
+  try { const s = localStorage.getItem("olvision_admin_cfg_"+key); return s ? JSON.parse(s) : def; }
+  catch { return def; }
+}
+function saveAdminConfig(key, data) {
+  localStorage.setItem("olvision_admin_cfg_"+key, JSON.stringify(data));
+  push({ type:"SAVE_DATA", key:"ADMIN_CFG_"+key.toUpperCase(), value: JSON.stringify(data) });
+}
+
+// ── Render principal ──
+function renderAdministracion() {
+  const el = document.getElementById("administracion-body");
+  if (!el) return;
+  const tab = el.dataset.tab || "proveedores";
+  const tabs = [
+    ["proveedores","🏭 Proveedores"],
+    ["cheques","📄 Cheques"],
+    ["sueldos","👥 Sueldos"]
+  ];
+  const tabBar = `
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      ${tabs.map(([v,l])=>`
+        <button onclick="adminSetTab('${v}')"
+          style="flex:1;padding:10px 4px;border:none;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;
+          background:${tab===v?"var(--azul)":"var(--blanco)"};
+          color:${tab===v?"var(--amarillo)":"var(--texto)"};
+          box-shadow:${tab===v?"0 3px 10px rgba(27,79,168,.3)":"0 1px 4px rgba(0,0,0,.06)"};
+          border:${tab===v?"none":"1.5px solid var(--gris-borde)"}">${l}</button>
+      `).join("")}
+    </div>`;
+
+  let content = "";
+  if (tab === "proveedores") content = renderAdminProveedores();
+  else if (tab === "cheques") content = renderAdminCheques();
+  else if (tab === "sueldos") content = renderAdminSueldos();
+
+  el.innerHTML = tabBar + content;
+}
+
+function adminSetTab(tab) {
+  const el = document.getElementById("administracion-body");
+  if (el) el.dataset.tab = tab;
+  renderAdministracion();
+}
+
+// ──────────────────────────────────────────────────
+// SUB-MÓDULO 1: PROVEEDORES
+// ──────────────────────────────────────────────────
+function renderAdminProveedores() {
+  const pagos = getAdminData("pagos_prov");
+  const hoy = new Date();
+
+  // Agrupar por proveedor
+  const porProv = {};
+  pagos.forEach(p => {
+    if (!porProv[p.proveedor]) porProv[p.proveedor] = [];
+    porProv[p.proveedor].push(p);
+  });
+
+  const totalARS = pagos.filter(p=>p.moneda!=="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+  const totalUSD = pagos.filter(p=>p.moneda==="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+
+  const resumen = `
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div style="flex:1;background:var(--blanco);border-radius:13px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid var(--azul)">
+        <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:4px">Total ARS</div>
+        <div style="font-size:20px;font-weight:900;color:var(--azul)">$${num(totalARS)}</div>
+      </div>
+      <div style="flex:1;background:var(--blanco);border-radius:13px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32">
+        <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:4px">Total USD</div>
+        <div style="font-size:20px;font-weight:900;color:#2E7D32">U$D ${num(totalUSD)}</div>
+      </div>
+    </div>`;
+
+  const lista = pagos.length === 0
+    ? `<div class="empty"><span>🏭</span>Sin pagos registrados</div>`
+    : [...Object.entries(porProv)].sort((a,b)=>a[0].localeCompare(b[0])).map(([prov, ps]) => {
+        const totARS = ps.filter(p=>p.moneda!=="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+        const totUSD = ps.filter(p=>p.moneda==="USD").reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+        const items = ps.sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(p=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--gris-borde)">
+            <div>
+              <div style="font-size:13px;font-weight:700">${p.fecha ? new Date(p.fecha+"T12:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"short",year:"numeric"}) : ""}</div>
+              <div style="font-size:11px;color:var(--suave)">${p.metodoPago||""} ${p.notas?`· ${p.notas}`:""}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="text-align:right">
+                ${p.moneda==="USD"
+                  ? `<div style="font-size:15px;font-weight:900;color:#2E7D32">U$D ${num(parseFloat(p.monto)||0)}</div>`
+                  : `<div style="font-size:15px;font-weight:900;color:var(--azul)">$${num(parseFloat(p.monto)||0)}</div>`}
+              </div>
+              <button onclick="adminEliminarPago('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#ccc;padding:2px 4px">×</button>
+            </div>
+          </div>`).join("");
+        return `
+          <div style="background:var(--blanco);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:12px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;background:var(--azul-light);border-bottom:1.5px solid var(--gris-borde)">
+              <div style="font-size:14px;font-weight:900;color:var(--azul)">🏭 ${prov}</div>
+              <div style="text-align:right">
+                ${totARS>0?`<div style="font-size:13px;font-weight:800;color:var(--azul)">$${num(totARS)}</div>`:""}
+                ${totUSD>0?`<div style="font-size:13px;font-weight:800;color:#2E7D32">U$D ${num(totUSD)}</div>`:""}
+              </div>
+            </div>
+            ${items}
+          </div>`;
+      }).join("");
+
+  const form = `
+    <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:14px">➕ Registrar pago a proveedor</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="ap-proveedor" placeholder="Nombre del proveedor" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;background:var(--gris)">
+        <div style="display:flex;gap:8px">
+          <input id="ap-fecha" type="date" value="${hoy.toISOString().split("T")[0]}" style="flex:1;border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 12px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+          <select id="ap-moneda" style="flex:0 0 90px;border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+            <option value="ARS">$ ARS</option>
+            <option value="USD">U$D</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 13px">
+          <span style="font-size:13px;color:var(--suave);font-weight:700">$</span>
+          <input id="ap-monto" type="number" min="0" placeholder="Monto" style="flex:1;border:none;outline:none;font-size:15px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+        </div>
+        <select id="ap-metodo" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+          <option value="">— Método de pago —</option>
+          <option>Efectivo</option>
+          <option>Transferencia</option>
+          <option>Cheque</option>
+          <option>Tarjeta débito</option>
+          <option>Tarjeta crédito</option>
+        </select>
+        <input id="ap-notas" placeholder="Notas (opcional)" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <button onclick="adminGuardarPago()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">Guardar pago</button>
+      </div>
+    </div>`;
+
+  return form + resumen + lista;
+}
+
+function adminGuardarPago() {
+  const prov = document.getElementById("ap-proveedor")?.value?.trim();
+  const monto = parseFloat(document.getElementById("ap-monto")?.value);
+  const fecha = document.getElementById("ap-fecha")?.value;
+  if (!prov || !monto || !fecha) { toast("Completá proveedor, monto y fecha"); return; }
+  const pagos = getAdminData("pagos_prov");
+  pagos.push({
+    id: Date.now().toString(),
+    proveedor: prov,
+    fecha,
+    monto,
+    moneda: document.getElementById("ap-moneda")?.value || "ARS",
+    metodoPago: document.getElementById("ap-metodo")?.value || "",
+    notas: document.getElementById("ap-notas")?.value?.trim() || ""
+  });
+  saveAdminData("pagos_prov", pagos);
+  toast("✅ Pago registrado");
+  renderAdministracion();
+}
+
+function adminEliminarPago(id) {
+  if (!confirm("¿Eliminar este pago?")) return;
+  const pagos = getAdminData("pagos_prov").filter(p => p.id !== id);
+  saveAdminData("pagos_prov", pagos);
+  renderAdministracion();
+}
+
+// ──────────────────────────────────────────────────
+// SUB-MÓDULO 2: CHEQUES
+// ──────────────────────────────────────────────────
+function renderAdminCheques() {
+  const cheques = getAdminData("cheques");
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const en7 = new Date(hoy); en7.setDate(en7.getDate()+7);
+  const en30 = new Date(hoy); en30.setDate(en30.getDate()+30);
+
+  const pendientes = cheques.filter(c => !["debitado","cancelado"].includes(c.estado));
+  const totalPendiente = pendientes.reduce((a,c)=>a+(parseFloat(c.monto)||0),0);
+  const prox7 = pendientes.filter(c => { const d = new Date(c.vencimiento+"T12:00:00"); return d>=hoy && d<=en7; });
+  const prox30 = pendientes.filter(c => { const d = new Date(c.vencimiento+"T12:00:00"); return d>=hoy && d<=en30; });
+  const vencidos = pendientes.filter(c => { const d = new Date(c.vencimiento+"T12:00:00"); return d<hoy; });
+
+  const getEstadoColor = (c) => {
+    const d = new Date(c.vencimiento+"T12:00:00");
+    if (c.estado==="debitado") return { bg:"#E8F5E9", txt:"#2E7D32", label:"✅ Debitado" };
+    if (c.estado==="cancelado") return { bg:"#F5F5F5", txt:"#999", label:"❌ Cancelado" };
+    if (d<hoy) return { bg:"#FDECEA", txt:"#C62828", label:"🔴 Vencido" };
+    const diff = Math.round((d-hoy)/(1000*60*60*24));
+    if (diff===0) return { bg:"#FFF3E0", txt:"#E65100", label:"🟠 Vence hoy" };
+    if (diff<=7) return { bg:"#FFF8E1", txt:"#F57F17", label:`⚠️ En ${diff}d` };
+    return { bg:"#E3F2FD", txt:"#1565C0", label:`📅 En ${diff}d` };
+  };
+
+  const resumen = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--blanco);border-radius:13px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #C62828">
+        <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:3px">Exposición total</div>
+        <div style="font-size:18px;font-weight:900;color:#C62828">$${num(totalPendiente)}</div>
+        <div style="font-size:11px;color:var(--suave)">${pendientes.length} cheques</div>
+      </div>
+      <div style="background:var(--blanco);border-radius:13px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #E65100">
+        <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:3px">Próx. 7 días</div>
+        <div style="font-size:18px;font-weight:900;color:#E65100">$${num(prox7.reduce((a,c)=>a+(parseFloat(c.monto)||0),0))}</div>
+        <div style="font-size:11px;color:var(--suave)">${prox7.length} cheques</div>
+      </div>
+      <div style="background:var(--blanco);border-radius:13px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #F57F17">
+        <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:3px">Próx. 30 días</div>
+        <div style="font-size:18px;font-weight:900;color:#F57F17">$${num(prox30.reduce((a,c)=>a+(parseFloat(c.monto)||0),0))}</div>
+        <div style="font-size:11px;color:var(--suave)">${prox30.length} cheques</div>
+      </div>
+      <div style="background:var(--blanco);border-radius:13px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #C62828">
+        <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-bottom:3px">Vencidos</div>
+        <div style="font-size:18px;font-weight:900;color:#C62828">$${num(vencidos.reduce((a,c)=>a+(parseFloat(c.monto)||0),0))}</div>
+        <div style="font-size:11px;color:var(--suave)">${vencidos.length} cheques</div>
+      </div>
+    </div>`;
+
+  const lista = cheques.length === 0
+    ? `<div class="empty"><span>📄</span>Sin cheques registrados</div>`
+    : [...cheques].sort((a,b) => {
+        const order = {pendiente:0,proximo:1,vencido:2,debitado:3,cancelado:4};
+        const da = new Date(a.vencimiento+"T12:00:00"), db = new Date(b.vencimiento+"T12:00:00");
+        const ea = da<hoy && !["debitado","cancelado"].includes(a.estado) ? "vencido" : a.estado;
+        const eb = db<hoy && !["debitado","cancelado"].includes(b.estado) ? "vencido" : b.estado;
+        if ((order[ea]||0) !== (order[eb]||0)) return (order[ea]||0)-(order[eb]||0);
+        return da-db;
+      }).map(c => {
+        const { bg, txt, label } = getEstadoColor(c);
+        const hayBanco = c.cbu || c.alias || c.titular;
+        return `
+          <div style="background:var(--blanco);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:10px;overflow:hidden">
+            <div style="background:${bg};padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:14px;font-weight:900;color:${txt}">${c.destinatario||"Sin destinatario"}</div>
+                <div style="font-size:11px;color:${txt};opacity:.8">${label}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:18px;font-weight:900;color:${txt}">$${num(parseFloat(c.monto)||0)}</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px">
+              <div style="display:flex;gap:12px;font-size:12px;color:var(--suave);margin-bottom:8px">
+                <span>📅 Emisión: <strong>${c.fechaEmision||"—"}</strong></span>
+                <span>⏰ Vence: <strong style="color:${txt}">${c.vencimiento||"—"}</strong></span>
+              </div>
+              ${c.banco ? `<div style="font-size:12px;color:var(--texto);margin-bottom:6px">🏦 ${c.banco} ${c.nroCuenta ? `· Cta: ${c.nroCuenta}` : ""}</div>` : ""}
+              ${hayBanco ? `
+                <div style="background:var(--gris);border-radius:9px;padding:10px 12px;margin-bottom:8px">
+                  ${c.titular ? `<div style="font-size:12px;margin-bottom:4px"><span style="color:var(--suave)">Titular:</span> <strong>${c.titular}</strong></div>` : ""}
+                  ${c.cuit ? `<div style="font-size:12px;margin-bottom:4px"><span style="color:var(--suave)">CUIT:</span> <strong>${c.cuit}</strong></div>` : ""}
+                  ${c.cbu ? `<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                    <span><span style="color:var(--suave)">CBU:</span> <strong style="font-family:monospace">${c.cbu}</strong></span>
+                    <button onclick="adminCopiar('${c.cbu}','CBU')" style="background:var(--azul);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer">Copiar</button>
+                  </div>` : ""}
+                  ${c.alias ? `<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+                    <span><span style="color:var(--suave)">Alias:</span> <strong>${c.alias}</strong></span>
+                    <button onclick="adminCopiar('${c.alias}','Alias')" style="background:var(--azul);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer">Copiar</button>
+                  </div>` : ""}
+                </div>` : ""}
+              ${c.notas ? `<div style="font-size:12px;color:var(--suave);margin-bottom:8px">📝 ${c.notas}</div>` : ""}
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                ${!["debitado","cancelado"].includes(c.estado) ? `
+                  <button onclick="adminCambiarEstadoCheque('${c.id}','debitado')" style="flex:1;background:#E8F5E9;color:#2E7D32;border:1.5px solid #A5D6A7;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer">✅ Debitado</button>
+                  <button onclick="adminCambiarEstadoCheque('${c.id}','cancelado')" style="flex:1;background:#F5F5F5;color:#999;border:1.5px solid #E0E0E0;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer">❌ Cancelar</button>
+                ` : `<div style="font-size:12px;color:var(--suave);font-style:italic">Cheque ${c.estado}</div>`}
+                <button onclick="adminEliminarCheque('${c.id}')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#ccc;padding:6px">×</button>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+
+  const form = `
+    <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:14px">➕ Emitir cheque</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="ch-dest" placeholder="Destinatario / Proveedor" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;background:var(--gris)">
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--suave);font-weight:700;margin-bottom:4px;padding-left:4px">Fecha emisión</div>
+            <input id="ch-emision" type="date" value="${new Date().toISOString().split("T")[0]}" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 12px;font-size:13px;font-family:inherit;outline:none;background:var(--gris);box-sizing:border-box">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--suave);font-weight:700;margin-bottom:4px;padding-left:4px">Fecha vencimiento</div>
+            <input id="ch-venc" type="date" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 12px;font-size:13px;font-family:inherit;outline:none;background:var(--gris);box-sizing:border-box">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 13px">
+          <span style="font-size:13px;color:var(--suave);font-weight:700">$</span>
+          <input id="ch-monto" type="number" min="0" placeholder="Monto" style="flex:1;border:none;outline:none;font-size:15px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+        </div>
+        <input id="ch-banco" placeholder="Banco (ej: Galicia, Nación...)" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <div style="font-size:12px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.5px;padding-top:4px">Datos bancarios del destinatario</div>
+        <input id="ch-titular" placeholder="Nombre del titular" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <input id="ch-cuit" placeholder="CUIT" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <input id="ch-cbu" placeholder="CBU (22 dígitos)" maxlength="22" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:monospace;outline:none;background:var(--gris)">
+        <input id="ch-alias" placeholder="Alias (opcional)" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <input id="ch-notas" placeholder="Notas (opcional)" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <button onclick="adminGuardarCheque()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">Registrar cheque</button>
+      </div>
+    </div>`;
+
+  return form + resumen + lista;
+}
+
+function adminGuardarCheque() {
+  const dest = document.getElementById("ch-dest")?.value?.trim();
+  const monto = parseFloat(document.getElementById("ch-monto")?.value);
+  const venc = document.getElementById("ch-venc")?.value;
+  if (!dest || !monto || !venc) { toast("Completá destinatario, monto y fecha de vencimiento"); return; }
+  const cheques = getAdminData("cheques");
+  cheques.push({
+    id: Date.now().toString(),
+    destinatario: dest,
+    fechaEmision: document.getElementById("ch-emision")?.value || "",
+    vencimiento: venc,
+    monto,
+    banco: document.getElementById("ch-banco")?.value?.trim() || "",
+    titular: document.getElementById("ch-titular")?.value?.trim() || "",
+    cuit: document.getElementById("ch-cuit")?.value?.trim() || "",
+    cbu: document.getElementById("ch-cbu")?.value?.trim() || "",
+    alias: document.getElementById("ch-alias")?.value?.trim() || "",
+    notas: document.getElementById("ch-notas")?.value?.trim() || "",
+    estado: "pendiente"
+  });
+  saveAdminData("cheques", cheques);
+  toast("✅ Cheque registrado");
+  renderAdministracion();
+}
+
+function adminCambiarEstadoCheque(id, estado) {
+  const cheques = getAdminData("cheques");
+  const c = cheques.find(x=>x.id===id);
+  if (c) { c.estado = estado; saveAdminData("cheques", cheques); renderAdministracion(); }
+}
+
+function adminEliminarCheque(id) {
+  if (!confirm("¿Eliminar este cheque?")) return;
+  saveAdminData("cheques", getAdminData("cheques").filter(c=>c.id!==id));
+  renderAdministracion();
+}
+
+function adminCopiar(texto, label) {
+  navigator.clipboard.writeText(texto).then(()=>toast(`✅ ${label} copiado`)).catch(()=>{
+    const ta = document.createElement("textarea");
+    ta.value = texto; document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+    document.body.removeChild(ta); toast(`✅ ${label} copiado`);
+  });
+}
+
+// ──────────────────────────────────────────────────
+// SUB-MÓDULO 3: SUELDOS
+// ──────────────────────────────────────────────────
+function getEmpleados() { return getAdminConfig("empleados", []); }
+function saveEmpleados(e) { saveAdminConfig("empleados", e); }
+function getPagosSueldos() { return getAdminData("pagos_sueldos"); }
+function savePagosSueldos(p) { saveAdminData("pagos_sueldos", p); }
+
+function renderAdminSueldos() {
+  const empleados = getEmpleados();
+  const pagos = getPagosSueldos();
+  const hoy = new Date();
+  const mesActual = hoy.getMonth();
+  const anioActual = hoy.getFullYear();
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  // Calcular deuda acumulada por empleado
+  const calcDeuda = (emp) => {
+    const pagosEmp = pagos.filter(p => p.empleadoId === emp.id);
+    // Recorrer todos los meses desde el primero hasta hoy
+    let deudaAcum = 0;
+    const mesesConDatos = [...new Set(pagosEmp.map(p=>`${p.anio}-${p.mes}`))];
+    // Calcular desde primer pago o mes actual
+    const fechaInicio = emp.fechaIngreso ? new Date(emp.fechaIngreso+"T12:00:00") : new Date(anioActual, mesActual, 1);
+    let anioIt = fechaInicio.getFullYear(), mesIt = fechaInicio.getMonth();
+    while (anioIt < anioActual || (anioIt === anioActual && mesIt <= mesActual)) {
+      const salario = parseFloat(emp.salario) || 0;
+      const pagado = pagosEmp.filter(p=>p.mes===mesIt && p.anio===anioIt).reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+      deudaAcum += salario - pagado;
+      mesIt++; if (mesIt > 11) { mesIt = 0; anioIt++; }
+    }
+    return deudaAcum;
+  };
+
+  const pagadoMes = (empId, mes, anio) =>
+    pagos.filter(p=>p.empleadoId===empId && p.mes===mes && p.anio===anio).reduce((a,p)=>a+(parseFloat(p.monto)||0),0);
+
+  const tarjetas = empleados.length === 0
+    ? `<div class="empty"><span>👥</span>Sin empleados registrados</div>`
+    : empleados.map(emp => {
+        const salario = parseFloat(emp.salario) || 0;
+        const pagadoActual = pagadoMes(emp.id, mesActual, anioActual);
+        const restante = salario - pagadoActual;
+        const deudaTotal = calcDeuda(emp);
+        const pct = salario > 0 ? Math.min(100, Math.round(pagadoActual/salario*100)) : 0;
+        const pagosDelMes = pagos.filter(p=>p.empleadoId===emp.id && p.mes===mesActual && p.anio===anioActual)
+          .sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+        const historial = pagosDelMes.map(p=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--gris-borde);font-size:12px">
+            <div>
+              <div style="font-weight:700">${new Date(p.fecha+"T12:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"short"})}</div>
+              <div style="color:var(--suave)">${p.metodoPago||""} ${p.notas?`· ${p.notas}`:""}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-weight:900;color:#2E7D32">$${num(parseFloat(p.monto)||0)}</div>
+              <button onclick="adminEliminarPagoSueldo('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:16px;color:#ccc">×</button>
+            </div>
+          </div>`).join("");
+
+        return `
+          <div style="background:var(--blanco);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px;overflow:hidden">
+            <div style="background:var(--azul);padding:14px 16px;color:#fff">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div style="font-size:16px;font-weight:900">${emp.nombre}</div>
+                  <div style="font-size:12px;opacity:.8">${emp.rol||""}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:11px;opacity:.7">Sueldo base</div>
+                  <div style="font-size:18px;font-weight:900">$${num(salario)}</div>
+                  ${emp.comision ? `<div style="font-size:11px;opacity:.8">Comisión: ${emp.comision}%</div>` : ""}
+                </div>
+              </div>
+            </div>
+            <!-- Progreso del mes -->
+            <div style="padding:14px 16px;border-bottom:1px solid var(--gris-borde)">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+                <span style="font-weight:700;color:var(--texto)">${meses[mesActual]} ${anioActual}</span>
+                <span style="color:${restante>0?"#E65100":"#2E7D32"};font-weight:800">${restante>0?`Resta $${num(restante)}`:"✅ Sueldo completo"}</span>
+              </div>
+              <div style="background:#eee;border-radius:8px;height:10px;overflow:hidden;margin-bottom:6px">
+                <div style="background:${pct>=100?"#2E7D32":"var(--azul)"};width:${pct}%;height:10px;border-radius:8px;transition:width .4s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--suave)">
+                <span>Pagado: <strong style="color:#2E7D32">$${num(pagadoActual)}</strong></span>
+                <span>${pct}%</span>
+              </div>
+              ${deudaTotal > 0.01 ? `
+                <div style="margin-top:8px;background:#FDECEA;border-radius:9px;padding:8px 12px;font-size:12px;color:#C62828;font-weight:700">
+                  ⚠️ Deuda acumulada: $${num(Math.round(deudaTotal))}
+                </div>` : deudaTotal < -0.01 ? `
+                <div style="margin-top:8px;background:#E8F5E9;border-radius:9px;padding:8px 12px;font-size:12px;color:#2E7D32;font-weight:700">
+                  ✅ Sin deuda pendiente (adelanto $${num(Math.abs(Math.round(deudaTotal)))})
+                </div>` : ""}
+            </div>
+            <!-- Registrar pago -->
+            <div style="padding:12px 16px;background:var(--azul-light);border-bottom:1px solid var(--gris-borde)">
+              <div style="font-size:11px;font-weight:800;color:var(--azul);text-transform:uppercase;margin-bottom:8px">Registrar pago</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px">
+                  <span style="font-size:12px;color:var(--suave)">$</span>
+                  <input type="number" min="0" id="sp-monto-${emp.id}" placeholder="${num(Math.max(0,restante)||salario)}" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:9px 0;font-family:inherit;background:transparent">
+                </div>
+                <select id="sp-metodo-${emp.id}" style="flex:0 0 120px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 8px;font-size:12px;font-family:inherit;outline:none;background:#fff">
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <input id="sp-notas-${emp.id}" placeholder="Notas (opcional)" style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:12px;font-family:inherit;outline:none;background:#fff">
+                <button onclick="adminGuardarPagoSueldo('${emp.id}')" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:900;cursor:pointer">＋ Pagar</button>
+              </div>
+            </div>
+            <!-- Historial del mes -->
+            ${pagosDelMes.length > 0 ? `
+              <div style="padding:10px 0 2px">
+                <div style="font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;padding:0 16px;margin-bottom:6px">Pagos de ${meses[mesActual]}</div>
+                ${historial}
+              </div>` : ""}
+            <!-- Botón editar empleado -->
+            <div style="padding:10px 14px;display:flex;justify-content:flex-end">
+              <button onclick="adminEditarEmpleado('${emp.id}')" style="background:none;border:1.5px solid var(--gris-borde);border-radius:9px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--suave)">✏️ Editar empleado</button>
+            </div>
+          </div>`;
+      }).join("");
+
+  const formEmpleado = `
+    <div style="background:var(--blanco);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:900;color:var(--azul);margin-bottom:14px">➕ Agregar empleado</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="ae-nombre" placeholder="Nombre completo" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;background:var(--gris)">
+        <input id="ae-rol" placeholder="Rol (ej: Vendedora, Óptico...)" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 12px">
+            <span style="font-size:12px;color:var(--suave)">$</span>
+            <input id="ae-salario" type="number" min="0" placeholder="Sueldo base" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+          </div>
+          <div style="flex:0 0 110px;display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 12px">
+            <input id="ae-comision" type="number" min="0" max="100" step="0.5" placeholder="0" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+            <span style="font-size:12px;color:var(--suave)">% com.</span>
+          </div>
+        </div>
+        <input id="ae-ingreso" type="date" placeholder="Fecha de ingreso" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+        <button onclick="adminGuardarEmpleado()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">Agregar empleado</button>
+      </div>
+    </div>`;
+
+  return formEmpleado + tarjetas;
+}
+
+function adminGuardarEmpleado() {
+  const nombre = document.getElementById("ae-nombre")?.value?.trim();
+  const salario = parseFloat(document.getElementById("ae-salario")?.value);
+  if (!nombre || !salario) { toast("Completá nombre y sueldo"); return; }
+  const emps = getEmpleados();
+  emps.push({
+    id: Date.now().toString(),
+    nombre,
+    rol: document.getElementById("ae-rol")?.value?.trim() || "",
+    salario,
+    comision: parseFloat(document.getElementById("ae-comision")?.value) || 0,
+    fechaIngreso: document.getElementById("ae-ingreso")?.value || new Date().toISOString().split("T")[0]
+  });
+  saveEmpleados(emps);
+  toast("✅ Empleado agregado");
+  renderAdministracion();
+}
+
+function adminGuardarPagoSueldo(empId) {
+  const monto = parseFloat(document.getElementById(`sp-monto-${empId}`)?.value);
+  if (!monto) { toast("Ingresá un monto"); return; }
+  const pagos = getPagosSueldos();
+  const hoy = new Date();
+  pagos.push({
+    id: Date.now().toString(),
+    empleadoId: empId,
+    fecha: hoy.toISOString().split("T")[0],
+    mes: hoy.getMonth(),
+    anio: hoy.getFullYear(),
+    monto,
+    metodoPago: document.getElementById(`sp-metodo-${empId}`)?.value || "Efectivo",
+    notas: document.getElementById(`sp-notas-${empId}`)?.value?.trim() || ""
+  });
+  savePagosSueldos(pagos);
+  toast("✅ Pago registrado");
+  renderAdministracion();
+}
+
+function adminEliminarPagoSueldo(id) {
+  if (!confirm("¿Eliminar este pago?")) return;
+  savePagosSueldos(getPagosSueldos().filter(p=>p.id!==id));
+  renderAdministracion();
+}
+
+function adminEditarEmpleado(id) {
+  const emps = getEmpleados();
+  const emp = emps.find(e=>e.id===id);
+  if (!emp) return;
+  document.getElementById("modal-body").innerHTML = `
+    <div style="font-size:16px;font-weight:900;color:var(--azul);margin-bottom:16px">✏️ Editar empleado</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="ee-nombre" value="${emp.nombre||""}" placeholder="Nombre" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;background:var(--gris)">
+      <input id="ee-rol" value="${emp.rol||""}" placeholder="Rol" style="border:1.5px solid var(--gris-borde);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;outline:none;background:var(--gris)">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 12px">
+          <span style="font-size:12px;color:var(--suave)">$</span>
+          <input id="ee-salario" type="number" value="${emp.salario||""}" placeholder="Sueldo" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+        </div>
+        <div style="flex:0 0 110px;display:flex;align-items:center;gap:4px;background:var(--gris);border:1.5px solid var(--gris-borde);border-radius:10px;padding:0 12px">
+          <input id="ee-comision" type="number" value="${emp.comision||""}" placeholder="0" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:11px 0;font-family:inherit;background:transparent">
+          <span style="font-size:12px;color:var(--suave)">% com.</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button onclick="adminActualizarEmpleado('${id}')" style="flex:1;background:var(--azul);color:var(--amarillo);border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer">Guardar</button>
+        <button onclick="adminConfirmarEliminarEmpleado('${id}')" style="flex:0 0 56px;background:#FDECEA;color:#C62828;border:none;border-radius:11px;padding:13px;font-size:20px;cursor:pointer">🗑</button>
+      </div>
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+function adminActualizarEmpleado(id) {
+  const emps = getEmpleados();
+  const emp = emps.find(e=>e.id===id);
+  if (!emp) return;
+  emp.nombre = document.getElementById("ee-nombre")?.value?.trim() || emp.nombre;
+  emp.rol = document.getElementById("ee-rol")?.value?.trim() || emp.rol;
+  emp.salario = parseFloat(document.getElementById("ee-salario")?.value) || emp.salario;
+  emp.comision = parseFloat(document.getElementById("ee-comision")?.value) || 0;
+  saveEmpleados(emps);
+  document.getElementById("overlay").classList.remove("open");
+  toast("✅ Empleado actualizado");
+  renderAdministracion();
+}
+
+function adminConfirmarEliminarEmpleado(id) {
+  if (!confirm("¿Eliminar empleado? Se mantendrán los pagos históricos.")) return;
+  saveEmpleados(getEmpleados().filter(e=>e.id!==id));
+  document.getElementById("overlay").classList.remove("open");
+  renderAdministracion();
+}
 </script>
 </body>
 </html>
