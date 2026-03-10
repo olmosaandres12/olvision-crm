@@ -2719,9 +2719,9 @@ function nuevaVenta() {
 
       <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-top:6px;margin-bottom:2px">⚡ Ventas rápidas</div>
 
-      <button onclick="closeModal();setTimeout(()=>ventaRapida('accesorio'),100)"
-        class="btn-nueva-opcion" style="background:#F3E5F5;color:#6A1B9A;border-color:#CE93D8">
-        <span style="font-size:20px">🛍️</span> Accesorios / Líquidos
+      <button onclick="closeModal();setTimeout(()=>ventaLC(),100)"
+        class="btn-nueva-opcion" style="background:#E0F7FA;color:#006064;border-color:#80DEEA">
+        <span style="font-size:20px">👁️</span> Lentes de Contacto
       </button>
 
       <button onclick="closeModal();setTimeout(()=>ventaRapida('taller'),100)"
@@ -2729,9 +2729,9 @@ function nuevaVenta() {
         <span style="font-size:20px">🔧</span> Taller
       </button>
 
-      <button onclick="closeModal();setTimeout(()=>ventaLC(),100)"
-        class="btn-nueva-opcion" style="background:#E0F7FA;color:#006064;border-color:#80DEEA">
-        <span style="font-size:20px">👁️</span> Lentes de Contacto
+      <button onclick="closeModal();setTimeout(()=>ventaRapida('accesorio'),100)"
+        class="btn-nueva-opcion" style="background:#F3E5F5;color:#6A1B9A;border-color:#CE93D8">
+        <span style="font-size:20px">🛍️</span> Accesorios
       </button>
 
     </div>
@@ -3087,6 +3087,34 @@ function selTipoLC(value) {
   actualizarCamposLC();
 }
 
+function toggleLcLiqDropdown() {
+  const panel = document.getElementById("lc-liq-panel");
+  const arrow = document.getElementById("lc-liq-arrow");
+  const header = document.getElementById("lc-liq-header");
+  if (!panel) return;
+  const open = panel.style.display !== "none";
+  panel.style.display = open ? "none" : "";
+  if (arrow) arrow.style.transform = open ? "" : "rotate(180deg)";
+  if (header) {
+    header.style.borderRadius = open ? "10px" : "10px 10px 0 0";
+    header.style.borderBottom = open ? "" : "none";
+  }
+}
+
+function updateLcLiqBadge() {
+  const badge = document.getElementById("lc-liq-badge");
+  if (!badge) return;
+  const checked = document.querySelectorAll("#lc-liquidos-lista .check-item.checked").length;
+  const custom = document.getElementById("lc-liq-custom")?.value.trim() || "";
+  const total = checked + (custom ? 1 : 0);
+  if (total > 0) {
+    badge.textContent = total;
+    badge.style.display = "";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
 function toggleLcLiquido(e, label) {
   e.preventDefault();
   const cb = label.querySelector("input[type=checkbox]");
@@ -3101,6 +3129,7 @@ function toggleLcLiquido(e, label) {
     cb.checked = true;
     cbox.textContent = "✓";
   }
+  updateLcLiqBadge();
 }
 
 function selVentaItem(e, label, value) {
@@ -3210,24 +3239,37 @@ function ventaLC() {
 
     <!-- Líquidos / Soluciones -->
     <div class="fsec" style="margin-top:8px">
-      <div class="fsec-tit">💧 Líquidos multipropósito <span style="font-size:10px;font-weight:600;color:var(--suave);text-transform:none">(opcional)</span></div>
-      <div id="lc-liquidos-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
-        ${(cfg.liquidosLC||[]).map((liq,i)=>`
-          <div style="display:flex;align-items:center;gap:8px">
-            <label class="check-item" onclick="toggleLcLiquido(event,this)" data-liq="${i}"
-              style="flex:1;margin-bottom:0;padding:8px 12px">
-              <input type="checkbox" name="lc-liq" value="${liq}">
-              <span class="cbox"></span>
-              <span class="clabel" style="font-size:13px">${liq}</span>
-            </label>
-            <input type="number" id="lc-liq-qty-${i}" inputmode="numeric" placeholder="1" value="1" min="1"
-              style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:8px;font-size:14px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
-          </div>`).join("")}
+      <div onclick="toggleLcLiqDropdown()" id="lc-liq-header"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gris-borde);background:var(--gris);user-select:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span>💧</span>
+          <span style="font-size:14px;font-weight:700;color:var(--texto)">Líquidos multipropósito</span>
+          <span id="lc-liq-badge" style="display:none;background:#006064;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;font-weight:600;color:var(--suave)">opcional</span>
+          <span id="lc-liq-arrow" style="font-size:13px;color:var(--suave);transition:transform .2s">▼</span>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="lc-liq-custom" placeholder="Otro líquido..." style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 12px;font-size:13px;background:var(--gris);font-family:inherit;outline:none">
-        <input type="number" id="lc-liq-custom-qty" inputmode="numeric" placeholder="1" value="1" min="1"
-          style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px;font-size:13px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+      <div id="lc-liq-panel" style="display:none;border:1.5px solid var(--gris-borde);border-top:none;border-radius:0 0 10px 10px;padding:10px 10px 8px;background:var(--fondo)">
+        <div id="lc-liquidos-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+          ${(cfg.liquidosLC||[]).map((liq,i)=>`
+            <div style="display:flex;align-items:center;gap:8px">
+              <label class="check-item" onclick="toggleLcLiquido(event,this)" data-liq="${i}"
+                style="flex:1;margin-bottom:0;padding:8px 12px">
+                <input type="checkbox" name="lc-liq" value="${liq}">
+                <span class="cbox"></span>
+                <span class="clabel" style="font-size:13px">${liq}</span>
+              </label>
+              <input type="number" id="lc-liq-qty-${i}" inputmode="numeric" placeholder="1" value="1" min="1"
+                style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:8px;font-size:14px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+            </div>`).join("")}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="lc-liq-custom" oninput="updateLcLiqBadge()" placeholder="Otro líquido..." style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 12px;font-size:13px;background:var(--gris);font-family:inherit;outline:none">
+          <input type="number" id="lc-liq-custom-qty" inputmode="numeric" placeholder="1" value="1" min="1"
+            style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px;font-size:13px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+        </div>
       </div>
     </div>
 
