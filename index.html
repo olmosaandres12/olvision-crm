@@ -457,8 +457,8 @@ async function init() {
   renderCaja();
   await syncSheets();
   renderCaja();
-  // Auto-sync cada 5 minutos
-  setInterval(syncSheets, 5 * 60 * 1000);
+  // Auto-sync cada 3 minutos
+  setInterval(syncSheets, 3 * 60 * 1000);
   // Eventos de conectividad
   window.addEventListener('online', () => { drainQueue(); syncSheets(); updateOnlineStatus(); });
   // Sync al volver de background (iPhone/Android desde otra app o pantalla apagada)
@@ -486,12 +486,25 @@ function showSyncIndicator() {
   ind.style.opacity = "1";
   return ind;
 }
+let lastSyncTime = null;
+
 function hideSyncIndicator(ok) {
   const ind = document.getElementById("sync-indicator");
   if (!ind) return;
+  if (ok) lastSyncTime = Date.now();
   ind.textContent = ok ? "✅ Actualizado" : "⚠️ Sin conexión";
   ind.style.background = ok ? "#2E7D32" : "#E65100";
-  setTimeout(() => { ind.style.opacity = "0"; }, 1800);
+  setTimeout(() => { ind.style.opacity = "0"; updateOnlineStatus(); }, 1800);
+}
+
+function getLastSyncLabel() {
+  if (!lastSyncTime) return null;
+  const mins = Math.floor((Date.now() - lastSyncTime) / 60000);
+  if (mins < 1) return "hace menos de 1 min";
+  if (mins === 1) return "hace 1 min";
+  if (mins < 60) return `hace ${mins} min`;
+  const hs = Math.floor(mins / 60);
+  return `hace ${hs}h`;
 }
 
 function updateOnlineStatus() {
@@ -499,20 +512,30 @@ function updateOnlineStatus() {
   if (!badge) {
     badge = document.createElement('div');
     badge.id = 'online-badge';
-    badge.style.cssText = 'position:fixed;bottom:70px;right:12px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:800;z-index:9999;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15)';
+    badge.style.cssText = 'position:fixed;bottom:70px;right:12px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:800;z-index:9999;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:default';
     document.body.appendChild(badge);
   }
   const pendientes = JSON.parse(localStorage.getItem('olvision_queue') || '[]').length;
+  const syncLabel = getLastSyncLabel();
   if (navigator.onLine) {
-    badge.textContent = pendientes ? `🔄 ${pendientes} pendientes` : '🟢 En línea';
-    badge.style.background = pendientes ? '#FFF3E0' : '#E8F5E9';
-    badge.style.color = pendientes ? '#E65100' : '#2E7D32';
+    if (pendientes) {
+      badge.textContent = `🔄 ${pendientes} pendientes`;
+      badge.style.background = '#FFF3E0';
+      badge.style.color = '#E65100';
+    } else {
+      badge.textContent = syncLabel ? `🟢 ${syncLabel}` : '🟢 En línea';
+      badge.style.background = '#E8F5E9';
+      badge.style.color = '#2E7D32';
+    }
   } else {
     badge.textContent = pendientes ? `🔴 Sin conexión · ${pendientes} en cola` : '🔴 Sin conexión';
     badge.style.background = '#FDECEA';
     badge.style.color = '#C62828';
   }
 }
+
+// Actualizar el label de tiempo cada minuto
+setInterval(updateOnlineStatus, 60 * 1000);
 
 async function syncSheets() {
   const ind = showSyncIndicator();
@@ -1215,8 +1238,6 @@ function verFichaCliente(nombreEnc) {
       const idx = D.orders.findIndex(x => x.id === o.id);
       const badge = getEstadoBadge(o.estado);
       const saldoO = parseFloat(o.total||0) - parseFloat(o.aCuenta||0);
-      const hasL = o.lEsf||o.lEsfI, hasC = o.cEsf||o.cEsfI;
-      const hasReceta = hasL || hasC;
       return `<div class="card" onclick="closeModal();setTimeout(()=>verDetalle(${idx}),100)" style="cursor:pointer;margin-bottom:8px;border-left:4px solid var(--azul);transition:background .15s" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background='#fff'">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="flex:1;min-width:0">
@@ -1225,7 +1246,6 @@ function verFichaCliente(nombreEnc) {
             <div style="font-size:12px;color:var(--suave);margin-top:2px">
               ${o.tipoTrabajo?`<span>${o.tipoTrabajo}</span>`:""}
               ${o.tratamiento?` · ✨ ${o.tratamiento}`:""}
-              ${o.armazonDesc?` · 🕶️ ${o.armazonDesc}`:""}
               ${o.oSocial?` · 🏥 ${o.oSocial}`:""}
             </div>
           </div>
@@ -1234,56 +1254,6 @@ function verFichaCliente(nombreEnc) {
             ${o.pagado?`<div style="font-size:11px;color:#2E7D32;font-weight:700">✅ Pagado</div>`:saldoO>0?`<div style="font-size:11px;color:#E65100;font-weight:700">⏳ Saldo $${num(saldoO)}</div>`:o.ctaCte?`<div style="font-size:11px;color:#E65100;font-weight:700">📒 Cta.Cte</div>`:""}
           </div>
         </div>
-        ${hasReceta?`
-        <div style="margin-top:10px;border-top:1px solid var(--gris-borde);padding-top:10px">
-          <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📐 Receta</div>
-          <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-              <thead>
-                <tr style="background:var(--gris)">
-                  <th style="padding:4px 6px;text-align:left;font-size:10px;color:var(--suave);font-weight:700;border-radius:6px 0 0 0"></th>
-                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Esf</th>
-                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Cil</th>
-                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Eje</th>
-                  <th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--suave);font-weight:700">Add</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${hasL?`<tr><td colspan="5" style="background:linear-gradient(90deg,var(--azul),#2563eb);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;letter-spacing:1px">LEJOS</td></tr>
-                <tr style="border-bottom:1px solid var(--gris-borde)">
-                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OD</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lEsf)}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lCil)}</td>
-                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.lEje||"—"}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lAdd)}</td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--gris-borde)">
-                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OI</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lEsfI)}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lCilI)}</td>
-                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.lEjeI||"—"}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.lAddI)}</td>
-                </tr>`:""}
-                ${hasC?`<tr><td colspan="5" style="background:linear-gradient(90deg,#4527A0,#6A1B9A);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;letter-spacing:1px">CERCA</td></tr>
-                <tr style="border-bottom:1px solid var(--gris-borde)">
-                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OD</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cEsf)}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cCil)}</td>
-                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.cEje||"—"}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cAdd)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:4px 6px;font-weight:700;color:var(--suave);font-size:11px">OI</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cEsfI)}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cCilI)}</td>
-                  <td style="padding:4px 4px;text-align:center;font-size:11px;color:var(--texto)">${o.cEjeI||"—"}</td>
-                  <td style="padding:4px 4px;text-align:center">${signGradColor(o.cAddI)}</td>
-                </tr>`:""}
-              </tbody>
-            </table>
-          </div>
-          ${detectarCondicion(o)}
-        </div>`:""}
       </div>`;
     }).join("")}
     <button class="btn-cancel" onclick="closeModal()">← Volver</button>
@@ -4962,43 +4932,33 @@ function detectarCondicion(o) {
     return isNaN(n) ? null : n;
   }
 
-  // Lejos
-  const lEsfOD = valNum(o.lEsf),  lEsfOI = valNum(o.lEsfI);
-  const lCilOD = valNum(o.lCil),  lCilOI = valNum(o.lCilI);
-  const lAddOD = valNum(o.lAdd),  lAddOI = valNum(o.lAddI);
-  // Cerca
-  const cEsfOD = valNum(o.cEsf),  cEsfOI = valNum(o.cEsfI);
-  const cCilOD = valNum(o.cCil),  cCilOI = valNum(o.cCilI);
-  const cAddOD = valNum(o.cAdd),  cAddOI = valNum(o.cAddI);
+  const esfOD = valNum(o.lEsf),  esfOI = valNum(o.lEsfI);
+  const cilOD = valNum(o.lCil),  cilOI = valNum(o.lCilI);
+  const addOD = valNum(o.lAdd),  addOI = valNum(o.lAddI);
 
   const condiciones = [];
+  const ojos = [];
 
-  // Miopía: esfera negativa en lejos (o en cerca si no hay lejos)
+  // Miopía: esfera negativa en lejos
   const miopia = [];
-  const esfOD_lejos = lEsfOD !== null ? lEsfOD : cEsfOD;
-  const esfOI_lejos = lEsfOI !== null ? lEsfOI : cEsfOI;
-  if (esfOD_lejos !== null && esfOD_lejos < 0) miopia.push("OD");
-  if (esfOI_lejos !== null && esfOI_lejos < 0) miopia.push("OI");
+  if (esfOD !== null && esfOD < 0) miopia.push("OD");
+  if (esfOI !== null && esfOI < 0) miopia.push("OI");
   if (miopia.length) condiciones.push({ label: "Miopía", icon: "👁️", color: "#1565C0", bg: "#E3F2FD", desc: "Dificultad para ver de lejos", ojos: miopia });
 
-  // Hipermetropía: esfera positiva en lejos (o en cerca si no hay lejos)
+  // Hipermetropía: esfera positiva en lejos
   const hiper = [];
-  if (esfOD_lejos !== null && esfOD_lejos > 0) hiper.push("OD");
-  if (esfOI_lejos !== null && esfOI_lejos > 0) hiper.push("OI");
+  if (esfOD !== null && esfOD > 0) hiper.push("OD");
+  if (esfOI !== null && esfOI > 0) hiper.push("OI");
   if (hiper.length) condiciones.push({ label: "Hipermetropía", icon: "🔆", color: "#2E7D32", bg: "#E8F5E9", desc: "Dificultad para ver de cerca", ojos: hiper });
 
-  // Astigmatismo: cilindro distinto de 0 en lejos o en cerca
+  // Astigmatismo: cilindro presente (distinto de 0 y no nulo)
   const astig = [];
-  const cilOD = (lCilOD !== null && lCilOD !== 0) ? lCilOD : cCilOD;
-  const cilOI = (lCilOI !== null && lCilOI !== 0) ? lCilOI : cCilOI;
   if (cilOD !== null && cilOD !== 0) astig.push("OD");
   if (cilOI !== null && cilOI !== 0) astig.push("OI");
   if (astig.length) condiciones.push({ label: "Astigmatismo", icon: "🌀", color: "#6A1B9A", bg: "#F3E5F5", desc: "Curvatura irregular de la córnea", ojos: astig });
 
-  // Presbicia: adición positiva en lejos o en cerca
+  // Presbicia: adición presente (add > 0)
   const presby = [];
-  const addOD = (lAddOD !== null && lAddOD > 0) ? lAddOD : cAddOD;
-  const addOI = (lAddOI !== null && lAddOI > 0) ? lAddOI : cAddOI;
   if (addOD !== null && addOD > 0) presby.push("OD");
   if (addOI !== null && addOI > 0) presby.push("OI");
   if (presby.length) condiciones.push({ label: "Presbicia", icon: "📖", color: "#E65100", bg: "#FFF3E0", desc: "Dificultad para enfocar de cerca (vista cansada)", ojos: presby });
