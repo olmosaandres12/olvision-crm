@@ -405,7 +405,8 @@ const DEFAULT_CONFIG = {
   tratamientos:["Orgánico Blanco","Orgánico Blue","Blue c/HD","HD","Fotocromático","Policarbonato","Mineral","Poli con AR","Orgánico Blue Fotocromático","Bifocal Flat Top Blanco","Bifocal Flat Top Blue","Bifocal Fotocromático","Bifocal Criptock"],
   armazon:     ["Armazon Nuevo","Armazon Usado"],
   obraSocial:  ["OSDE","PAMI","Swiss Medical","Galeno","Medife","Sancor Salud","IOMA","APROSS","DOSEP"],
-  formaPago:   ["Efectivo","Tarjeta débito","Tarjeta crédito 1 cuota","Tarjeta crédito 3 cuotas s/i","Tarjeta crédito 5 cuotas s/i","Tarjeta crédito 6 cuotas s/i","Transferencia","Mixto"],
+  formaPago:   ["Efectivo","Tarjeta débito","Tarjeta crédito","Transferencia","Mixto"],
+  tarjetasCredito: ["Visa","Mastercard","American Express","Cabal","Naranja X","Mercado Pago","MODO"],
   vendedores:   [],
   doctores:     [],
   laboratorios: [],
@@ -896,7 +897,8 @@ function renderConfig() {
     seccion("Obras Sociales", "🏥", "obraSocial", "Ej: PAMI, OSDE...") +
     seccion("Tipos de Lente", "🔭", "lentes", "Ej: Progresivo...") +
     seccion("Armazón", "🕶️", "armazon", "Ej: Armazon Nuevo...") +
-    seccion("Formas de Pago", "💳", "formaPago", "Ej: Débito...") +
+    seccion("Tarjetas de Crédito", "💳", "tarjetasCredito", "Ej: Visa, Naranja X...") +
+    seccion("Formas de Pago", "💰", "formaPago", "Ej: Débito...") +
     `<div style="height:20px"></div>`;
 }
 
@@ -4647,14 +4649,52 @@ function openOrdenForm(data={}) {
         <div class="field"><label>A cuenta $</label><input id="f-acuenta" type="number" inputmode="decimal" placeholder="0" value="${data.aCuenta||""}"></div>
         <div class="field"><label>Saldo $</label><input id="f-saldo" placeholder="0" value="${data.saldo||""}" readonly style="background:#f0f0f0;color:var(--suave);"></div>
       </div>
-      <div class="field">
-        <label>Forma de pago</label>
-        <select id="f-pago" onchange="onFormaPagoChange(this.value)" style="-webkit-appearance:none;appearance:none;">
-          <option value="">— Seleccioná —</option>
-          ${(getCfg().formaPago||[]).map(p=>`<option value="${p}" ${data.formaPago===p?"selected":""}>${p}</option>`).join("")}
-          <option value="Sin cargo" ${data.formaPago==="Sin cargo"?"selected":""}>Sin cargo</option>
-        </select>
-      </div>
+      ${(()=>{
+        // Parsear el formaPago guardado para restaurar los tres selectores
+        // Formato posible: "Tarjeta crédito 3 cuotas s/i — Visa"  |  "Efectivo"  |  "Sin cargo"
+        const fp = data.formaPago || "";
+        let fpBase = fp, fpCuotas = "", fpTarjeta = "";
+        if (fp.includes(" — ")) {
+          const [a, b] = fp.split(" — ");
+          fpBase = a.trim(); fpTarjeta = b.trim();
+        }
+        // Detectar cuotas en fpBase: "Tarjeta crédito 3 cuotas s/i" → base="Tarjeta crédito", cuotas="3 cuotas s/i"
+        const cuotasMatch = fpBase.match(/^(Tarjeta crédito)\s+(.+)$/);
+        if (cuotasMatch) { fpBase = cuotasMatch[1]; fpCuotas = cuotasMatch[2]; }
+        const esTarjeta = fpBase === "Tarjeta crédito";
+        const cfg = getCfg();
+        return `
+        <div class="field">
+          <label>Forma de pago</label>
+          <select id="f-pago" onchange="onFormaPagoChange(this.value)" style="-webkit-appearance:none;appearance:none;">
+            <option value="">— Seleccioná —</option>
+            ${(cfg.formaPago||[]).map(p=>`<option value="${p}" ${fpBase===p?"selected":""}>${p}</option>`).join("")}
+            <option value="Sin cargo" ${fp==="Sin cargo"?"selected":""}>Sin cargo</option>
+          </select>
+        </div>
+        <div id="f-tarjeta-wrap" style="display:${esTarjeta?"block":"none"};margin-top:2px">
+          <div style="display:flex;gap:8px">
+            <div class="field" style="flex:1;margin-bottom:0">
+              <label>Cuotas</label>
+              <select id="f-cuotas" style="-webkit-appearance:none;appearance:none;">
+                <option value="">— Cuotas —</option>
+                <option value="1 cuota" ${ fpCuotas==="1 cuota"?"selected":""}>1 cuota</option>
+                <option value="3 cuotas s/i" ${ fpCuotas==="3 cuotas s/i"?"selected":""}>3 cuotas s/i</option>
+                <option value="5 cuotas s/i" ${ fpCuotas==="5 cuotas s/i"?"selected":""}>5 cuotas s/i</option>
+                <option value="6 cuotas s/i" ${ fpCuotas==="6 cuotas s/i"?"selected":""}>6 cuotas s/i</option>
+                <option value="12 cuotas" ${ fpCuotas==="12 cuotas"?"selected":""}>12 cuotas</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1;margin-bottom:0">
+              <label>Tarjeta</label>
+              <select id="f-tarjeta" style="-webkit-appearance:none;appearance:none;">
+                <option value="">— Tarjeta —</option>
+                ${(cfg.tarjetasCredito||[]).map(t=>`<option value="${t}" ${fpTarjeta===t?"selected":""}>${t}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>`;
+      })()}
       <div style="display:flex;gap:10px;margin-top:4px">
         <label class="check-item ${data.pagado?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
           <input type="checkbox" id="f-pagado" ${data.pagado?"checked":""}>
@@ -4751,6 +4791,18 @@ function onOSocialChange(val) {
 }
 
 function onFormaPagoChange(val) {
+  // Mostrar/ocultar sub-selectores de cuotas y tarjeta
+  const wrap = document.getElementById("f-tarjeta-wrap");
+  if (wrap) {
+    const esTarjeta = val === "Tarjeta crédito";
+    wrap.style.display = esTarjeta ? "block" : "none";
+    if (!esTarjeta) {
+      const sc = document.getElementById("f-cuotas");
+      const st = document.getElementById("f-tarjeta");
+      if (sc) sc.value = "";
+      if (st) st.value = "";
+    }
+  }
   if (val === "Sin cargo") {
     const lbl = document.querySelector("#f-pagado")?.closest(".check-item");
     if (lbl && !lbl.classList.contains("checked")) {
@@ -4760,7 +4812,6 @@ function onFormaPagoChange(val) {
       if (cb) cb.checked = true;
       if (box) box.textContent = "✓";
     }
-    // Poner total y saldo en 0
     const total = document.getElementById("f-total");
     const acuenta = document.getElementById("f-acuenta");
     if (total && !total.value) total.value = "0";
@@ -4768,6 +4819,8 @@ function onFormaPagoChange(val) {
     calcSaldo();
   }
 }
+
+function onTarjetaChange() { /* reservado */ }
 
 function calcSaldo(){
   const t=parseFloat(getRawMonto(document.getElementById("f-total"))||document.getElementById("f-total").value)||0;
@@ -4825,7 +4878,18 @@ async function submitOrden(existingId){
     cEsfI:gGrad("cEsfI"),cCilI:gGrad("cCilI"),cEjeI:g("cEjeI"),cAddI:gGrad("cAddI"),
     tipoTrabajo: (document.querySelector("input[name='tipo-trabajo']:checked")?.value||""),
     armazonDesc: g("f-armazon-desc"),
-    tipos,tratamiento,total,aCuenta,saldo,formaPago:g("f-pago"),
+    tipos,tratamiento,total,aCuenta,saldo,formaPago:(()=>{
+      const base = g("f-pago") || "";
+      if (base === "Tarjeta crédito") {
+        const cuotas  = (document.getElementById("f-cuotas")?.value  || "").trim();
+        const tarjeta = (document.getElementById("f-tarjeta")?.value || "").trim();
+        let v = "Tarjeta crédito";
+        if (cuotas)  v += " " + cuotas;
+        if (tarjeta) v += " — " + tarjeta;
+        return v;
+      }
+      return base;
+    })(),
     pagado:document.getElementById("f-pagado")?.checked||false,
     ctaCte:document.getElementById("f-ctacte")?.checked||false,
     notas:g("f-notas"),
@@ -5045,9 +5109,11 @@ function calcCostoOrden(o, costosCfg) {
 
   // 3. Costo financiero (% sobre el total)
   const cf = costosCfg.costoFinanciero || {};
-  if (o.formaPago && cf[o.formaPago]) {
-    const pct = parseFloat(cf[o.formaPago]) || 0;
-    costo += (parseFloat(o.total) || 0) * pct / 100;
+  if (o.formaPago) {
+    // Soporte para "Tarjeta crédito 3 cuotas s/i — Visa": buscar por base
+    const fpBase = o.formaPago.includes(" — ") ? o.formaPago.split(" — ")[0] : o.formaPago;
+    const pct = parseFloat(cf[fpBase] || cf[o.formaPago]) || 0;
+    if (pct) costo += (parseFloat(o.total) || 0) * pct / 100;
   }
 
   return Math.round(costo);
@@ -5228,7 +5294,8 @@ function renderFinanzas() {
       const maxV = entries[0]?.[1] || 1;
       if (!entries.length) return `<div style="color:var(--suave);font-size:13px;padding:8px 0">Sin datos</div>`;
       return entries.map(([k,v]) => {
-        const cf = costosCfg.costoFinanciero?.[k];
+        const kBase = k.includes(" — ") ? k.split(" — ")[0] : k;
+        const cf = costosCfg.costoFinanciero?.[kBase] || costosCfg.costoFinanciero?.[k];
         return `<div style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
             <span style="font-weight:600">${k}${cf ? `<span style="font-size:10px;color:#E65100;margin-left:4px">(+${cf}%)</span>` : ""}</span>
