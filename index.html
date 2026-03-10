@@ -4962,33 +4962,43 @@ function detectarCondicion(o) {
     return isNaN(n) ? null : n;
   }
 
-  const esfOD = valNum(o.lEsf),  esfOI = valNum(o.lEsfI);
-  const cilOD = valNum(o.lCil),  cilOI = valNum(o.lCilI);
-  const addOD = valNum(o.lAdd),  addOI = valNum(o.lAddI);
+  // Lejos
+  const lEsfOD = valNum(o.lEsf),  lEsfOI = valNum(o.lEsfI);
+  const lCilOD = valNum(o.lCil),  lCilOI = valNum(o.lCilI);
+  const lAddOD = valNum(o.lAdd),  lAddOI = valNum(o.lAddI);
+  // Cerca
+  const cEsfOD = valNum(o.cEsf),  cEsfOI = valNum(o.cEsfI);
+  const cCilOD = valNum(o.cCil),  cCilOI = valNum(o.cCilI);
+  const cAddOD = valNum(o.cAdd),  cAddOI = valNum(o.cAddI);
 
   const condiciones = [];
-  const ojos = [];
 
-  // Miopía: esfera negativa en lejos
+  // Miopía: esfera negativa en lejos (o en cerca si no hay lejos)
   const miopia = [];
-  if (esfOD !== null && esfOD < 0) miopia.push("OD");
-  if (esfOI !== null && esfOI < 0) miopia.push("OI");
+  const esfOD_lejos = lEsfOD !== null ? lEsfOD : cEsfOD;
+  const esfOI_lejos = lEsfOI !== null ? lEsfOI : cEsfOI;
+  if (esfOD_lejos !== null && esfOD_lejos < 0) miopia.push("OD");
+  if (esfOI_lejos !== null && esfOI_lejos < 0) miopia.push("OI");
   if (miopia.length) condiciones.push({ label: "Miopía", icon: "👁️", color: "#1565C0", bg: "#E3F2FD", desc: "Dificultad para ver de lejos", ojos: miopia });
 
-  // Hipermetropía: esfera positiva en lejos
+  // Hipermetropía: esfera positiva en lejos (o en cerca si no hay lejos)
   const hiper = [];
-  if (esfOD !== null && esfOD > 0) hiper.push("OD");
-  if (esfOI !== null && esfOI > 0) hiper.push("OI");
+  if (esfOD_lejos !== null && esfOD_lejos > 0) hiper.push("OD");
+  if (esfOI_lejos !== null && esfOI_lejos > 0) hiper.push("OI");
   if (hiper.length) condiciones.push({ label: "Hipermetropía", icon: "🔆", color: "#2E7D32", bg: "#E8F5E9", desc: "Dificultad para ver de cerca", ojos: hiper });
 
-  // Astigmatismo: cilindro presente (distinto de 0 y no nulo)
+  // Astigmatismo: cilindro distinto de 0 en lejos o en cerca
   const astig = [];
+  const cilOD = (lCilOD !== null && lCilOD !== 0) ? lCilOD : cCilOD;
+  const cilOI = (lCilOI !== null && lCilOI !== 0) ? lCilOI : cCilOI;
   if (cilOD !== null && cilOD !== 0) astig.push("OD");
   if (cilOI !== null && cilOI !== 0) astig.push("OI");
   if (astig.length) condiciones.push({ label: "Astigmatismo", icon: "🌀", color: "#6A1B9A", bg: "#F3E5F5", desc: "Curvatura irregular de la córnea", ojos: astig });
 
-  // Presbicia: adición presente (add > 0)
+  // Presbicia: adición positiva en lejos o en cerca
   const presby = [];
+  const addOD = (lAddOD !== null && lAddOD > 0) ? lAddOD : cAddOD;
+  const addOI = (lAddOI !== null && lAddOI > 0) ? lAddOI : cAddOI;
   if (addOD !== null && addOD > 0) presby.push("OD");
   if (addOI !== null && addOI > 0) presby.push("OI");
   if (presby.length) condiciones.push({ label: "Presbicia", icon: "📖", color: "#E65100", bg: "#FFF3E0", desc: "Dificultad para enfocar de cerca (vista cansada)", ojos: presby });
