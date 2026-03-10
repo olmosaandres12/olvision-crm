@@ -20,6 +20,7 @@
 <meta name="apple-mobile-web-app-title" content="Olvisión">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button { font-family: inherit; }
   :root {
     --azul: #1B4FA8; --azul-dark: #143D85; --azul-light: #E8EFF9;
     --amarillo: #F5E87C; --blanco: #FFFFFF;
@@ -130,8 +131,43 @@
   .check-item.checked .cbox { background: var(--azul); border-color: var(--azul); color: var(--amarillo); }
   .clabel { font-size: 13px; font-weight: 600; }
 
-  .btn-save { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--azul); color: var(--amarillo); font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 6px; letter-spacing: .3px; }
-  .btn-cancel { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid var(--gris-borde); background: var(--blanco); color: var(--suave); font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+  .btn-save { width: 100%; padding: 15px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--azul) 0%, #2563eb 100%); color: var(--amarillo); font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 6px; letter-spacing: .3px; transition: all .18s ease; box-shadow: 0 3px 12px rgba(27,79,168,.3); active-scale:.97; }
+  .btn-save:hover { filter: brightness(1.08); box-shadow: 0 5px 18px rgba(27,79,168,.4); transform: translateY(-1px); }
+  .btn-save:active { transform: scale(.97) translateY(0); box-shadow: 0 2px 8px rgba(27,79,168,.25); filter: brightness(.95); }
+  .btn-cancel { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid var(--gris-borde); background: var(--blanco); color: var(--suave); font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all .15s ease; }
+  .btn-cancel:hover { background: var(--gris); border-color: #9AB0D4; color: var(--texto); }
+  .btn-cancel:active { transform: scale(.97); background: #EBF0FA; }
+
+  /* Botones ícono (tarjetas) */
+  .bico { transition: all .15s ease; }
+  .bedit:hover { background: #D0E0F5; transform: scale(1.08); }
+  .bedit:active { transform: scale(.93); }
+  .bdel:hover { background: #FACDCC; transform: scale(1.08); }
+  .bdel:active { transform: scale(.93); }
+
+  /* FAB flotante */
+  .fab { transition: all .2s cubic-bezier(.34,1.56,.64,1); }
+  .fab:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 6px 24px rgba(27,79,168,.5); }
+  .fab:active { transform: scale(.92); }
+
+  /* Nav sidebar */
+  .nav-item { transition: all .15s ease; }
+  .nav-item:hover { padding-left: 22px; }
+  .nav-item.active { padding-left: 22px; }
+
+  /* Clases utilitarias para botones inline */
+  .btn-green { background: #E8F5E9; color: #2E7D32; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .btn-green:hover { background: #C8E6C9; transform: translateY(-1px); }
+  .btn-green:active { transform: scale(.95); }
+  .btn-wa { background: #E7F9EE; color: #25D366; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .btn-wa:hover { background: #C8F2D8; transform: translateY(-1px); }
+  .btn-wa:active { transform: scale(.95); }
+  .btn-red { background: #FDECEA; color: #C0392B; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .btn-red:hover { background: #FBCAC8; transform: translateY(-1px); }
+  .btn-red:active { transform: scale(.95); }
+  .btn-blue { background: var(--azul-light); color: var(--azul); border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .btn-blue:hover { background: #D0E0F5; transform: translateY(-1px); }
+  .btn-blue:active { transform: scale(.95); }
 
   #toast { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%); background: var(--azul-dark); color: var(--amarillo); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; opacity: 0; transition: opacity .3s; z-index: 999; white-space: nowrap; pointer-events: none; }
   #toast.show { opacity: 1; }
@@ -139,6 +175,21 @@
   .empty { text-align: center; padding: 50px 20px; color: var(--suave); font-size: 15px; line-height: 1.7; }
   .empty span { font-size: 36px; display: block; margin-bottom: 10px; }
   .hist-item { border-left: 3px solid var(--azul); padding: 7px 10px; margin-bottom: 6px; background: var(--azul-light); border-radius: 0 8px 8px 0; font-size: 13px; }
+
+  /* Botones de estado (cambiar estado de orden) */
+  button[style*="border-radius:20px"] { transition: all .15s ease !important; }
+  button[style*="border-radius:20px"]:hover { filter: brightness(.92); transform: scale(1.04); }
+  button[style*="border-radius:20px"]:active { transform: scale(.95); }
+
+  /* Botón "Nueva venta" en menú modal */
+  .btn-nueva-opcion { background: var(--azul-light); color: var(--azul); border: 1.5px solid var(--gris-borde); border-radius: 12px; padding: 14px 16px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; width: 100%; transition: all .18s ease; font-family: inherit; }
+  .btn-nueva-opcion:hover { background: #D0E0F5; border-color: var(--azul); transform: translateX(3px); box-shadow: 0 2px 10px rgba(27,79,168,.15); }
+  .btn-nueva-opcion:active { transform: scale(.97) translateX(0); }
+
+  /* Mejorar botón cierre de caja y botones destructivos */
+  button[style*="background:#FDECEA"] { transition: all .15s ease !important; }
+  button[style*="background:#FDECEA"]:hover { filter: brightness(.92); transform: scale(1.03); }
+  button[style*="background:#FDECEA"]:active { transform: scale(.95); }
 </style>
 </head>
 <body>
@@ -1564,7 +1615,7 @@ function renderOrdenesAlerta() {
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="background:#E7F9EE;color:#25D366;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none">📲</a>`:""}
-            <button onclick="marcarRetirado(${idx})" style="background:#E8F5E9;color:#2E7D32;border:none;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">✅ Retiró</button>
+            <button onclick="marcarRetirado(${idx})" class="btn-green" style="font-size:12px;padding:6px 10px">✅ Retiró</button>
           </div>
         </div>`;
       }).join("")}
@@ -2125,7 +2176,7 @@ function renderAdminOrdenes() {
           </div>
           <div style="display:flex;gap:6px">
             ${o.cel?`<a href="https://wa.me/549${String(o.cel||'').replace(/[^0-9]/g,'')}" target="_blank" style="background:#E7F9EE;color:#25D366;border-radius:7px;padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none">📲</a>`:""}
-            <button onclick="marcarRetirado(${D.orders.findIndex(x=>x.id===o.id)});switchAdminTab('ordenes')" style="background:#E8F5E9;color:#2E7D32;border:none;border-radius:7px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer">✅</button>
+            <button onclick="marcarRetirado(${D.orders.findIndex(x=>x.id===o.id)});switchAdminTab('ordenes')" class="btn-green" style="font-size:12px;padding:5px 9px">✅</button>
           </div>
         </div>`;
       }).join("")}
@@ -2212,8 +2263,8 @@ function renderMensajes() {
         </div>
         <textarea id="msg-${i}" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:10px 12px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;resize:none;height:90px;line-height:1.5" onchange="editMensaje(${i},this.value)">${m.texto}</textarea>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-          <button onclick="copiarMensaje(${i})" style="flex:1;background:var(--azul-light);color:var(--azul);border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">📋 Copiar</button>
-          <button onclick="enviarWhatsApp(${i})" style="flex:1;background:#E7F9EE;color:#25D366;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">📲 WA sin nombre</button>
+          <button onclick="copiarMensaje(${i})" class="btn-blue" style="flex:1;padding:9px;font-size:13px">📋 Copiar</button>
+          <button onclick="enviarWhatsApp(${i})" class="btn-wa" style="flex:1;padding:9px;font-size:13px">📲 WA sin nombre</button>
         </div>
       </div>`).join("")}
 
@@ -2394,7 +2445,7 @@ function renderSaldosPendientesHtml() {
     const nom_    = encodeURIComponent(o.nombre||"");
     const cel_    = String(o.cel||"");
     const waBtn   = cel_
-      ? "<button onclick='enviarMensajeCliente(\"" + nom_ + "\",\"" + cel_ + "\")' style='background:#E7F9EE;color:#25D366;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer'>📲</button>"
+      ? "<button onclick='enviarMensajeCliente(\"" + nom_ + "\",\"" + cel_ + "\")' class='btn-wa' style='padding:8px 12px;font-size:13px'>📲</button>"
       : "";
     h += "<div style='background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid #F57F17;box-shadow:0 1px 4px rgba(0,0,0,.06)'>"
       +   "<div style='display:flex;justify-content:space-between;align-items:center'>"
@@ -2408,8 +2459,8 @@ function renderSaldosPendientesHtml() {
       +     "</div>"
       +   "</div>"
       +   "<div style='display:flex;gap:8px;margin-top:8px'>"
-      +     "<button onclick='document.getElementById(\"overlay\").classList.add(\"open\");abrirPagoSaldo(" + o._idx + ",\"pendientes\")' style='flex:1;background:#E8F5E9;color:#1B5E20;border:none;border-radius:8px;padding:8px;font-size:13px;font-weight:700;cursor:pointer'>💰 Cobrar</button>"
-      +     "<button onclick='verDetalle(" + o._idx + ")' style='background:var(--azul-light);color:var(--azul);border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer'>Ver</button>"
+      +     "<button onclick='document.getElementById(\"overlay\").classList.add(\"open\");abrirPagoSaldo(" + o._idx + ",\"pendientes\")' class='btn-green' style='flex:1;padding:8px;font-size:13px'>💰 Cobrar</button>"
+      +     "<button onclick='verDetalle(" + o._idx + ")' class='btn-blue' style='padding:8px 12px;font-size:13px'>Ver</button>"
       +     waBtn
       +   "</div>"
       + "</div>";
@@ -2478,9 +2529,9 @@ function renderPendientes() {
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
-          ${o.cel?`<button onclick="enviarMensajeCliente('${encodeURIComponent(o.nombre||'')}','${o.cel}')" style="background:#E7F9EE;color:#25D366;border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📲 WA</button>`:""}
-          ${o.cel&&o.estado==='listo_retirar'?`<button onclick="enviarMsgDirecto('listo','${encodeURIComponent(o.nombre||'')}','${o.cel}')" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">✅ Aviso</button>`:""}
-          <button onclick="verDetalle(${idx})" style="background:var(--azul-light);color:var(--azul);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">Ver</button>
+          ${o.cel?`<button onclick="enviarMensajeCliente('${encodeURIComponent(o.nombre||'')}','${o.cel}')" class="btn-wa" style="font-size:12px;padding:5px 10px;white-space:nowrap">📲 WA</button>`:""}
+          ${o.cel&&o.estado==='listo_retirar'?`<button onclick="enviarMsgDirecto('listo','${encodeURIComponent(o.nombre||'')}','${o.cel}')" class="btn-green" style="font-size:11px;padding:5px 10px;white-space:nowrap">✅ Aviso</button>`:""}
+          <button onclick="verDetalle(${idx})" class="btn-blue" style="font-size:12px;padding:5px 10px">Ver</button>
         </div>
       </div>
       <!-- Cambiar estado rápido -->
@@ -2559,42 +2610,42 @@ function nuevaVenta() {
 
       ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t => `
         <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('${t}'),100)"
-          style="background:var(--azul-light);color:var(--azul);border:1.5px solid var(--gris-borde);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+          class="btn-nueva-opcion">
           <span style="font-size:20px">${t==="Recetado"?"👓":t==="Reposición de Cristales"?"🔭":"🔄"}</span>
           ${t}
         </button>`).join("")}
 
       <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('PAMI'),100)"
-        style="background:#E3F2FD;color:#1565C0;border:1.5px solid #90CAF9;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        class="btn-nueva-opcion" style="background:#E3F2FD;color:#1565C0;border-color:#90CAF9">
         <span style="font-size:20px">🏥</span> PAMI
       </button>
 
       <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-top:6px;margin-bottom:2px">⚡ Ventas rápidas</div>
 
       <button onclick="closeModal();setTimeout(()=>ventaRapida('accesorio'),100)"
-        style="background:#F3E5F5;color:#6A1B9A;border:1.5px solid #CE93D8;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        class="btn-nueva-opcion" style="background:#F3E5F5;color:#6A1B9A;border-color:#CE93D8">
         <span style="font-size:20px">🛍️</span> Accesorios / Líquidos
       </button>
 
       <button onclick="closeModal();setTimeout(()=>ventaRapida('taller'),100)"
-        style="background:#FFF8E1;color:#F57F17;border:1.5px solid #FFD54F;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        class="btn-nueva-opcion" style="background:#FFF8E1;color:#F57F17;border-color:#FFD54F">
         <span style="font-size:20px">🔧</span> Taller
       </button>
 
       <button onclick="closeModal();setTimeout(()=>ventaLC(),100)"
-        style="background:#E0F7FA;color:#006064;border:1.5px solid #80DEEA;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        class="btn-nueva-opcion" style="background:#E0F7FA;color:#006064;border-color:#80DEEA">
         <span style="font-size:20px">👁️</span> Lentes de Contacto
       </button>
 
     </div>
       <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-top:6px;margin-bottom:2px">💰 Cobros</div>
       <button onclick="closeModal();setTimeout(()=>cobrarSaldo(),100)"
-        style="background:#E8F5E9;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        class="btn-nueva-opcion" style="background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7">
         <span style="font-size:20px">💰</span> Cobrar saldo pendiente
       </button>
 
       <button onclick="closeModal();setTimeout(()=>registrarGasto(),100)"
-        style="background:#FFF8F8;color:#C62828;border:1.5px solid #FFCDD2;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
+        class="btn-nueva-opcion" style="background:#FFF8F8;color:#C62828;border-color:#FFCDD2">
         <span style="font-size:20px">💸</span> Registrar gasto / retiro
       </button>
 
@@ -4298,7 +4349,7 @@ function renderFidelizacion() {
           </div>
           ${urgBadge(c.dias)}
         </div>
-        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">${c.cel ? `<button onclick="enviarMensajeCliente('${encodeURIComponent(c.nombre||'')}','${c.cel}')" style="background:#E7F9EE;color:#25D366;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer">📲 Elegir mensaje</button>` : ""}<button onclick="enviarMsgDirecto('cumple','${encodeURIComponent(c.nombre||'')}','${c.cel||''}')" style="background:#FCE4EC;color:#C62828;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer">🎂 Saludo rápido</button></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">${c.cel ? `<button onclick="enviarMensajeCliente('${encodeURIComponent(c.nombre||'')}','${c.cel}')" class="btn-wa" style="padding:7px 14px;font-size:13px">📲 Elegir mensaje</button>` : ""}<button onclick="enviarMsgDirecto('cumple','${encodeURIComponent(c.nombre||'')}','${c.cel||''}')" class="btn-red" style="padding:7px 14px;font-size:13px;background:#FCE4EC;color:#C62828">🎂 Saludo rápido</button></div>
       </div>`).join("")}
     <div style="height:6px"></div>` : ""}
 
@@ -4315,8 +4366,8 @@ function renderFidelizacion() {
           ${urgBadge(o.diasRestantes)}
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-          ${o.cel ? `<button onclick="enviarMensajeCliente('${encodeURIComponent(o.nombre||'')}','${o.cel}')" style="background:#E7F9EE;color:#25D366;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer">📲 Elegir mensaje</button>` : ""}<button onclick="enviarMsgDirecto('aniversario','${encodeURIComponent(o.nombre||'')}','${o.cel||''}')" style="background:#E3F2FD;color:#1565C0;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer">📅 Seguimiento rápido</button>
-          <button onclick="verDetalle(${idx})" style="background:var(--azul-light);color:var(--azul);border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer">Ver orden</button>
+          ${o.cel ? `<button onclick="enviarMensajeCliente('${encodeURIComponent(o.nombre||'')}','${o.cel}')" class="btn-wa" style="padding:7px 14px;font-size:13px">📲 Elegir mensaje</button>` : ""}<button onclick="enviarMsgDirecto('aniversario','${encodeURIComponent(o.nombre||'')}','${o.cel||''}')" class="btn-blue" style="padding:7px 14px;font-size:13px;background:#E3F2FD;color:#1565C0">📅 Seguimiento rápido</button>
+          <button onclick="verDetalle(${idx})" class="btn-blue" style="padding:7px 14px;font-size:13px">Ver orden</button>
         </div>
       </div>`;
     }).join("") : `<div class="empty" style="padding:30px 20px"><span>📅</span>No hay órdenes por cumplir el año en los próximos 30 días</div>`}
