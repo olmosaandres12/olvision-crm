@@ -1033,7 +1033,8 @@ function renderOrdenes(q="") {
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.nombre||"—"}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
-          ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.tipoTrabajo}</span>`:""}
+          ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.tipoTrabajo}${o.dosAnteojos&&o.b_tipoTrabajo&&o.b_tipoTrabajo!==o.tipoTrabajo?" (1)":""}</span>`:""}
+          ${o.dosAnteojos&&o.b_tipoTrabajo?(()=>{const bg2=o.b_tipoTrabajo==="Recetado"?"#E3F2FD":o.b_tipoTrabajo==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";const cl2=o.b_tipoTrabajo==="Recetado"?"#1565C0":o.b_tipoTrabajo==="Reposición de Cristales"?"#6A1B9A":"#F57F17";return`<span style="background:${bg2};color:${cl2};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.b_tipoTrabajo}${o.b_tipoTrabajo!==o.tipoTrabajo?" (2)":""}</span>`;})():""}
           ${o.pagado?`<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">✅ Pagado</span>`:""}
           ${o.ctaCte?`<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">📒 Cta.Cte</span>`:""}
           ${o.armazonDesc?`<span style="background:#F3F0FF;color:#5B21B6;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">🕶️ ${o.armazonDesc}</span>`:""}
@@ -1055,13 +1056,23 @@ function verDetalle(idx) {
   const hasL = o.lEsf||o.lEsfI, hasC = o.cEsf||o.cEsfI;
   const ttColor = o.tipoTrabajo==="Recetado"?"#1565C0":o.tipoTrabajo==="Reposición de Cristales"?"#6A1B9A":"#F57F17";
   const ttBg    = o.tipoTrabajo==="Recetado"?"#E3F2FD":o.tipoTrabajo==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";
+  const ttColor2 = o.b_tipoTrabajo==="Recetado"?"#1565C0":o.b_tipoTrabajo==="Reposición de Cristales"?"#6A1B9A":"#F57F17";
+  const ttBg2    = o.b_tipoTrabajo==="Recetado"?"#E3F2FD":o.b_tipoTrabajo==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";
+  const tipoBadges = o.dosAnteojos
+    ? [o.tipoTrabajo, o.b_tipoTrabajo].filter(Boolean)
+    : [o.tipoTrabajo].filter(Boolean);
 
   document.getElementById("modal-body").innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:8px">
       <div>
         <div style="font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px">Orden de Trabajo</div>
         <div style="font-size:26px;font-weight:900;color:var(--azul);line-height:1.1">N° ${o.num}</div>
-        ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block;margin-top:4px">${o.tipoTrabajo}</span>`:""}
+        ${tipoBadges.map((t,i)=>{
+          const bg = t==="Recetado"?"#E3F2FD":t==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";
+          const cl = t==="Recetado"?"#1565C0":t==="Reposición de Cristales"?"#6A1B9A":"#F57F17";
+          const lbl = o.dosAnteojos ? `${t} (Ant. ${i+1})` : t;
+          return `<span style="background:${bg};color:${cl};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block;margin-top:4px;margin-right:4px">${lbl}</span>`;
+        }).join("")}
       </div>
       <div style="text-align:right">
         ${o.fecha?`<div style="font-size:13px;color:var(--suave)">📅 ${fmtDate(o.fecha)}</div>`:""}
