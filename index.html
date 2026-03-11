@@ -263,6 +263,7 @@
     <button class="nav-item"        id="nav-pendientes"  onclick="setTab('pendientes',this)">  <span class="nav-icon">⏳</span><span>Pendientes</span></button>
     <button class="nav-item"        id="nav-clientes"    onclick="setTab('clientes',this)">    <span class="nav-icon">👤</span><span>Clientes</span></button>
     <button class="nav-item"        id="nav-osocial"     onclick="setTab('osocial',this)">     <span class="nav-icon">🏥</span><span>Obra Social</span></button>
+    <button class="nav-item"        id="nav-pami"        onclick="setTab('pami',this)">        <span class="nav-icon">🩺</span><span>PAMI</span></button>
     <button class="nav-item"        id="nav-ctacte"      onclick="setTab('ctacte',this)">      <span class="nav-icon">📒</span><span>Cta. Corriente</span></button>
     <div style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Fidelización</div>
     <button class="nav-item"        id="nav-fidelizacion" onclick="setTab('fidelizacion',this)"><span class="nav-icon">⭐</span><span>Fidelizar</span></button>
@@ -370,6 +371,14 @@
     <input id="q-osocial" type="search" placeholder="Buscar por nombre u obra social..." oninput="renderOSocial(this.value)">
   </div>
   <div id="lista-osocial"><div class="empty"><span>🏥</span>Cargando...</div></div>
+</div>
+
+<div id="screen-pami" class="screen">
+  <div class="search-wrap">
+    <span class="si">🔍</span>
+    <input id="q-pami" type="search" placeholder="Buscar por nombre, DNI o N° afiliado..." oninput="renderPami(this.value)">
+  </div>
+  <div id="lista-pami"><div class="empty"><span>🩺</span>Cargando...</div></div>
 </div>
 
 <div id="screen-ctacte" class="screen">
@@ -906,6 +915,7 @@ function setTab(t,btn) {
   window.scrollTo(0,0);
   // Render inmediato con datos locales (sin esperar red)
   if(t==="osocial")      renderOSocial();
+  if(t==="pami")         renderPami();
   if(t==="ctacte")       renderCtaCte();
   if(t==="config")       renderConfig();
   if(t==="stats")        renderStats();
@@ -930,6 +940,7 @@ function setTab(t,btn) {
     if(t==="clientes")     renderClientes();
     if(t==="caja")         renderCaja();
     if(t==="osocial")      renderOSocial();
+    if(t==="pami")         renderPami();
     if(t==="ctacte")       renderCtaCte();
     if(t==="stats")        renderStats();
     if(t==="fidelizacion") renderFidelizacion();
@@ -1375,6 +1386,57 @@ function verFichaCliente(nombreEnc) {
   `;
   document.getElementById("overlay").classList.add("open");
   setTimeout(()=>{ document.getElementById("modal-inner").scrollTop=0; },50);
+}
+
+function renderPami(q="") {
+  const el = document.getElementById("lista-pami");
+  if (!el) return;
+  const ESTADOS = {pendiente_envio:"⏳ Pendiente",en_laboratorio:"🔬 En Lab.",demorado:"⚠ Demorado",listo_laboratorio:"✅ Listo Lab.",listo_retirar:"👓 Listo",entregado:"✔ Entregado"};
+  const list = D.orders.filter(o => o.esPami || (o.oSocial||"").toUpperCase()==="PAMI").sort((a,b)=>String(b.num).localeCompare(String(a.num),undefined,{numeric:true}));
+  const ql = q.toLowerCase();
+  const filtered = q ? list.filter(o =>
+    (o.nombre||"").toLowerCase().includes(ql) ||
+    (o.dni||"").includes(q) ||
+    (o.pamiAfiliado||"").includes(q) ||
+    String(o.num).includes(q)
+  ) : list;
+  if (!filtered.length) {
+    el.innerHTML=`<div class="empty"><span>🩺</span>${list.length===0?"No hay órdenes PAMI cargadas":"Sin resultados"}</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(o => {
+    const idx = D.orders.indexOf(o);
+    const saldoN = o.saldo ? parseFloat(o.saldo) : (o.total&&o.aCuenta ? parseFloat(o.total)-parseFloat(o.aCuenta) : 0);
+    const estadoLabel = ESTADOS[o.estado] || o.estado || "—";
+    return `<div class="card" style="border-left:4px solid #1565C0">
+      <div class="card-top">
+        <div style="flex:1;min-width:0">
+          <span class="card-num">Orden N° ${o.num}</span>
+          <div class="card-name">${o.nombre||"—"}</div>
+          <div class="card-meta">
+            ${o.fecha?`<span>📅 ${fmtDate(o.fecha)}</span>`:""}
+            ${o.dni?`<span>🪪 DNI ${o.dni}</span>`:""}
+            ${o.pamiAfiliado?`<span>🩺 Afil. ${o.pamiAfiliado}</span>`:""}
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="bico bedit" onclick="editOrden(${idx})">✏️</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        ${o.pamiPrestacion?`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:800">📋 ${o.pamiPrestacion}</span>`:""}
+        ${o.pamiTratamiento?`<span class="chip" style="background:#E8EAF6;color:#283593">🔬 ${o.pamiTratamiento}</span>`:""}
+        ${o.pamiDiferencia?`<span class="chip" style="background:#FFF3E0;color:#E65100;font-weight:700">💲 Abona diferencia</span>`:""}
+        ${o.pamiSinCargo?`<span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">✅ Sin cargo</span>`:""}
+        ${o.pamiOpciones&&o.pamiOpciones.length?o.pamiOpciones.map(p=>`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-size:11px">${p}</span>`).join(""):""}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:12px;font-weight:700;color:var(--suave)">${estadoLabel}</span>
+        ${o.total?`<span class="chip">Total $${num(o.total)}</span>`:""}
+        ${saldoN>0?`<span class="chip chip-saldo">⚠ Saldo $${num(saldoN)}</span>`:`<span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">✅ Pagado</span>`}
+      </div>
+    </div>`;
+  }).join("");
 }
 
 function renderOSocial(q="") {
@@ -4853,9 +4915,39 @@ function openOrdenForm(data={}) {
         </div>
         <div class="field"><label>Laboratorio</label>${laboratorioSelect("f-lab", data.laboratorio||"")}</div>
       </div>
-      <div id="pami-opciones" style="display:${(data.oSocial||'').toUpperCase()==='PAMI'?'block':'none'};margin-top:4px">
-        <div class="field">
-          <label style="color:#1B4FA8;font-weight:800">🏥 Cobertura PAMI</label>
+      <div id="pami-opciones" style="display:${(data.oSocial||'').toUpperCase()==='PAMI'?'block':'none'};margin-top:4px;background:#EEF4FF;border-radius:12px;padding:12px;border:1.5px solid #90CAF9">
+        <div style="font-size:13px;font-weight:900;color:#1B4FA8;margin-bottom:10px">🏥 Datos PAMI</div>
+        <div class="g2">
+          <div class="field">
+            <label style="color:#1B4FA8;font-weight:800">N° Afiliado PAMI *</label>
+            <input id="f-pami-afiliado" placeholder="Ej: 12345678" value="${data.pamiAfiliado||''}" style="border-color:#90CAF9">
+          </div>
+          <div class="field">
+            <label style="color:#1B4FA8;font-weight:800">Tipo de Prestación *</label>
+            <select id="f-pami-prestacion" style="-webkit-appearance:none;appearance:none;border-color:#90CAF9">
+              <option value="">— Seleccionar —</option>
+              ${["Anteojo de lejos","Anteojo de cerca","Ambos anteojos","Bifocal"].map(op=>`<option value="${op}" ${(data.pamiPrestacion||"")=== op?"selected":""}>${op}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:6px">
+          <label style="color:#1B4FA8;font-weight:800">Tratamiento PAMI</label>
+          <input id="f-pami-tratamiento" placeholder="Ej: Orgánico Blue, Fotocromático..." value="${data.pamiTratamiento||''}">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <label class="check-item ${data.pamiDiferencia?'checked':''}" onclick="toggleCheck(event,this)" style="flex:1">
+            <input type="checkbox" id="f-pami-diferencia" ${data.pamiDiferencia?"checked":""}>
+            <span class="cbox">${data.pamiDiferencia?"✓":""}</span>
+            <span class="clabel" style="font-size:13px">Abona diferencia</span>
+          </label>
+          <label class="check-item ${data.pamiSinCargo?'checked':''}" onclick="toggleCheck(event,this)" style="flex:1">
+            <input type="checkbox" id="f-pami-sincargo" ${data.pamiSinCargo?"checked":""}>
+            <span class="cbox">${data.pamiSinCargo?"✓":""}</span>
+            <span class="clabel" style="font-size:13px">Sin cargo</span>
+          </label>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label style="color:#1B4FA8;font-weight:800">Cobertura PAMI</label>
           <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
             ${["1 Anteojo Lejos","1 Anteojo Cerca","Bifocal"].map(op=>`
             <label class="check-item ${(data.pamiOpciones||[]).includes(op)?"checked":""}" onclick="toggleCheck(event,this)" style="width:100%">
@@ -5306,6 +5398,13 @@ async function submitOrden(existingId){
   const numIngresado = g("f-num");
   const numDupe = D.orders.find(o => String(o.num) === String(numIngresado) && o.id !== existingId);
   if(numDupe){toast("⚠ Ya existe la orden N° "+numIngresado+" ("+numDupe.nombre+")");return;}
+  const esPami = (document.getElementById("f-oSocial")?.value||"").toUpperCase() === "PAMI";
+  if (esPami) {
+    const pamiAfiliado = (document.getElementById("f-pami-afiliado")?.value||"").trim();
+    const pamiPrestacion = (document.getElementById("f-pami-prestacion")?.value||"").trim();
+    if (!pamiAfiliado) { toast("⚠ PAMI: ingresá el N° de afiliado"); return; }
+    if (!pamiPrestacion) { toast("⚠ PAMI: seleccioná el tipo de prestación"); return; }
+  }
   const dosAnteojos = document.getElementById("ant2-bloque")?.style.display !== "none";
   const tipos=[...document.querySelectorAll("#ant1-bloque .check-grid .check-item.checked input[type=checkbox]")].filter(x=>x.name!=='pami-op').map(x=>x.value).join(",");
   const tratLejos=(document.getElementById("f-tratamiento-lejos")?.value||"").trim();
@@ -5323,6 +5422,12 @@ async function submitOrden(existingId){
     edad:g("f-edad"),fechaNac:g("f-fechaNac"),cel:g("f-cel"),
     oSocial: document.getElementById("f-oSocial")?.value||"",
     pamiOpciones: [...document.querySelectorAll("input[name='pami-op']:checked")].map(x=>x.value),
+    esPami,
+    pamiAfiliado: esPami ? (document.getElementById("f-pami-afiliado")?.value||"").trim() : "",
+    pamiPrestacion: esPami ? (document.getElementById("f-pami-prestacion")?.value||"") : "",
+    pamiTratamiento: esPami ? (document.getElementById("f-pami-tratamiento")?.value||"").trim() : "",
+    pamiDiferencia: esPami ? (document.getElementById("f-pami-diferencia")?.checked||false) : false,
+    pamiSinCargo: esPami ? (document.getElementById("f-pami-sincargo")?.checked||false) : false,
     laboratorio:g("f-lab"),doctor:g("f-doctor"),
     lEsf:gGrad("lEsf"),lCil:gGrad("lCil"),lEje:g("lEje"),lAdd:gGrad("lAdd"),
     lEsfI:gGrad("lEsfI"),lCilI:gGrad("lCilI"),lEjeI:g("lEjeI"),lAddI:gGrad("lAddI"),
