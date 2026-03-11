@@ -3589,22 +3589,30 @@ function renderCaja() {
       ? `<div class="empty" style="padding:20px"><span>📋</span>Sin órdenes hoy todavía</div>`
       : ordenesDia.sort((a,b)=>String(b.num).localeCompare(String(a.num),undefined,{numeric:true})).map(o => {
           const idx = D.orders.findIndex(x => x.id === o.id);
-          return `<div class="card" style="margin-bottom:8px;border-left:4px solid var(--azul)">
+          const saldoO = parseFloat(o.total||0) - parseFloat(o.aCuenta||0);
+          const tieneAcuenta = parseFloat(o.aCuenta||0) > 0 && saldoO > 0;
+          // Info lentes: juntar ant1 y ant2
+          const infoLentes = [
+            o.tratamiento ? `✨ ${o.tratamiento.replace(" | "," / ")}` : "",
+            o.dosAnteojos && o.b_tratamiento ? `· ✨ ${o.b_tratamiento.replace(" | "," / ")}` : ""
+          ].filter(Boolean).join(" ");
+          return `<div class="card" style="margin-bottom:8px;border-left:4px solid ${o.pagado?"#2E7D32":tieneAcuenta?"#F57F17":"var(--azul)"}">
             <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="verDetalle(${idx})" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background=''">
               <div style="flex:1;min-width:0;padding:2px 0">
                 <div style="font-weight:800;font-size:15px">${o.nombre||"—"} <span style="font-size:12px;color:var(--suave);font-weight:400">N° ${o.num}</span></div>
                 <div style="font-size:12px;color:var(--suave);margin-top:2px">
-                  ${o.tratamiento?`✨ ${o.tratamiento.replace(" | "," / ")}`:""}
+                  ${o.dosAnteojos?`<span style="background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px;margin-right:4px">2 anteojos</span>`:""}
+                  ${infoLentes}
                   ${o.oSocial?` · 🏥 ${o.oSocial}`:""}
+                </div>
+                <div style="font-size:12px;margin-top:3px">
+                  ${o.pagado?`<span style="color:#2E7D32;font-weight:700">✅ Cobrado completo</span>`:tieneAcuenta?`<span style="color:#E65100;font-weight:700">💵 A cuenta $${num(o.aCuenta)} · Saldo $${num(saldoO)}</span>`:o.ctaCte?`<span style="color:#E65100;font-weight:700">📒 Cta.Cte</span>`:""}
+                  ${o.formaPago?`<span style="color:var(--suave)"> · ${o.formaPago}</span>`:""}
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:10px">
                 <div style="text-align:right">
                   ${o.total?`<div style="font-weight:900;font-size:15px;color:var(--azul)">$${num(o.total)}</div>`:""}
-                  <div style="font-size:11px;margin-top:2px">
-                    ${o.pagado?`<span style="color:#2E7D32;font-weight:700">✅ Cobrado</span>`:o.ctaCte?`<span style="color:#E65100;font-weight:700">📒 Cta.Cte</span>`:""}
-                    ${o.formaPago?`<span style="color:var(--suave)"> · ${o.formaPago}</span>`:""}
-                  </div>
                 </div>
                 <button onclick="event.stopPropagation();eliminarOrdenCaja(${idx})" style="background:#FDECEA;color:#C0392B;border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:15px;flex-shrink:0">🗑</button>
               </div>
@@ -3641,10 +3649,20 @@ function renderCaja() {
 
 function calcResumen(ordenes, cajaInfo, fecha) {
   const totalFacturado = ordenes.reduce((a,o) => a + (parseFloat(o.total)||0), 0);
-  const totalCobrado   = ordenes.filter(o=>o.pagado).reduce((a,o) => a + (parseFloat(o.total)||0), 0);
+  // Cobrado = aCuenta de todas las órdenes (pagadas o con pago parcial)
+  const totalCobrado = ordenes.reduce((a,o) => {
+    const ac = parseFloat(o.aCuenta||0);
+    const tot = parseFloat(o.total||0);
+    // Si está pagado y no tiene aCuenta cargado, contar el total completo
+    return a + (o.pagado && ac === 0 ? tot : ac);
+  }, 0);
   const porMedio = {};
-  ordenes.filter(o=>o.pagado&&o.formaPago).forEach(o => {
-    porMedio[o.formaPago] = (porMedio[o.formaPago]||0) + (parseFloat(o.total)||0);
+  ordenes.forEach(o => {
+    if (!o.formaPago) return;
+    const ac = parseFloat(o.aCuenta||0);
+    const tot = parseFloat(o.total||0);
+    const cobrado = (o.pagado && ac === 0) ? tot : ac;
+    if (cobrado > 0) porMedio[o.formaPago] = (porMedio[o.formaPago]||0) + cobrado;
   });
   // Sumar ventas rápidas (accesorios, taller, saldos)
   const ventasDia = getCajasVentas().filter(v => v.fecha === (fecha || getHoy()));
