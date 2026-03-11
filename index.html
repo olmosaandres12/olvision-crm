@@ -669,73 +669,104 @@ async function syncSheets() {
     }
 
     // ── Órdenes ──
+    // Helpers
+    const fNorm = (v) => { if(!v) return ""; const s=String(v); if(s.includes("T")) return s.slice(0,10); return s; };
+    const TIPOS_VALIDOS = ["Monofocales","Bifocales","Progresivo","Ocupacional","Alto Índice","Armazon Nuevo","Armazon Usado"];
+    const boolVal = (v) => v===true || String(v)==="true";
+
+    // Detectar si existe fila HEADERS (sheet nuevo con migración)
+    const headersRow = rows.find(r => Array.isArray(r) && r[0] === "HEADERS");
+    const hMap = {}; // campo → índice de columna
+    if (headersRow) {
+      headersRow.forEach((h, i) => { if (h) hMap[String(h)] = i; });
+    }
+    const hasHeaders = Object.keys(hMap).length > 0;
+
+    // Función para leer un campo: usa hMap si existe, sino índice legacy
+    const col = (r, campo, legacyIdx) => {
+      if (hasHeaders) return hMap[campo] !== undefined ? r[hMap[campo]] : undefined;
+      return r[legacyIdx];
+    };
+
     const orders = [];
-    const dataRows = rows[0][0] === "ORDEN" ? rows : rows.slice(1);
-    dataRows.forEach(r => {
-      if (String(r[0]).trim() === "ORDEN") {
-        // Normalizar fecha — puede venir como Date de Sheets
-        let fecha = r[6] ? String(r[6]) : "";
-        if (fecha && fecha.includes("Date(")) fecha = "";
-        if (fecha && !fecha.includes("-") && !fecha.includes("/")) {
-          // intento parsear número de serie de Excel/Sheets
-          try {
-            const d = new Date(fecha);
-            if (!isNaN(d)) fecha = d.toISOString().slice(0,10);
-            else fecha = "";
-          } catch { fecha = ""; }
-        }
-        // Normalizar fecha ISO a YYYY-MM-DD
-        const fNorm = (v) => { if(!v) return ""; const s=String(v); if(s.includes("T")) return s.slice(0,10); return s; };
-        // Limpiar tipos: sacar "on", tipoTrabajo duplicado
-        const tiposRaw = String(r[30]||"");
-        const tipoTrabajo = String(r[29]||"");
-        const TIPOS_VALIDOS = ["Monofocales","Bifocales","Progresivo","Ocupacional","Alto Índice","Armazon Nuevo","Armazon Usado"];
-        const tipos = tiposRaw.split(",").filter(t => TIPOS_VALIDOS.includes(t.trim())).join(",");
-        orders.push({
-          id:    String(r[1]||uid()),
-          num:   String(r[2]||""),
-          nombre:String(r[3]||""),
-          dni:   String(r[4]||""),
-          dir:   String(r[5]||""),
-          fecha: fNorm(r[6]),
-          edad:  String(r[7]||""),
-          fechaNac: fNorm(r[8]),
-          cel:   String(r[9]||""),
-          laboratorio:String(r[10]||""),
-          doctor:String(r[11]||""),
-          oSocial:String(r[12]||""),
-          lEsf:String(r[13]||""),lCil:String(r[14]||""),lEje:String(r[15]||""),lAdd:String(r[16]||""),
-          lEsfI:String(r[17]||""),lCilI:String(r[18]||""),lEjeI:String(r[19]||""),lAddI:String(r[20]||""),
-          cEsf:String(r[21]||""),cCil:String(r[22]||""),cEje:String(r[23]||""),cAdd:String(r[24]||""),
-          cEsfI:String(r[25]||""),cCilI:String(r[26]||""),cEjeI:String(r[27]||""),cAddI:String(r[28]||""),
-          tipoTrabajo,
-          tipos,
-          tratamiento:String(r[31]||""),
-          armazonDesc:String(r[32]||""),
-          pamiOpciones:r[33]?String(r[33]).split(",").filter(Boolean):[],
-          total:String(r[34]||""),
-          aCuenta:String(r[35]||""),
-          saldo:String(r[36]||""),
-          formaPago:String(r[37]||""),
-          pagado: r[38]===true || String(r[38])==="true",
-          ctaCte: r[39]===true || String(r[39])==="true",
-          notas:String(r[40]||""),
-          estado:String(r[41]||"") || "pendiente_envio",
-          fechaEntrega:fNorm(r[42]),
-          vendedora:String(r[43]||""),
-          costo:String(r[44]||""),
-          retirado: r[45]===true || String(r[45])==="true",
-          updatedAt: r[46] ? Number(r[46]) : 0
-        });
-        // Expandir campos del anteojo 2 desde extras (columna 48)
-        const lastOrder = orders[orders.length-1];
-        if (r[47]) {
-          try {
-            const extras = JSON.parse(String(r[47]));
-            Object.assign(lastOrder, extras);
-          } catch {}
-        }
+    rows.forEach(r => {
+      if (!Array.isArray(r)) return;
+      if (String(r[0]).trim() !== "ORDEN") return;
+
+      // Normalizar fecha
+      let fechaRaw = col(r, "fecha", 6) ? String(col(r, "fecha", 6)) : "";
+      if (fechaRaw && fechaRaw.includes("Date(")) fechaRaw = "";
+      if (fechaRaw && !fechaRaw.includes("-") && !fechaRaw.includes("/")) {
+        try { const d = new Date(fechaRaw); if (!isNaN(d)) fechaRaw = d.toISOString().slice(0,10); else fechaRaw = ""; } catch { fechaRaw = ""; }
       }
+
+      const tiposRaw = String(col(r, "tipos", 30)||"");
+      const tipoTrabajo = String(col(r, "tipoTrabajo", 29)||"");
+      const tipos = tiposRaw.split(",").filter(t => TIPOS_VALIDOS.includes(t.trim())).join(",");
+
+      const o = {
+        id:         String(col(r,"id",1)||uid()),
+        num:        String(col(r,"num",2)||""),
+        nombre:     String(col(r,"nombre",3)||""),
+        dni:        String(col(r,"dni",4)||""),
+        dir:        String(col(r,"dir",5)||""),
+        fecha:      fNorm(fechaRaw),
+        edad:       String(col(r,"edad",7)||""),
+        fechaNac:   fNorm(col(r,"fechaNac",8)),
+        cel:        String(col(r,"cel",9)||""),
+        laboratorio:String(col(r,"laboratorio",10)||""),
+        doctor:     String(col(r,"doctor",11)||""),
+        oSocial:    String(col(r,"oSocial",12)||""),
+        lEsf: String(col(r,"lEsf",13)||""),  lCil: String(col(r,"lCil",14)||""),  lEje: String(col(r,"lEje",15)||""),  lAdd: String(col(r,"lAdd",16)||""),
+        lEsfI:String(col(r,"lEsfI",17)||""), lCilI:String(col(r,"lCilI",18)||""), lEjeI:String(col(r,"lEjeI",19)||""), lAddI:String(col(r,"lAddI",20)||""),
+        cEsf: String(col(r,"cEsf",21)||""),  cCil: String(col(r,"cCil",22)||""),  cEje: String(col(r,"cEje",23)||""),  cAdd: String(col(r,"cAdd",24)||""),
+        cEsfI:String(col(r,"cEsfI",25)||""), cCilI:String(col(r,"cCilI",26)||""), cEjeI:String(col(r,"cEjeI",27)||""), cAddI:String(col(r,"cAddI",28)||""),
+        tipoTrabajo,
+        tipos,
+        tratamiento:  String(col(r,"tratamiento",31)||""),
+        armazonDesc:  String(col(r,"armazonDesc",32)||""),
+        pamiOpciones: col(r,"pamiOpciones",33) ? String(col(r,"pamiOpciones",33)).split(",").filter(Boolean) : [],
+        total:      String(col(r,"total",34)||""),
+        aCuenta:    String(col(r,"aCuenta",35)||""),
+        saldo:      String(col(r,"saldo",36)||""),
+        formaPago:  String(col(r,"formaPago",37)||""),
+        pagado:     boolVal(col(r,"pagado",38)),
+        ctaCte:     boolVal(col(r,"ctaCte",39)),
+        notas:      String(col(r,"notas",40)||""),
+        estado:     String(col(r,"estado",41)||"") || "pendiente_envio",
+        fechaEntrega:fNorm(col(r,"fechaEntrega",42)),
+        vendedora:  String(col(r,"vendedora",43)||""),
+        costo:      String(col(r,"costo",44)||""),
+        retirado:   boolVal(col(r,"retirado",45)),
+        updatedAt:  col(r,"updatedAt",46) ? Number(col(r,"updatedAt",46)) : 0,
+        // ── Campos anteojo 2 (columnas propias desde migración)
+        dosAnteojos:  boolVal(col(r,"dosAnteojos",undefined)),
+        b_tipoTrabajo:String(col(r,"b_tipoTrabajo",undefined)||""),
+        b_lEsf: String(col(r,"b_lEsf",undefined)||""),  b_lCil: String(col(r,"b_lCil",undefined)||""),  b_lEje: String(col(r,"b_lEje",undefined)||""),  b_lAdd: String(col(r,"b_lAdd",undefined)||""),
+        b_lEsfI:String(col(r,"b_lEsfI",undefined)||""), b_lCilI:String(col(r,"b_lCilI",undefined)||""), b_lEjeI:String(col(r,"b_lEjeI",undefined)||""), b_lAddI:String(col(r,"b_lAddI",undefined)||""),
+        b_cEsf: String(col(r,"b_cEsf",undefined)||""),  b_cCil: String(col(r,"b_cCil",undefined)||""),  b_cEje: String(col(r,"b_cEje",undefined)||""),  b_cAdd: String(col(r,"b_cAdd",undefined)||""),
+        b_cEsfI:String(col(r,"b_cEsfI",undefined)||""), b_cCilI:String(col(r,"b_cCilI",undefined)||""), b_cEjeI:String(col(r,"b_cEjeI",undefined)||""), b_cAddI:String(col(r,"b_cAddI",undefined)||""),
+        b_tipos:       String(col(r,"b_tipos",undefined)||""),
+        b_tratamiento: String(col(r,"b_tratamiento",undefined)||""),
+        b_armazonDesc: String(col(r,"b_armazonDesc",undefined)||""),
+        // ── Campos PAMI
+        esPami:          boolVal(col(r,"esPami",undefined)),
+        pamiAfiliado:    String(col(r,"pamiAfiliado",undefined)||""),
+        pamiPrestacion:  String(col(r,"pamiPrestacion",undefined)||""),
+        pamiTratamiento: String(col(r,"pamiTratamiento",undefined)||""),
+        pamiDiferencia:  boolVal(col(r,"pamiDiferencia",undefined)),
+        pamiSinCargo:    boolVal(col(r,"pamiSinCargo",undefined)),
+      };
+
+      // Retrocompatibilidad: si es sheet viejo (sin HEADERS), leer extras JSON para anteojo 2
+      if (!hasHeaders && col(r,"extras",47)) {
+        try { Object.assign(o, JSON.parse(String(col(r,"extras",47)))); } catch {}
+      }
+
+      // Si oSocial es PAMI y no tiene esPami explícito, marcarlo
+      if (!o.esPami && (o.oSocial||"").toUpperCase() === "PAMI") o.esPami = true;
+
+      orders.push(o);
     });
     // Re-render caja si hubo cambios en cajas remotas
     if (cajasRow && cajasRow[1]) {
