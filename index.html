@@ -718,6 +718,14 @@ async function syncSheets() {
           retirado: r[45]===true || String(r[45])==="true",
           updatedAt: r[46] ? Number(r[46]) : 0
         });
+        // Expandir campos del anteojo 2 desde extras (columna 48)
+        const lastOrder = orders[orders.length-1];
+        if (r[47]) {
+          try {
+            const extras = JSON.parse(String(r[47]));
+            Object.assign(lastOrder, extras);
+          } catch {}
+        }
       }
     });
     // Re-render caja si hubo cambios en cajas remotas
@@ -1033,8 +1041,8 @@ function renderOrdenes(q="") {
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.nombre||"—"}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
-          ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.tipoTrabajo}${o.dosAnteojos&&o.b_tipoTrabajo&&o.b_tipoTrabajo!==o.tipoTrabajo?" (1)":""}</span>`:""}
-          ${o.dosAnteojos&&o.b_tipoTrabajo?(()=>{const bg2=o.b_tipoTrabajo==="Recetado"?"#E3F2FD":o.b_tipoTrabajo==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";const cl2=o.b_tipoTrabajo==="Recetado"?"#1565C0":o.b_tipoTrabajo==="Reposición de Cristales"?"#6A1B9A":"#F57F17";return`<span style="background:${bg2};color:${cl2};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.b_tipoTrabajo}${o.b_tipoTrabajo!==o.tipoTrabajo?" (2)":""}</span>`;})():""}
+          ${o.dosAnteojos?`<span style="background:#6A1B9A;color:#fff;font-size:10px;font-weight:900;padding:2px 8px;border-radius:20px">👓👓 2 ant.</span>`:""}
+          ${o.tipoTrabajo?`<span style="background:${ttBg};color:${ttColor};font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">${o.tipoTrabajo}</span>`:""}
           ${o.pagado?`<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">✅ Pagado</span>`:""}
           ${o.ctaCte?`<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">📒 Cta.Cte</span>`:""}
           ${o.armazonDesc?`<span style="background:#F3F0FF;color:#5B21B6;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">🕶️ ${o.armazonDesc}</span>`:""}
@@ -1067,12 +1075,15 @@ function verDetalle(idx) {
       <div>
         <div style="font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px">Orden de Trabajo</div>
         <div style="font-size:26px;font-weight:900;color:var(--azul);line-height:1.1">N° ${o.num}</div>
+        ${o.dosAnteojos?`<div style="background:linear-gradient(135deg,#6A1B9A,#4527A0);color:#fff;font-size:13px;font-weight:900;padding:6px 14px;border-radius:20px;display:inline-block;margin-top:6px;letter-spacing:.5px">👓👓 2 ANTEOJOS</div>`:""}
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
         ${tipoBadges.map((t,i)=>{
           const bg = t==="Recetado"?"#E3F2FD":t==="Reposición de Cristales"?"#F3E5F5":"#FFF8E1";
           const cl = t==="Recetado"?"#1565C0":t==="Reposición de Cristales"?"#6A1B9A":"#F57F17";
-          const lbl = o.dosAnteojos ? `${t} (Ant. ${i+1})` : t;
-          return `<span style="background:${bg};color:${cl};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block;margin-top:4px;margin-right:4px">${lbl}</span>`;
+          const lbl = o.dosAnteojos ? `${t} · Ant. ${i+1}` : t;
+          return `<span style="background:${bg};color:${cl};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block">${lbl}</span>`;
         }).join("")}
+        </div>
       </div>
       <div style="text-align:right">
         ${o.fecha?`<div style="font-size:13px;color:var(--suave)">📅 ${fmtDate(o.fecha)}</div>`:""}
@@ -5348,6 +5359,20 @@ async function submitOrden(existingId){
     costo:g("f-costo"),
     updatedAt: Date.now()
   };
+  // Serializar campos del anteojo 2 en campo extras para persistencia en Sheets
+  if (o.dosAnteojos) {
+    o.extras = JSON.stringify({
+      dosAnteojos: true,
+      b_tipoTrabajo: o.b_tipoTrabajo,
+      b_lEsf:o.b_lEsf,b_lCil:o.b_lCil,b_lEje:o.b_lEje,b_lAdd:o.b_lAdd,
+      b_lEsfI:o.b_lEsfI,b_lCilI:o.b_lCilI,b_lEjeI:o.b_lEjeI,b_lAddI:o.b_lAddI,
+      b_cEsf:o.b_cEsf,b_cCil:o.b_cCil,b_cEje:o.b_cEje,b_cAdd:o.b_cAdd,
+      b_cEsfI:o.b_cEsfI,b_cCilI:o.b_cCilI,b_cEjeI:o.b_cEjeI,b_cAddI:o.b_cAddI,
+      b_tipos:o.b_tipos,b_tratamiento:o.b_tratamiento,b_armazonDesc:o.b_armazonDesc
+    });
+  } else {
+    o.extras = "";
+  }
   if(existingId) D.orders=D.orders.map(x=>x.id===existingId?o:x);
   else D.orders.push(o);
   persist();closeModal();renderAll();toast("✅ Orden guardada");
