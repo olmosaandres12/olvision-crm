@@ -1096,7 +1096,7 @@ function verDetalle(idx) {
     </div>`:""}
 
     ${(hasL||hasC)?`<div class="fsec">
-      <div class="fsec-tit">📐 Receta Óptica</div>
+      <div class="fsec-tit">📐 ${o.dosAnteojos?'Anteojo 1 — ':''}Receta Óptica</div>
       <div class="gtbl-wrap"><table class="gtbl" style="pointer-events:none">
         <tr><th style="width:32px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
         ${hasL?`<tr><td colspan="5" style="background:linear-gradient(90deg,var(--azul) 0%,#2563eb 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔭 LEJOS</td></tr>
@@ -1109,13 +1109,40 @@ function verDetalle(idx) {
       ${detectarCondicion(o)}
     </div>`:""}
 
-    ${(tipos.length||o.tratamiento||o.armazonDesc)?`<div class="fsec">
+    ${o.dosAnteojos && (o.b_lEsf||o.b_lEsfI||o.b_cEsf||o.b_cEsfI)?`<div class="fsec">
+      <div class="fsec-tit" style="color:#6A1B9A">📐 Anteojo 2 — Receta Óptica</div>
+      <div class="gtbl-wrap"><table class="gtbl" style="pointer-events:none;--azul:#6A1B9A;--azul-light:#F3E5F5">
+        <tr><th style="width:32px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+        ${(o.b_lEsf||o.b_lEsfI)?`<tr><td colspan="5" style="background:linear-gradient(90deg,#6A1B9A 0%,#8E24AA 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔭 LEJOS</td></tr>
+        <tr><td class="rl" style="background:#F3E5F5;color:#6A1B9A">OD</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_lEsf)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_lCil)}</td><td style="text-align:center;padding:7px 4px;font-weight:700">${o.b_lEje||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_lAdd)}</td></tr>
+        <tr><td class="rl" style="background:#F3E5F5;color:#6A1B9A">OI</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_lEsfI)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_lCilI)}</td><td style="text-align:center;padding:7px 4px;font-weight:700">${o.b_lEjeI||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_lAddI)}</td></tr>`:""}
+        ${(o.b_cEsf||o.b_cEsfI)?`<tr><td colspan="5" style="background:linear-gradient(90deg,#6A1B9A 0%,#8E24AA 100%);font-size:10px;font-weight:800;color:#fff;padding:5px 10px;text-transform:uppercase;letter-spacing:1px">🔬 CERCA</td></tr>
+        <tr><td class="rl" style="background:#F3E5F5;color:#6A1B9A">OD</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_cEsf)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_cCil)}</td><td style="text-align:center;padding:7px 4px;font-weight:700">${o.b_cEje||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_cAdd)}</td></tr>
+        <tr><td class="rl" style="background:#F3E5F5;color:#6A1B9A">OI</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_cEsfI)}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_cCilI)}</td><td style="text-align:center;padding:7px 4px;font-weight:700">${o.b_cEjeI||"—"}</td><td style="text-align:center;padding:7px 4px">${signGradColor(o.b_cAddI)}</td></tr>`:""}
+      </table></div>
+    </div>`:""}
+
+    ${(tipos.length||o.tratamiento||o.armazonDesc||o.b_tipos||o.b_tratamiento)?`<div class="fsec">
       <div class="fsec-tit">👓 Lente y Tratamiento</div>
-      <div class="chips">
-        ${tipos.map(t=>`<span class="chip chip-blue">${t}</span>`).join("")}
-        ${o.tratamiento?`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:700">✨ ${o.tratamiento}</span>`:""}
-      </div>
-      ${o.armazonDesc?`<div style="margin-top:10px;font-size:13px;color:var(--suave)"><b style="color:var(--texto)">🕶️ Armazón:</b> ${o.armazonDesc}</div>`:""}
+      ${o.dosAnteojos?`
+        <div style="font-size:11px;font-weight:800;color:var(--azul);text-transform:uppercase;margin-bottom:5px">Anteojo 1</div>
+        <div class="chips">
+          ${tipos.map(t=>`<span class="chip chip-blue">${t}</span>`).join("")}
+          ${o.tratamiento?(()=>{const parts=o.tratamiento.split(" | ").map(s=>s.trim()).filter(Boolean);return parts.length===2?`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:700">👁 ${parts[0]}</span><span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">🔍 ${parts[1]}</span>`:`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:700">✨ ${o.tratamiento}</span>`})():""}
+        </div>
+        <div style="font-size:11px;font-weight:800;color:#6A1B9A;text-transform:uppercase;margin:10px 0 5px">Anteojo 2</div>
+        <div class="chips">
+          ${(o.b_tipos||"").split(",").filter(Boolean).map(t=>`<span class="chip" style="background:#F3E5F5;color:#6A1B9A;font-weight:700">${t}</span>`).join("")}
+          ${o.b_tratamiento?(()=>{const parts=o.b_tratamiento.split(" | ").map(s=>s.trim()).filter(Boolean);return parts.length===2?`<span class="chip" style="background:#EDE7F6;color:#4527A0;font-weight:700">👁 ${parts[0]}</span><span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">🔍 ${parts[1]}</span>`:`<span class="chip" style="background:#EDE7F6;color:#4527A0;font-weight:700">✨ ${o.b_tratamiento}</span>`})():""}
+        </div>
+        ${o.b_armazonDesc?`<div style="margin-top:8px;font-size:13px;color:var(--suave)"><b style="color:var(--texto)">🕶️ Armazón 2:</b> ${o.b_armazonDesc}</div>`:""}
+      `:`
+        <div class="chips">
+          ${tipos.map(t=>`<span class="chip chip-blue">${t}</span>`).join("")}
+          ${o.tratamiento?(()=>{const parts=o.tratamiento.split(" | ").map(s=>s.trim()).filter(Boolean);return parts.length===2?`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:700">👁 ${parts[0]}</span><span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">🔍 ${parts[1]}</span>`:`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:700">✨ ${o.tratamiento}</span>`})():""}
+        </div>
+      `}
+      ${o.armazonDesc?`<div style="margin-top:10px;font-size:13px;color:var(--suave)"><b style="color:var(--texto)">🕶️ ${o.dosAnteojos?"Armazón 1":"Armazón"}:</b> ${o.armazonDesc}</div>`:""}
     </div>`:""}
 
     <div class="fsec">
@@ -1310,7 +1337,7 @@ function verFichaCliente(nombreEnc) {
             <div style="margin-top:3px">${badge}</div>
             <div style="font-size:12px;color:var(--suave);margin-top:2px">
               ${o.tipoTrabajo?`<span>${o.tipoTrabajo}</span>`:""}
-              ${o.tratamiento?` · ✨ ${o.tratamiento}`:""}
+              ${o.tratamiento?` · ✨ ${o.tratamiento.replace(" | "," / ")}`:""}
               ${o.oSocial?` · 🏥 ${o.oSocial}`:""}
             </div>
           </div>
@@ -3567,7 +3594,7 @@ function renderCaja() {
               <div style="flex:1;min-width:0;padding:2px 0">
                 <div style="font-weight:800;font-size:15px">${o.nombre||"—"} <span style="font-size:12px;color:var(--suave);font-weight:400">N° ${o.num}</span></div>
                 <div style="font-size:12px;color:var(--suave);margin-top:2px">
-                  ${o.tratamiento?`✨ ${o.tratamiento}`:""}
+                  ${o.tratamiento?`✨ ${o.tratamiento.replace(" | "," / ")}`:""}
                   ${o.oSocial?` · 🏥 ${o.oSocial}`:""}
                 </div>
               </div>
@@ -4614,7 +4641,7 @@ function renderFidelizacion() {
           <div>
             <div style="font-size:16px;font-weight:800">${o.nombre||"—"}</div>
             <div style="font-size:12px;color:var(--suave);margin-top:2px">Orden N° ${o.num} · ${fmtDate(o.fecha)}</div>
-            ${o.tratamiento?`<div style="font-size:12px;color:#1565C0;margin-top:2px">✨ ${o.tratamiento}</div>`:""}
+            ${o.tratamiento?`<div style="font-size:12px;color:#1565C0;margin-top:2px">✨ ${o.tratamiento.replace(" | "," / ")}</div>`:""}
           </div>
           ${urgBadge(o.diasRestantes)}
         </div>
@@ -4801,72 +4828,189 @@ function openOrdenForm(data={}) {
       </div>
     </div>
 
-    <div class="fsec">
-      <div class="fsec-tit">🔭 Graduación — LEJOS</div>
-      <div class="gtbl-wrap"><table class="gtbl">
-        <tr><th style="width:32px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-        <tr><td class="rl">D</td><td>${gradCell('lEsf',data.lEsf,'esf')}</td><td>${gradCell('lCil',data.lCil,'cil')}</td><td><input id="lEje" class="grad-val" placeholder="—" value="${data.lEje||''}"></td><td>${gradCell('lAdd',data.lAdd,'add')}</td></tr>
-        <tr><td class="rl">I</td><td>${gradCell('lEsfI',data.lEsfI,'esf')}</td><td>${gradCell('lCilI',data.lCilI,'cil')}</td><td><input id="lEjeI" class="grad-val" placeholder="—" value="${data.lEjeI||''}"></td><td>${gradCell('lAddI',data.lAddI,'add')}</td></tr>
-      </table></div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">🔬 Graduación — CERCA</div>
-      <div class="gtbl-wrap"><table class="gtbl">
-        <tr><th style="width:32px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-        <tr><td class="rl">D</td><td>${gradCell('cEsf',data.cEsf,'esf')}</td><td>${gradCell('cCil',data.cCil,'cil')}</td><td><input id="cEje" class="grad-val" placeholder="—" value="${data.cEje||''}"></td><td>${gradCell('cAdd',data.cAdd,'add')}</td></tr>
-        <tr><td class="rl">I</td><td>${gradCell('cEsfI',data.cEsfI,'esf')}</td><td>${gradCell('cCilI',data.cCilI,'cil')}</td><td><input id="cEjeI" class="grad-val" placeholder="—" value="${data.cEjeI||''}"></td><td>${gradCell('cAddI',data.cAddI,'add')}</td></tr>
-      </table></div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">📌 Tipo de Trabajo</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
-        <label class="check-item ${data.tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:120px;justify-content:center">
-          <input type="radio" name="tipo-trabajo" value="${t}" ${data.tipoTrabajo===t?"checked":""}>
-          <span class="cbox">${data.tipoTrabajo===t?"✓":""}</span>
-          <span class="clabel" style="font-size:13px">${t}</span>
-        </label>`).join("")}
+    <!-- TOGGLE 1/2 ANTEOJOS -->
+    <div class="fsec" style="padding-bottom:0">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.5px">👓 Anteojos en esta orden</span>
+        <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--azul);flex-shrink:0">
+          <button type="button" id="btn-1ant" onclick="setDosAnteojos(false)"
+            style="padding:8px 18px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:background .15s;background:${data.dosAnteojos?'#fff':'var(--azul)'};color:${data.dosAnteojos?'var(--azul)':'#fff'}">
+            1 Anteojo
+          </button>
+          <button type="button" id="btn-2ant" onclick="setDosAnteojos(true)"
+            style="padding:8px 18px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:background .15s;background:${data.dosAnteojos?'var(--azul)':'#fff'};color:${data.dosAnteojos?'#fff':'var(--azul)'}">
+            2 Anteojos
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="fsec">
-      <div class="fsec-tit">🔭 Tipo de Lente</div>
-      <div class="check-grid">
-        ${(getCfg().lentes||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-          <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
-          <span class="cbox">${sel.includes(t)?"✓":""}</span>
-          <span class="clabel">${t}</span>
-        </label>`).join("")}
-      </div>
-    </div>
+    <!-- CONTENEDOR PRINCIPAL: 1 columna o 2 columnas -->
+    <div id="anteojos-container" style="display:${data.dosAnteojos?'grid':'block'};grid-template-columns:1fr 1fr;gap:14px;align-items:start">
 
-    <div class="fsec">
-      <div class="fsec-tit">✨ Tratamiento / Material</div>
-      <div class="field">
-        <label>Seleccioná el tratamiento</label>
-        <select id="f-tratamiento" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-          <option value="">— Sin tratamiento —</option>
-          ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${data.tratamiento===t?"selected":""}>${t}</option>`).join("")}
-        </select>
-      </div>
-    </div>
+      <!-- ══════════════ ANTEOJO 1 (siempre visible) ══════════════ -->
+      <div id="ant1-bloque">
+        ${data.dosAnteojos?`<div style="text-align:center;font-size:12px;font-weight:900;color:#fff;background:var(--azul);border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px">ANTEOJO 1</div>`:''}
 
-    <div class="fsec">
-      <div class="fsec-tit">🕶️ Armazón</div>
-      <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:280px">
-        ${(getCfg().armazon||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-          <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
-          <span class="cbox">${sel.includes(t)?"✓":""}</span>
-          <span class="clabel">${t}</span>
-        </label>`).join("")}
+        <div class="fsec">
+          <div class="fsec-tit">📌 Tipo de Trabajo</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
+            <label class="check-item ${data.tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:100px;justify-content:center">
+              <input type="radio" name="tipo-trabajo" value="${t}" ${data.tipoTrabajo===t?"checked":""}>
+              <span class="cbox">${data.tipoTrabajo===t?"✓":""}</span>
+              <span class="clabel" style="font-size:12px">${t}</span>
+            </label>`).join("")}
+          </div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🔭 Graduación — LEJOS</div>
+          <div class="gtbl-wrap"><table class="gtbl">
+            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+            <tr><td class="rl">D</td><td>${gradCell('lEsf',data.lEsf,'esf')}</td><td>${gradCell('lCil',data.lCil,'cil')}</td><td><input id="lEje" class="grad-val" placeholder="—" value="${data.lEje||''}"></td><td>${gradCell('lAdd',data.lAdd,'add')}</td></tr>
+            <tr><td class="rl">I</td><td>${gradCell('lEsfI',data.lEsfI,'esf')}</td><td>${gradCell('lCilI',data.lCilI,'cil')}</td><td><input id="lEjeI" class="grad-val" placeholder="—" value="${data.lEjeI||''}"></td><td>${gradCell('lAddI',data.lAddI,'add')}</td></tr>
+          </table></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🔬 Graduación — CERCA</div>
+          <div class="gtbl-wrap"><table class="gtbl">
+            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+            <tr><td class="rl">D</td><td>${gradCell('cEsf',data.cEsf,'esf')}</td><td>${gradCell('cCil',data.cCil,'cil')}</td><td><input id="cEje" class="grad-val" placeholder="—" value="${data.cEje||''}"></td><td>${gradCell('cAdd',data.cAdd,'add')}</td></tr>
+            <tr><td class="rl">I</td><td>${gradCell('cEsfI',data.cEsfI,'esf')}</td><td>${gradCell('cCilI',data.cCilI,'cil')}</td><td><input id="cEjeI" class="grad-val" placeholder="—" value="${data.cEjeI||''}"></td><td>${gradCell('cAddI',data.cAddI,'add')}</td></tr>
+          </table></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🔭 Tipo de Lente</div>
+          <div class="check-grid">
+            ${(getCfg().lentes||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+              <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
+              <span class="cbox">${sel.includes(t)?"✓":""}</span>
+              <span class="clabel">${t}</span>
+            </label>`).join("")}
+          </div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">✨ Tratamiento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field">
+              <label style="font-size:11px;font-weight:700;color:var(--suave)">👁 Lejos</label>
+              <select id="f-tratamiento-lejos" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
+                <option value="">— Sin trat. —</option>
+                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label style="font-size:11px;font-weight:700;color:var(--suave)">🔍 Cerca</label>
+              <select id="f-tratamiento-cerca" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
+                <option value="">— Sin trat. —</option>
+                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🕶️ Armazón</div>
+          <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:260px">
+            ${(getCfg().armazon||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+              <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
+              <span class="cbox">${sel.includes(t)?"✓":""}</span>
+              <span class="clabel">${t}</span>
+            </label>`).join("")}
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label style="font-size:11px;font-weight:700;color:var(--suave)">Descripción</label>
+            <input id="f-armazon-desc" placeholder="Marca, modelo, color..." value="${data.armazonDesc||""}">
+          </div>
+        </div>
       </div>
-      <div class="field" style="margin-top:12px">
-        <label>Descripción del armazón</label>
-        <input id="f-armazon-desc" placeholder="Marca, modelo, color..." value="${data.armazonDesc||""}">
+
+      <!-- ══════════════ ANTEOJO 2 (solo visible si dosAnteojos) ══════════════ -->
+      <div id="ant2-bloque" style="display:${data.dosAnteojos?'block':'none'}">
+        <div style="text-align:center;font-size:12px;font-weight:900;color:#fff;background:#6A1B9A;border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px">ANTEOJO 2</div>
+
+        <div class="fsec">
+          <div class="fsec-tit">📌 Tipo de Trabajo</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
+            <label class="check-item ${data.b_tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:100px;justify-content:center">
+              <input type="radio" name="b-tipo-trabajo" value="${t}" ${data.b_tipoTrabajo===t?"checked":""}>
+              <span class="cbox">${data.b_tipoTrabajo===t?"✓":""}</span>
+              <span class="clabel" style="font-size:12px">${t}</span>
+            </label>`).join("")}
+          </div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🔭 Graduación — LEJOS</div>
+          <div class="gtbl-wrap"><table class="gtbl">
+            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+            <tr><td class="rl">D</td><td>${gradCell('b_lEsf',data.b_lEsf,'esf')}</td><td>${gradCell('b_lCil',data.b_lCil,'cil')}</td><td><input id="b_lEje" class="grad-val" placeholder="—" value="${data.b_lEje||''}"></td><td>${gradCell('b_lAdd',data.b_lAdd,'add')}</td></tr>
+            <tr><td class="rl">I</td><td>${gradCell('b_lEsfI',data.b_lEsfI,'esf')}</td><td>${gradCell('b_lCilI',data.b_lCilI,'cil')}</td><td><input id="b_lEjeI" class="grad-val" placeholder="—" value="${data.b_lEjeI||''}"></td><td>${gradCell('b_lAddI',data.b_lAddI,'add')}</td></tr>
+          </table></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🔬 Graduación — CERCA</div>
+          <div class="gtbl-wrap"><table class="gtbl">
+            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+            <tr><td class="rl">D</td><td>${gradCell('b_cEsf',data.b_cEsf,'esf')}</td><td>${gradCell('b_cCil',data.b_cCil,'cil')}</td><td><input id="b_cEje" class="grad-val" placeholder="—" value="${data.b_cEje||''}"></td><td>${gradCell('b_cAdd',data.b_cAdd,'add')}</td></tr>
+            <tr><td class="rl">I</td><td>${gradCell('b_cEsfI',data.b_cEsfI,'esf')}</td><td>${gradCell('b_cCilI',data.b_cCilI,'cil')}</td><td><input id="b_cEjeI" class="grad-val" placeholder="—" value="${data.b_cEjeI||''}"></td><td>${gradCell('b_cAddI',data.b_cAddI,'add')}</td></tr>
+          </table></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🔭 Tipo de Lente</div>
+          <div class="check-grid" id="b-lentes-grid">
+            ${(()=>{const bSel=data.b_tipos?data.b_tipos.split(","):[];return(getCfg().lentes||[]).map(t=>`<label class="check-item b-lente-item ${bSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+              <input type="checkbox" value="${t}" ${bSel.includes(t)?"checked":""}>
+              <span class="cbox">${bSel.includes(t)?"✓":""}</span>
+              <span class="clabel">${t}</span>
+            </label>`).join("");})()}
+          </div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">✨ Tratamiento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field">
+              <label style="font-size:11px;font-weight:700;color:var(--suave)">👁 Lejos</label>
+              <select id="f-b-tratamiento-lejos" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
+                <option value="">— Sin trat. —</option>
+                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.b_tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label style="font-size:11px;font-weight:700;color:var(--suave)">🔍 Cerca</label>
+              <select id="f-b-tratamiento-cerca" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
+                <option value="">— Sin trat. —</option>
+                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.b_tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-tit">🕶️ Armazón</div>
+          <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:260px">
+            ${(()=>{const bArmSel=data.b_armazonDesc?(getCfg().armazon||[]).filter(t=>data.b_armazonDesc.includes(t)):[];return(getCfg().armazon||[]).map(t=>`<label class="check-item b-armazon-item ${bArmSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+              <input type="checkbox" value="${t}" ${bArmSel.includes(t)?"checked":""}>
+              <span class="cbox">${bArmSel.includes(t)?"✓":""}</span>
+              <span class="clabel">${t}</span>
+            </label>`).join("");})()}
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label style="font-size:11px;font-weight:700;color:var(--suave)">Descripción</label>
+            <input id="f-b-armazon-desc" placeholder="Marca, modelo, color..." value="${data.b_armazonDesc||""}">
+          </div>
+        </div>
       </div>
-    </div>
+
+    </div><!-- /anteojos-container -->
 
     <div class="fsec">
       <div class="fsec-tit">💰 Pago</div>
@@ -5055,10 +5199,46 @@ function calcSaldo(){
   document.getElementById("f-saldo").value = saldo > 0 ? saldo.toLocaleString("es-AR") : "0";
 }
 
+function setDosAnteojos(dos) {
+  const container = document.getElementById("anteojos-container");
+  const ant2 = document.getElementById("ant2-bloque");
+  const ant1Header = document.getElementById("ant1-header");
+  const btn1 = document.getElementById("btn-1ant");
+  const btn2 = document.getElementById("btn-2ant");
+  if (!container || !ant2) return;
+
+  if (dos) {
+    container.style.display = "grid";
+    container.style.gridTemplateColumns = "1fr 1fr";
+    container.style.gap = "14px";
+    ant2.style.display = "block";
+    // Mostrar header "ANTEOJO 1" si no existe
+    let h = document.getElementById("ant1-dynamic-header");
+    if (!h) {
+      h = document.createElement("div");
+      h.id = "ant1-dynamic-header";
+      h.style.cssText = "text-align:center;font-size:12px;font-weight:900;color:#fff;background:var(--azul);border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px";
+      h.textContent = "ANTEOJO 1";
+      document.getElementById("ant1-bloque").prepend(h);
+    }
+    btn1.style.background = "#fff"; btn1.style.color = "var(--azul)";
+    btn2.style.background = "var(--azul)"; btn2.style.color = "#fff";
+  } else {
+    container.style.display = "block";
+    ant2.style.display = "none";
+    const h = document.getElementById("ant1-dynamic-header");
+    if (h) h.remove();
+    btn1.style.background = "var(--azul)"; btn1.style.color = "#fff";
+    btn2.style.background = "#fff"; btn2.style.color = "var(--azul)";
+  }
+}
+
 function selectTipoTrabajo(e, label) {
   e.preventDefault();
-  // Desmarcar todos los de tipo trabajo
-  document.querySelectorAll("input[name='tipo-trabajo']").forEach(r => {
+  const rb = label.querySelector("input[type=radio]");
+  const name = rb?.name || "tipo-trabajo";
+  // Desmarcar todos del mismo grupo
+  document.querySelectorAll(`input[name='${name}']`).forEach(r => {
     const lbl = r.closest(".check-item");
     lbl.classList.remove("checked");
     lbl.querySelector(".cbox").textContent = "";
@@ -5066,7 +5246,6 @@ function selectTipoTrabajo(e, label) {
   });
   // Marcar el seleccionado
   label.classList.add("checked");
-  const rb = label.querySelector("input[type=radio]");
   rb.checked = true;
   label.querySelector(".cbox").textContent = "✓";
 }
@@ -5087,8 +5266,15 @@ async function submitOrden(existingId){
   const numIngresado = g("f-num");
   const numDupe = D.orders.find(o => String(o.num) === String(numIngresado) && o.id !== existingId);
   if(numDupe){toast("⚠ Ya existe la orden N° "+numIngresado+" ("+numDupe.nombre+")");return;}
-  const tipos=[...document.querySelectorAll(".check-grid .check-item.checked input[type=checkbox]")].filter(x=>x.name!=='pami-op').map(x=>x.value).join(",");
-  const tratamiento=g("f-tratamiento");
+  const dosAnteojos = document.getElementById("ant2-bloque")?.style.display !== "none";
+  const tipos=[...document.querySelectorAll("#ant1-bloque .check-grid .check-item.checked input[type=checkbox]")].filter(x=>x.name!=='pami-op').map(x=>x.value).join(",");
+  const tratLejos=(document.getElementById("f-tratamiento-lejos")?.value||"").trim();
+  const tratCerca=(document.getElementById("f-tratamiento-cerca")?.value||"").trim();
+  const tratamiento = tratLejos && tratCerca && tratLejos!==tratCerca ? tratLejos+" | "+tratCerca : tratLejos || tratCerca;
+  const b_tipos = dosAnteojos ? [...document.querySelectorAll("#b-lentes-grid .check-item.checked input[type=checkbox]")].map(x=>x.value).join(",") : "";
+  const b_tratLejos = dosAnteojos ? (document.getElementById("f-b-tratamiento-lejos")?.value||"").trim() : "";
+  const b_tratCerca = dosAnteojos ? (document.getElementById("f-b-tratamiento-cerca")?.value||"").trim() : "";
+  const b_tratamiento = dosAnteojos ? (b_tratLejos && b_tratCerca && b_tratLejos!==b_tratCerca ? b_tratLejos+" | "+b_tratCerca : b_tratLejos || b_tratCerca) : "";
   const total=getRawMonto(document.getElementById("f-total"))||g("f-total"),aCuenta=getRawMonto(document.getElementById("f-acuenta"))||g("f-acuenta");
   const saldo=(total&&aCuenta)?String(Math.max(0,parseFloat(total)-parseFloat(aCuenta))):String(parseFloat((g("f-saldo")||"0").replace(/\./g,""))||0);
   const o={
@@ -5103,6 +5289,14 @@ async function submitOrden(existingId){
     cEsf:gGrad("cEsf"),cCil:gGrad("cCil"),cEje:g("cEje"),cAdd:gGrad("cAdd"),
     cEsfI:gGrad("cEsfI"),cCilI:gGrad("cCilI"),cEjeI:g("cEjeI"),cAddI:gGrad("cAddI"),
     tipoTrabajo: (document.querySelector("input[name='tipo-trabajo']:checked")?.value||""),
+    dosAnteojos,
+    b_tipoTrabajo: dosAnteojos?(document.querySelector("input[name='b-tipo-trabajo']:checked")?.value||""):"",
+    b_lEsf:dosAnteojos?gGrad("b_lEsf"):"",b_lCil:dosAnteojos?gGrad("b_lCil"):"",b_lEje:dosAnteojos?g("b_lEje"):"",b_lAdd:dosAnteojos?gGrad("b_lAdd"):"",
+    b_lEsfI:dosAnteojos?gGrad("b_lEsfI"):"",b_lCilI:dosAnteojos?gGrad("b_lCilI"):"",b_lEjeI:dosAnteojos?g("b_lEjeI"):"",b_lAddI:dosAnteojos?gGrad("b_lAddI"):"",
+    b_cEsf:dosAnteojos?gGrad("b_cEsf"):"",b_cCil:dosAnteojos?gGrad("b_cCil"):"",b_cEje:dosAnteojos?g("b_cEje"):"",b_cAdd:dosAnteojos?gGrad("b_cAdd"):"",
+    b_cEsfI:dosAnteojos?gGrad("b_cEsfI"):"",b_cCilI:dosAnteojos?gGrad("b_cCilI"):"",b_cEjeI:dosAnteojos?g("b_cEjeI"):"",b_cAddI:dosAnteojos?gGrad("b_cAddI"):"",
+    b_tipos, b_tratamiento,
+    b_armazonDesc: dosAnteojos?(g("f-b-armazon-desc")||""):"",
     armazonDesc: g("f-armazon-desc"),
     tipos,tratamiento,total,aCuenta,saldo,formaPago:(()=>{
       const base = g("f-pago") || "";
