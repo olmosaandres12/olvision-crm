@@ -290,6 +290,7 @@
 details > summary { user-select: none; }
 details > summary::-webkit-details-marker { display: none; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1975,6 +1976,10 @@ function renderAdminPanel() {
 }
 
 function switchAdminTab(tab) {
+  // Destruir charts anteriores para evitar memory leaks
+  Chart.helpers && Object.values(Chart.instances||{}).forEach(c => {
+    try { c.destroy(); } catch(e) {}
+  });
   adminTab = tab;
   renderAdminPanel();
   window.scrollTo(0,0);
@@ -1987,6 +1992,33 @@ function renderAdminTab(tab) {
   if (tab === "productos") return renderAdminProductos();
   if (tab === "ordenes")   return renderAdminOrdenes();
   return "";
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────────
+const CHART_COLORS = {
+  blue:   '#4A9EFF', green:  '#34D399', yellow: '#F5E87C',
+  purple: '#A78BFA', orange: '#FB923C', red:    '#EF5350',
+  teal:   '#2DD4BF', pink:   '#F472B6'
+};
+const CHART_PALETTE = Object.values(CHART_COLORS);
+
+function mkChart(id, config) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  // Destruir instancia previa si existe
+  const prev = Chart.getChart(id);
+  if (prev) prev.destroy();
+  Chart.defaults.color = 'rgba(255,255,255,.65)';
+  Chart.defaults.borderColor = 'rgba(255,255,255,.07)';
+  Chart.defaults.font.family = "'Inter','system-ui',sans-serif";
+  return new Chart(canvas, config);
+}
+
+function darkCard(title, canvasId, height=200) {
+  return `<div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
+  <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">${title}</div>
+  <canvas id="${canvasId}" height="${height}"></canvas>
+</div>`;
 }
 
 // ── DASHBOARD ────────────────────────────────────────────────
@@ -2013,36 +2045,25 @@ function renderDashboard() {
   const ticketCur   = curOrds.length ? facturaCur/curOrds.length : 0;
   const ticketPrev  = prevOrds.length ? facturaPrev/prevOrds.length : 0;
 
-  // Clientes nuevos vs recurrentes
   const clientesPrevios = new Set(
-    D.orders.filter(o=>{
-      if(!o.fecha) return false;
-      const d=new Date(o.fecha+"T12:00:00");
-      return d < new Date(anio, mes, 1);
-    }).map(o=>(o.nombre||"").toLowerCase().trim())
+    D.orders.filter(o=>{ if(!o.fecha) return false; const d=new Date(o.fecha+"T12:00:00"); return d < new Date(anio,mes,1); }).map(o=>(o.nombre||"").toLowerCase().trim())
   );
-  const nuevos     = curOrds.filter(o=>!clientesPrevios.has((o.nombre||"").toLowerCase().trim())).length;
+  const nuevos = curOrds.filter(o=>!clientesPrevios.has((o.nombre||"").toLowerCase().trim())).length;
   const recurrentes = curOrds.length - nuevos;
 
-  // Gráfico últimos 6 meses
   const ultimos6 = Array.from({length:6},(_,i)=>{
-    const m2 = ((mes - 5 + i) + 12) % 12;
-    const a2 = anio + Math.floor((mes - 5 + i) / 12);
+    const m2 = ((mes-5+i)+12)%12;
+    const a2 = anio + Math.floor((mes-5+i)/12);
     const ords = getOrdenesMes(m2, a2);
     return { label: meses[m2], fact: ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0), count: ords.length };
   });
-  const maxFact = Math.max(...ultimos6.map(x=>x.fact), 1);
 
-  const pctChange = (cur, prev) => {
-    if (!prev) return null;
-    return Math.round((cur-prev)/prev*100);
-  };
+  const pctChange = (cur, prev) => prev ? Math.round((cur-prev)/prev*100) : null;
 
-  const kpiCard = (emoji, label, valor, prev, prefix="", color="#1B4FA8", darkBg="#1B2E54") => {
+  const kpiCard = (emoji, label, valor, prev, prefix="") => {
     const pct = pctChange(parseFloat(valor), parseFloat(prev));
     const badge = pct!==null ? `<div style="display:inline-flex;align-items:center;gap:3px;background:${pct>=0?'rgba(46,125,50,.15)':'rgba(198,40,40,.12)'};border:1px solid ${pct>=0?'rgba(46,125,50,.3)':'rgba(198,40,40,.3)'};border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;color:${pct>=0?'#4CAF50':'#EF5350'};margin-top:4px">${pct>=0?'▲':'▼'} ${Math.abs(pct)}%</div>` : "";
     return `<div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;position:relative;overflow:hidden">
-      <div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;background:${color};opacity:.08;border-radius:50%"></div>
       <div style="font-size:22px;margin-bottom:8px">${emoji}</div>
       <div style="font-size:10px;font-weight:700;color:#F5E87C;text-transform:uppercase;letter-spacing:.8px">${label}</div>
       <div style="font-size:20px;font-weight:900;color:#fff;margin-top:4px;letter-spacing:-.5px">${prefix}${typeof valor==="number"?num(valor.toFixed(0)):valor}</div>
@@ -2050,263 +2071,424 @@ function renderDashboard() {
     </div>`;
   };
 
-  return `
-    <!-- KPIs principales -->
+  // Tipo de trabajo para torta
+  const tipoCount = {};
+  curOrds.forEach(o=>{ if(o.tipoTrabajo) tipoCount[o.tipoTrabajo]=(tipoCount[o.tipoTrabajo]||0)+1; });
+
+  const diasTranscurridos = Math.max(hoy.getDate(),1);
+  const diasMes = new Date(anio,mes+1,0).getDate();
+  const promDia = (curOrds.length/diasTranscurridos).toFixed(1);
+  const proyeccion = Math.round(promDia*diasMes);
+  const proyFact = Math.round((facturaCur/diasTranscurridos)*diasMes);
+
+  const html = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      ${kpiCard("💰","Facturación "+mesesFull[mes], facturaCur, facturaPrev, "$", "#4A9EFF")}
-      ${kpiCard("🧾","Órdenes del mes", curOrds.length, prevOrds.length, "", "#34D399")}
-      ${kpiCard("🎯","Ticket promedio", ticketCur, ticketPrev, "$", "#A78BFA")}
-      ${kpiCard("📅","Órdenes hoy", hoyOrds.length, null, "", "#FB923C")}
+      ${kpiCard("💰","Facturación "+mesesFull[mes], facturaCur, facturaPrev, "$")}
+      ${kpiCard("🧾","Órdenes del mes", curOrds.length, prevOrds.length, "")}
+      ${kpiCard("🎯","Ticket promedio", ticketCur, ticketPrev, "$")}
+      ${kpiCard("📅","Órdenes hoy", hoyOrds.length, null, "")}
     </div>
 
-    <!-- Clientes nuevos vs recurrentes -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">👥 Clientes este mes</div>
-      <div style="display:flex;gap:10px">
-        <div style="flex:1;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:9px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:.5px">Nuevos</div>
-          <div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">${nuevos}</div>
-        </div>
-        <div style="flex:1;background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.2);border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:9px;font-weight:800;color:#4A9EFF;text-transform:uppercase;letter-spacing:.5px">Recurrentes</div>
-          <div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">${recurrentes}</div>
-        </div>
-        <div style="flex:1;background:rgba(245,232,124,.06);border:1px solid rgba(245,232,124,.15);border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:.5px">Total</div>
-          <div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">${curOrds.length}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Gráfico 6 meses -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">📈 Facturación últimos 6 meses</div>
-      <div style="display:flex;align-items:flex-end;gap:6px;height:110px">
-        ${ultimos6.map((m2,i)=>`
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-            <div style="font-size:9px;font-weight:700;color:${i===5?'#F5E87C':'rgba(255,255,255,.65)'}">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
-            <div style="width:100%;background:${i===5?'linear-gradient(180deg,#4A9EFF,#1B4FA8)':'rgba(74,158,255,.15)'};border-radius:5px 5px 0 0;height:${Math.max(m2.fact/maxFact*85,4)}px;transition:height .4s"></div>
-            <div style="font-size:9px;color:rgba(255,255,255,.72);font-weight:600">${m2.label}</div>
-          </div>`).join("")}
-      </div>
-    </div>
-
-    <!-- Ritmo del mes -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">⏱ Ritmo del mes</div>
+    <!-- Ritmo del mes compacto -->
+    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">⏱ Ritmo del mes</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        ${(()=>{
-          const diasTranscurridos = Math.max(hoy.getDate(), 1);
-          const diasMes = new Date(anio, mes+1, 0).getDate();
-          const promDia = (curOrds.length / diasTranscurridos).toFixed(1);
-          const proyeccion = Math.round(promDia * diasMes);
-          const proyFact = Math.round((facturaCur / diasTranscurridos) * diasMes);
-          return `
-            <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#F5E87C;text-transform:uppercase">Prom/día</div>
-              <div style="font-size:22px;font-weight:900;color:#4A9EFF;margin-top:4px">${promDia}</div>
-              <div style="font-size:9px;color:rgba(255,255,255,.6)">órdenes</div>
-            </div>
-            <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.18);border-radius:12px;padding:12px;text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#34D399;text-transform:uppercase">Proyección</div>
-              <div style="font-size:22px;font-weight:900;color:#34D399;margin-top:4px">${proyeccion}</div>
-              <div style="font-size:9px;color:rgba(52,211,153,.6)">al cierre</div>
-            </div>
-            <div style="background:rgba(245,232,124,.05);border:1px solid rgba(245,232,124,.15);border-radius:12px;padding:12px;text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#F5E87C;text-transform:uppercase">Proy. $</div>
-              <div style="font-size:14px;font-weight:900;color:#F5E87C;margin-top:4px">$${num(proyFact)}</div>
-              <div style="font-size:9px;color:rgba(245,232,124,.5)">estimado</div>
-            </div>`;
-        })()}
+        <div style="background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.2);border-radius:12px;padding:10px;text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#4A9EFF;text-transform:uppercase">Prom/día</div>
+          <div style="font-size:20px;font-weight:900;color:#4A9EFF;margin-top:3px">${promDia}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.45)">órdenes</div>
+        </div>
+        <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.18);border-radius:12px;padding:10px;text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#34D399;text-transform:uppercase">Proy. ords.</div>
+          <div style="font-size:20px;font-weight:900;color:#34D399;margin-top:3px">${proyeccion}</div>
+          <div style="font-size:9px;color:rgba(52,211,153,.5)">al cierre</div>
+        </div>
+        <div style="background:rgba(245,232,124,.05);border:1px solid rgba(245,232,124,.15);border-radius:12px;padding:10px;text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#F5E87C;text-transform:uppercase">Proy. $</div>
+          <div style="font-size:14px;font-weight:900;color:#F5E87C;margin-top:3px">$${num(proyFact)}</div>
+          <div style="font-size:9px;color:rgba(245,232,124,.4)">estimado</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Área: facturación 6 meses -->
+    ${darkCard("📈 Facturación — últimos 6 meses", "chart-dash-area", 160)}
+
+    <!-- Grid: torta clientes + torta tipo trabajo -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">👥 Clientes</div>
+        <canvas id="chart-dash-clientes" height="140"></canvas>
+      </div>
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">🔭 Tipo trabajo</div>
+        <canvas id="chart-dash-tipo" height="140"></canvas>
       </div>
     </div>
   `;
+
+  setTimeout(() => {
+    // Área 6 meses
+    mkChart("chart-dash-area", {
+      type: "line",
+      data: {
+        labels: ultimos6.map(x=>x.label),
+        datasets: [{
+          label: "Facturación",
+          data: ultimos6.map(x=>x.fact),
+          borderColor: "#4A9EFF",
+          backgroundColor: "rgba(74,158,255,.12)",
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#4A9EFF",
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => " $"+num(ctx.raw) } } },
+        scales: {
+          x: { grid: { color:"rgba(255,255,255,.05)" }, ticks: { font:{size:10} } },
+          y: { grid: { color:"rgba(255,255,255,.05)" }, ticks: { font:{size:10}, callback: v => "$"+num(Math.round(v/1000))+"k" } }
+        }
+      }
+    });
+
+    // Torta clientes nuevos vs recurrentes
+    mkChart("chart-dash-clientes", {
+      type: "doughnut",
+      data: {
+        labels: ["Nuevos","Recurrentes"],
+        datasets: [{ data: [nuevos, recurrentes], backgroundColor: ["#34D399","#4A9EFF"], borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: "65%",
+        plugins: { legend: { position:"bottom", labels:{ font:{size:10}, padding:8, boxWidth:10 } }, tooltip: { callbacks: { label: ctx => " "+ctx.label+": "+ctx.raw } } }
+      }
+    });
+
+    // Torta tipo de trabajo
+    const tipoEntries = Object.entries(tipoCount);
+    mkChart("chart-dash-tipo", {
+      type: "doughnut",
+      data: {
+        labels: tipoEntries.map(x=>x[0]),
+        datasets: [{ data: tipoEntries.map(x=>x[1]), backgroundColor: CHART_PALETTE, borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: "65%",
+        plugins: { legend: { position:"bottom", labels:{ font:{size:9}, padding:6, boxWidth:9 } }, tooltip: { callbacks: { label: ctx => " "+ctx.label+": "+ctx.raw } } }
+      }
+    });
+  }, 80);
+
+  return html;
 }
+
 
 // ── VENTAS ────────────────────────────────────────────────────
 function renderAdminVentas() {
   const hoy = new Date();
   const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  const mesesFull = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-  // Últimos 12 meses
   const ultimos12 = Array.from({length:12},(_,i)=>{
-    const offset = 11 - i;
-    const m = ((hoy.getMonth() - offset) + 120) % 12;
-    const a = hoy.getFullYear() + Math.floor((hoy.getMonth() - offset) / 12);
+    const offset = 11-i;
+    const m = ((hoy.getMonth()-offset)+120)%12;
+    const a = hoy.getFullYear()+Math.floor((hoy.getMonth()-offset)/12);
     const ords = D.orders.filter(o=>{
       if(!o.fecha) return false;
       const d=new Date(o.fecha+"T12:00:00");
       return d.getMonth()===m && d.getFullYear()===a;
     });
-    return { label: meses[m]+" "+String(a).slice(2), mes:m, anio:a, fact: ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0), count: ords.length, ticket: ords.length?ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0)/ords.length:0 };
+    return { label: meses[m]+" "+String(a).slice(2), mes:m, anio:a,
+      fact: ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0),
+      count: ords.length,
+      ticket: ords.length ? ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0)/ords.length : 0
+    };
   });
-  const maxFact = Math.max(...ultimos12.map(x=>x.fact),1);
-  const maxCount = Math.max(...ultimos12.map(x=>x.count),1);
 
-  // Evolución semanal (últimas 8 semanas)
+  // Acumulado anual (año actual)
+  const anioActual = hoy.getFullYear();
+  const mesesAnio = Array.from({length:12},(_,i)=>{
+    const ords = D.orders.filter(o=>{
+      if(!o.fecha) return false;
+      const d=new Date(o.fecha+"T12:00:00");
+      return d.getMonth()===i && d.getFullYear()===anioActual;
+    });
+    return { label: meses[i], fact: ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0) };
+  });
+  // Acumulado progresivo
+  let acum=0;
+  const acumData = mesesAnio.map(m=>{ acum+=m.fact; return acum; });
+
+  // Semanas (últimas 8)
   const semanas = Array.from({length:8},(_,i)=>{
-    const fin = new Date(hoy); fin.setDate(hoy.getDate() - i*7);
-    const ini = new Date(fin); ini.setDate(fin.getDate() - 6);
+    const fin = new Date(hoy); fin.setDate(hoy.getDate()-i*7);
+    const ini = new Date(fin); ini.setDate(fin.getDate()-6);
     const finStr = fin.toISOString().slice(0,10);
     const iniStr = ini.toISOString().slice(0,10);
     const ords = D.orders.filter(o=>o.fecha&&o.fecha>=iniStr&&o.fecha<=finStr);
-    return { label: ini.getDate()+"/"+String(ini.getMonth()+1).padStart(2,'0'), fact: ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0), count: ords.length };
+    return { label: ini.getDate()+"/"+String(ini.getMonth()+1).padStart(2,"0"),
+      fact: ords.reduce((a,o)=>a+(parseFloat(o.total)||0),0), count: ords.length };
   }).reverse();
-  const maxSem = Math.max(...semanas.map(x=>x.fact),1);
 
-  return `
-    <!-- Gráfico 12 meses facturación -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">💰 Facturación mensual (12 meses)</div>
-      <div style="overflow-x:auto;scrollbar-width:none">
-        <div style="display:flex;align-items:flex-end;gap:5px;height:120px;min-width:320px">
-          ${ultimos12.map((m2,i)=>`
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:28px">
-              <div style="font-size:8px;font-weight:700;color:${i===11?'#F5E87C':'rgba(255,255,255,.6)'};white-space:nowrap">${m2.fact>0?'$'+num(Math.round(m2.fact/1000))+'k':''}</div>
-              <div style="width:100%;background:${i===11?'linear-gradient(180deg,#4A9EFF,#1B4FA8)':'rgba(74,158,255,.15)'};border-radius:4px 4px 0 0;height:${Math.max(m2.fact/maxFact*95,3)}px"></div>
-              <div style="font-size:8px;color:rgba(255,255,255,.72);font-weight:600;white-space:nowrap">${m2.label}</div>
-            </div>`).join("")}
-        </div>
+  // Medios de pago
+  const medioCount = {};
+  D.orders.filter(o=>o.formaPago).forEach(o=>{ medioCount[o.formaPago]=(medioCount[o.formaPago]||0)+1; });
+
+  const html = `
+    ${darkCard("💰 Facturación mensual — 12 meses (ECG)", "chart-v-linea", 170)}
+    ${darkCard("📈 Acumulado anual "+anioActual, "chart-v-acum", 150)}
+    ${darkCard("📅 Evolución semanal — últimas 8 semanas", "chart-v-sem", 150)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">💳 Medios de pago</div>
+        <canvas id="chart-v-medios" height="150"></canvas>
       </div>
-    </div>
-
-    <!-- Órdenes por mes -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">🧾 Órdenes por mes</div>
-      <div style="overflow-x:auto;scrollbar-width:none">
-        <div style="display:flex;align-items:flex-end;gap:5px;height:90px;min-width:320px">
-          ${ultimos12.map((m2,i)=>`
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:28px">
-              <div style="font-size:9px;font-weight:700;color:${i===11?'#34D399':'rgba(52,211,153,.5)'}">${m2.count||''}</div>
-              <div style="width:100%;background:${i===11?'linear-gradient(180deg,#34D399,#059669)':'rgba(52,211,153,.15)'};border-radius:4px 4px 0 0;height:${Math.max(m2.count/maxCount*70,3)}px"></div>
-              <div style="font-size:8px;color:rgba(255,255,255,.72);font-weight:600">${m2.label}</div>
-            </div>`).join("")}
-        </div>
-      </div>
-    </div>
-
-    <!-- Ticket promedio histórico -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🎯 Ticket promedio histórico</div>
-      <div style="overflow-x:auto;scrollbar-width:none">
-        <div style="display:flex;gap:8px;min-width:320px">
-          ${ultimos12.filter(m2=>m2.count>0).map((m2,i,arr)=>{
-            const maxT = Math.max(...arr.map(x=>x.ticket),1);
-            return `<div style="flex:1;text-align:center;min-width:40px">
-              <div style="font-size:9px;font-weight:800;color:#A78BFA">$${num(Math.round(m2.ticket/1000))}k</div>
-              <div style="width:100%;background:rgba(167,139,250,.1);border-radius:4px;margin:3px 0;height:55px;display:flex;align-items:flex-end">
-                <div style="width:100%;background:linear-gradient(180deg,#A78BFA,#7C3AED);border-radius:4px;height:${Math.max(m2.ticket/maxT*55,3)}px"></div>
-              </div>
-              <div style="font-size:8px;color:rgba(255,255,255,.78)">${m2.label}</div>
-            </div>`;
-          }).join("")}
-        </div>
-      </div>
-    </div>
-
-    <!-- Evolución semanal -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px">📅 Evolución semanal (8 semanas)</div>
-      <div style="display:flex;align-items:flex-end;gap:6px;height:90px">
-        ${semanas.map((s,i)=>`
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-            <div style="font-size:9px;font-weight:700;color:${i===7?'#FB923C':'rgba(251,146,60,.5)'}">${s.count||''}</div>
-            <div style="width:100%;background:${i===7?'linear-gradient(180deg,#FB923C,#EA580C)':'rgba(251,146,60,.15)'};border-radius:4px 4px 0 0;height:${Math.max(s.fact/maxSem*75,3)}px"></div>
-            <div style="font-size:9px;color:rgba(255,255,255,.72);font-weight:600">${s.label}</div>
-          </div>`).join("")}
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">🧾 Órdenes / mes</div>
+        <canvas id="chart-v-ords" height="150"></canvas>
       </div>
     </div>
   `;
+
+  setTimeout(()=>{
+    // ECG linea 12 meses
+    mkChart("chart-v-linea", {
+      type:"line",
+      data:{
+        labels: ultimos12.map(x=>x.label),
+        datasets:[{
+          label:"Facturación",
+          data: ultimos12.map(x=>x.fact),
+          borderColor:"#4A9EFF", backgroundColor:"rgba(74,158,255,.08)",
+          borderWidth:2.5, fill:true, tension:0.35,
+          pointBackgroundColor: ultimos12.map((_,i)=>i===11?"#F5E87C":"#4A9EFF"),
+          pointRadius: ultimos12.map((_,i)=>i===11?6:3),
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>" $"+num(ctx.raw) } } },
+        scales:{
+          x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}} },
+          y:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}, callback:v=>"$"+num(Math.round(v/1000))+"k"} }
+        }
+      }
+    });
+
+    // Área acumulada anual
+    mkChart("chart-v-acum", {
+      type:"line",
+      data:{
+        labels: mesesAnio.map(x=>x.label),
+        datasets:[{
+          label:"Acumulado",
+          data: acumData,
+          borderColor:"#34D399", backgroundColor:"rgba(52,211,153,.1)",
+          borderWidth:2.5, fill:true, tension:0.4,
+          pointBackgroundColor:"#34D399", pointRadius:3
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>" $"+num(ctx.raw) } } },
+        scales:{
+          x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}} },
+          y:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}, callback:v=>"$"+num(Math.round(v/1000))+"k"} }
+        }
+      }
+    });
+
+    // Barras semanas
+    mkChart("chart-v-sem", {
+      type:"bar",
+      data:{
+        labels: semanas.map(x=>x.label),
+        datasets:[{
+          label:"Facturación",
+          data: semanas.map(x=>x.fact),
+          backgroundColor: semanas.map((_,i)=>i===7?"#FB923C":"rgba(251,146,60,.35)"),
+          borderRadius:5, borderSkipped:false
+        },{
+          label:"Órdenes",
+          data: semanas.map(x=>x.count),
+          backgroundColor:"rgba(167,139,250,.25)",
+          borderColor:"rgba(167,139,250,.7)",
+          borderWidth:1.5,
+          type:"line", tension:0.4, yAxisID:"y2",
+          pointBackgroundColor:"#A78BFA", pointRadius:3
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false}, tooltip:{ mode:"index", callbacks:{ label: ctx=>ctx.datasetIndex===0?" $"+num(ctx.raw):" "+ctx.raw+" ords" } } },
+        scales:{
+          x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}} },
+          y:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}, callback:v=>"$"+num(Math.round(v/1000))+"k"} },
+          y2:{ position:"right", grid:{display:false}, ticks:{font:{size:9}}, min:0 }
+        }
+      }
+    });
+
+    // Torta medios de pago
+    const medioEntries = Object.entries(medioCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    mkChart("chart-v-medios", {
+      type:"doughnut",
+      data:{
+        labels: medioEntries.map(x=>x[0]),
+        datasets:[{ data:medioEntries.map(x=>x[1]), backgroundColor:CHART_PALETTE, borderWidth:0, hoverOffset:6 }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true, cutout:"60%",
+        plugins:{ legend:{ position:"bottom", labels:{font:{size:9},padding:6,boxWidth:9} }, tooltip:{ callbacks:{ label: ctx=>" "+ctx.raw+" ords" } } }
+      }
+    });
+
+    // Barras órdenes por mes
+    mkChart("chart-v-ords", {
+      type:"bar",
+      data:{
+        labels: ultimos12.map(x=>x.label),
+        datasets:[{
+          data: ultimos12.map(x=>x.count),
+          backgroundColor: ultimos12.map((_,i)=>i===11?"#34D399":"rgba(52,211,153,.3)"),
+          borderRadius:4, borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>" "+ctx.raw+" ords" } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:9}} },
+          y:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}}, beginAtZero:true }
+        }
+      }
+    });
+  }, 80);
+
+  return html;
 }
+
 
 // ── EQUIPO ────────────────────────────────────────────────────
 function renderAdminEquipo() {
-  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   const hoy = new Date();
+  const meses6 = Array.from({length:6},(_,i)=>{
+    const offset=5-i;
+    const m=((hoy.getMonth()-offset)+120)%12;
+    const a=hoy.getFullYear()+Math.floor((hoy.getMonth()-offset)/12);
+    return { key:m+"-"+a, label:["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][m] };
+  });
 
-  // Acumular por vendedora — todos los meses
   const vendMap = {};
-  D.orders.filter(o=>o.vendedora).forEach(o => {
-    const k = o.vendedora.trim();
-    const d = o.fecha ? new Date(o.fecha+"T12:00:00") : null;
-    const mk = d ? d.getMonth()+"-"+d.getFullYear() : null;
-    if (!vendMap[k]) vendMap[k] = { total:0, ordenes:0, byMes:{} };
-    vendMap[k].total   += parseFloat(o.total)||0;
-    vendMap[k].ordenes += 1;
-    if (mk) vendMap[k].byMes[mk] = (vendMap[k].byMes[mk]||0) + (parseFloat(o.total)||0);
+  D.orders.filter(o=>o.vendedora).forEach(o=>{
+    const k=o.vendedora.trim();
+    const d=o.fecha?new Date(o.fecha+"T12:00:00"):null;
+    const mk=d?d.getMonth()+"-"+d.getFullYear():null;
+    if(!vendMap[k]) vendMap[k]={total:0,ordenes:0,byMes:{}};
+    vendMap[k].total+=parseFloat(o.total)||0;
+    vendMap[k].ordenes++;
+    if(mk) vendMap[k].byMes[mk]=(vendMap[k].byMes[mk]||0)+(parseFloat(o.total)||0);
   });
-  getCajasVentas().filter(v=>v.vendedora).forEach(v => {
-    const k = v.vendedora.trim();
-    if (!vendMap[k]) vendMap[k] = { total:0, ordenes:0, byMes:{} };
-    vendMap[k].total += v.total||0;
-  });
-
-  const entries = Object.entries(vendMap).sort((a,b)=>b[1].total-a[1].total);
-  const mesCur = hoy.getMonth()+"-"+hoy.getFullYear();
-  const mesPrev = (hoy.getMonth()===0?11:hoy.getMonth()-1)+"-"+(hoy.getMonth()===0?hoy.getFullYear()-1:hoy.getFullYear());
-
-  if (!entries.length) return `<div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:40px 20px;text-align:center;color:rgba(255,255,255,.78)"><span style="font-size:36px;display:block;margin-bottom:10px">👥</span>Todavía no hay datos de vendedoras.<br>Completá el campo "Vendedora" al cargar órdenes.</div>`;
-
-  // Últimos 6 meses para comparativa
-  const ultimos6meses = Array.from({length:6},(_,i)=>{
-    const offset = 5-i;
-    const m = ((hoy.getMonth()-offset)+120)%12;
-    const a = hoy.getFullYear()+Math.floor((hoy.getMonth()-offset)/12);
-    return { key: m+"-"+a, label: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][m] };
+  getCajasVentas().filter(v=>v.vendedora).forEach(v=>{
+    const k=v.vendedora.trim();
+    if(!vendMap[k]) vendMap[k]={total:0,ordenes:0,byMes:{}};
+    vendMap[k].total+=v.total||0;
   });
 
-  return `
-    <!-- Ranking vendedoras -->
+  const entries=Object.entries(vendMap).sort((a,b)=>b[1].total-a[1].total);
+  const mesCur=hoy.getMonth()+"-"+hoy.getFullYear();
+  const mesPrev=(hoy.getMonth()===0?11:hoy.getMonth()-1)+"-"+(hoy.getMonth()===0?hoy.getFullYear()-1:hoy.getFullYear());
+
+  if(!entries.length) return `<div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);border-radius:16px;padding:40px 20px;text-align:center;color:rgba(255,255,255,.78)"><span style="font-size:36px;display:block;margin-bottom:10px">👥</span>Sin datos de vendedoras todavía.</div>`;
+
+  const colors = ["#F5E87C","#4A9EFF","#34D399","#A78BFA","#FB923C","#EF5350"];
+  const medals = ["🥇","🥈","🥉"];
+
+  const html = `
+    <!-- Ranking bars -->
+    ${darkCard("🏆 Ranking — facturación total", "chart-eq-rank", 180)}
+
+    <!-- Comparativa 6 meses lineas -->
+    ${darkCard("📊 Evolución mensual por vendedora (6 meses)", "chart-eq-lineas", 180)}
+
+    <!-- Tabla compacta -->
     <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🏆 Ranking general</div>
-      ${entries.map(([nombre, d], i) => {
-        const curMes = d.byMes[mesCur]||0;
-        const prevMes = d.byMes[mesPrev]||0;
-        const pct = prevMes ? Math.round((curMes-prevMes)/prevMes*100) : null;
-        const medals = ["🥇","🥈","🥉"];
-        const accentColors = ["#F5E87C","rgba(255,255,255,.5)","rgba(180,120,60,.8)"];
-        return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">📋 Detalle por vendedora</div>
+      ${entries.map(([nombre,d],i)=>{
+        const curMes=d.byMes[mesCur]||0;
+        const prevMes=d.byMes[mesPrev]||0;
+        const pct=prevMes?Math.round((curMes-prevMes)/prevMes*100):null;
+        return `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;background:rgba(255,255,255,.06);border:1px solid ${accentColors[i]||'rgba(255,255,255,.1)'};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">${medals[i]||"👤"}</div>
+            <div style="width:32px;height:32px;background:rgba(255,255,255,.06);border:1px solid ${colors[i]||"rgba(255,255,255,.1)"};border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">${medals[i]||"👤"}</div>
             <div>
-              <div style="font-weight:800;font-size:14px;color:#fff">${nombre}</div>
-              <div style="font-size:11px;color:rgba(255,255,255,.78)">${d.ordenes} órdenes totales</div>
+              <div style="font-weight:700;color:#fff;font-size:14px">${nombre}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.45)">${d.ordenes} órdenes · $${num(Math.round(d.total/1000))}k total</div>
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-weight:900;font-size:15px;color:#4A9EFF">$${num(d.total.toFixed(0))}</div>
-            <div style="font-size:10px;color:rgba(255,255,255,.78)">Este mes: $${num(curMes.toFixed(0))}</div>
-            ${pct!==null?`<div style="font-size:10px;font-weight:800;color:${pct>=0?'#34D399':'#EF5350'}">${pct>=0?'▲':'▼'}${Math.abs(pct)}%</div>`:""}
+            <div style="font-size:13px;font-weight:800;color:${colors[i]||"#fff"}">$${num(curMes)}</div>
+            <div style="font-size:10px;font-weight:700;color:${pct===null?"rgba(255,255,255,.4)":pct>=0?"#34D399":"#EF5350"}">${pct===null?"—":pct>=0?"▲ "+pct+"%":"▼ "+Math.abs(pct)+"%"}</div>
           </div>
         </div>`;
       }).join("")}
     </div>
-
-    <!-- Comparativa por mes -->
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">📊 Comparativa por vendedora (6 meses)</div>
-      <div style="overflow-x:auto;scrollbar-width:none">
-        <table style="width:100%;border-collapse:collapse;min-width:280px;font-size:12px">
-          <tr>
-            <th style="padding:8px 6px;text-align:left;font-size:10px;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Vendedora</th>
-            ${ultimos6meses.map(m2=>`<th style="padding:8px 4px;text-align:center;font-size:10px;color:rgba(255,255,255,.35);font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">${m2.label}</th>`).join("")}
-          </tr>
-          ${entries.map(([nombre, d])=>`
-            <tr>
-              <td style="padding:10px 6px;font-weight:700;color:#fff;white-space:nowrap">${nombre}</td>
-              ${ultimos6meses.map(m2=>{
-                const v = d.byMes[m2.key]||0;
-                return `<td style="padding:10px 6px;text-align:center;color:${v>0?'#4A9EFF':'rgba(255,255,255,.2)'}">
-                  ${v>0?'$'+num(Math.round(v/1000))+'k':'—'}
-                </td>`;
-              }).join("")}
-            </tr>`).join("")}
-        </table>
-      </div>
-    </div>
   `;
+
+  setTimeout(()=>{
+    // Barras horizontales ranking
+    mkChart("chart-eq-rank", {
+      type:"bar",
+      data:{
+        labels: entries.map(x=>x[0]),
+        datasets:[{
+          label:"Total",
+          data: entries.map(x=>x[1].total),
+          backgroundColor: entries.map((_,i)=>colors[i]||"rgba(255,255,255,.3)"),
+          borderRadius:6, borderSkipped:false
+        }]
+      },
+      options:{
+        indexAxis:"y", responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>" $"+num(ctx.raw) } } },
+        scales:{
+          x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}, callback:v=>"$"+num(Math.round(v/1000))+"k"} },
+          y:{ grid:{display:false}, ticks:{font:{size:11}} }
+        }
+      }
+    });
+
+    // Líneas 6 meses por vendedora
+    mkChart("chart-eq-lineas", {
+      type:"line",
+      data:{
+        labels: meses6.map(x=>x.label),
+        datasets: entries.slice(0,5).map((([nombre,d],i)=>({
+          label: nombre,
+          data: meses6.map(m2=>d.byMes[m2.key]||0),
+          borderColor: colors[i], backgroundColor:"transparent",
+          borderWidth:2, tension:0.4, pointRadius:3,
+          pointBackgroundColor: colors[i]
+        })))
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{ position:"bottom", labels:{font:{size:9},padding:8,boxWidth:10} }, tooltip:{ callbacks:{ label: ctx=>" "+ctx.dataset.label+": $"+num(ctx.raw) } } },
+        scales:{
+          x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}} },
+          y:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}, callback:v=>"$"+num(Math.round(v/1000))+"k"} }
+        }
+      }
+    });
+  }, 80);
+
+  return html;
 }
+
 
 // ── PRODUCTOS ─────────────────────────────────────────────────
 function renderAdminProductos() {
@@ -2318,56 +2500,87 @@ function renderAdminProductos() {
     const d=new Date(o.fecha+"T12:00:00");
     return d.getMonth()===mes && d.getFullYear()===anio;
   });
-  const ordTotal = D.orders;
 
-  // Tratamientos
-  const tratMes={}, tratTotal={};
-  ordMes.forEach(o=>{ if(o.tratamiento) tratMes[o.tratamiento]=(tratMes[o.tratamiento]||0)+1; });
-  ordTotal.forEach(o=>{ if(o.tratamiento) tratTotal[o.tratamiento]=(tratTotal[o.tratamiento]||0)+1; });
+  const tratMes={}, motorMes={}, osMes={}, lenteMes={};
+  ordMes.forEach(o=>{
+    if(o.tratamiento) tratMes[o.tratamiento]=(tratMes[o.tratamiento]||0)+1;
+    if(o.tipoTrabajo) motorMes[o.tipoTrabajo]=(motorMes[o.tipoTrabajo]||0)+1;
+    if(o.oSocial) osMes[o.oSocial]=(osMes[o.oSocial]||0)+1;
+    if(o.tipos) o.tipos.split(",").filter(Boolean).forEach(t=>{ lenteMes[t]=(lenteMes[t]||0)+1; });
+  });
 
-  // Motores de venta (tipo trabajo)
-  const motorMes={}, motorTotal={};
-  ordMes.forEach(o=>{ if(o.tipoTrabajo) motorMes[o.tipoTrabajo]=(motorMes[o.tipoTrabajo]||0)+1; });
-  ordTotal.forEach(o=>{ if(o.tipoTrabajo) motorTotal[o.tipoTrabajo]=(motorTotal[o.tipoTrabajo]||0)+1; });
-
-  // Obras sociales
-  const osMes={};
-  ordMes.forEach(o=>{ if(o.oSocial) osMes[o.oSocial]=(osMes[o.oSocial]||0)+1; });
-
-  const barras = (counts, color, total) => {
-    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-    const max = entries[0]?.[1]||1;
-    return entries.map(([k,v])=>`
-      <div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
-          <span style="font-weight:600;color:#fff">${k}</span>
-          <span style="font-weight:800;color:${color}">${v} <span style="font-size:10px;color:rgba(255,255,255,.6);font-weight:400">${Math.round(v/total*100)}%</span></span>
-        </div>
-        <div style="background:rgba(255,255,255,.06);border-radius:6px;height:7px;overflow:hidden">
-          <div style="background:${color};width:${Math.round(v/max*100)}%;height:7px;border-radius:6px;transition:width .4s"></div>
-        </div>
-      </div>`).join("") || `<div style="color:rgba(255,255,255,.6);font-size:13px">Sin datos este mes</div>`;
-  };
-
-  return `
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🚀 Motores de venta (este mes)</div>
-      ${barras(motorMes, "#4A9EFF", ordMes.length||1)}
+  const html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">🚀 Tipo de trabajo</div>
+        <canvas id="chart-pr-motor" height="170"></canvas>
+      </div>
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">✨ Tratamientos</div>
+        <canvas id="chart-pr-trat" height="170"></canvas>
+      </div>
     </div>
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✨ Tratamientos más vendidos (este mes)</div>
-      ${barras(tratMes, "#A78BFA", ordMes.length||1)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">🏥 Obras sociales</div>
+        <canvas id="chart-pr-os" height="170"></canvas>
+      </div>
+      <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:14px">
+        <div style="font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">🔭 Tipo de lente</div>
+        <canvas id="chart-pr-lente" height="170"></canvas>
+      </div>
     </div>
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🏥 Obras sociales (este mes)</div>
-      ${barras(osMes, "#FB923C", ordMes.length||1)}
-    </div>
-    <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(12px);border:1px solid rgba(74,158,255,.25);box-shadow:0 0 0 1px rgba(74,158,255,.1),0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✨ Tratamientos históricos (todos)</div>
-      ${barras(tratTotal, "#34D399", ordTotal.length||1)}
-    </div>
+    ${darkCard("📊 Tratamientos — barras comparativas (este mes)", "chart-pr-barras", 160)}
   `;
+
+  setTimeout(()=>{
+    const makePie = (id, data, label) => {
+      const entries = Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,7);
+      if(!entries.length) return;
+      mkChart(id, {
+        type:"doughnut",
+        data:{
+          labels: entries.map(x=>x[0]),
+          datasets:[{ data:entries.map(x=>x[1]), backgroundColor:CHART_PALETTE, borderWidth:0, hoverOffset:8 }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:true, cutout:"55%",
+          plugins:{ legend:{ position:"bottom", labels:{font:{size:8},padding:5,boxWidth:8} }, tooltip:{ callbacks:{ label: ctx=>" "+ctx.label+": "+ctx.raw } } }
+        }
+      });
+    };
+
+    makePie("chart-pr-motor", motorMes, "Tipo trabajo");
+    makePie("chart-pr-trat", tratMes, "Tratamiento");
+    makePie("chart-pr-os", osMes, "Obra social");
+    makePie("chart-pr-lente", lenteMes, "Lente");
+
+    // Barras tratamientos
+    const tratEntries = Object.entries(tratMes).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(tratEntries.length) mkChart("chart-pr-barras", {
+      type:"bar",
+      data:{
+        labels: tratEntries.map(x=>x[0]),
+        datasets:[{
+          data: tratEntries.map(x=>x[1]),
+          backgroundColor: CHART_PALETTE,
+          borderRadius:5, borderSkipped:false
+        }]
+      },
+      options:{
+        indexAxis:"y", responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>" "+ctx.raw+" ords" } } },
+        scales:{
+          x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{font:{size:9}}, beginAtZero:true },
+          y:{ grid:{display:false}, ticks:{font:{size:9}} }
+        }
+      }
+    });
+  }, 80);
+
+  return html;
 }
+
 
 // ── ÓRDENES CEO ───────────────────────────────────────────────
 function renderAdminOrdenes() {
@@ -3592,28 +3805,44 @@ function renderCaja() {
   if (!cajaHoy || cajaHoy.cerrada) {
     // Sin apertura hoy, o caja del día ya cerrada
     const resumenCierre = cajaHoy && cajaHoy.cerrada ? `
-      <div style="background:#F1F8E9;border-radius:14px;padding:14px;margin:0 0 16px;border:1.5px solid #A5D6A7">
-        <div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">✅ Resumen del cierre de hoy</div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1B5E20"><span>Facturado</span><b>$${num(cajaHoy.totalFacturado||0)}</b></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1B5E20"><span>Cobrado</span><b>$${num(cajaHoy.totalCobrado||0)}</b></div>
-        ${cajaHoy.arqueo ? `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#1B5E20"><span>Arqueo</span><b style="color:${cajaHoy.arqueo.diferencia===0?'#2E7D32':cajaHoy.arqueo.diferencia>0?'#1565C0':'#C62828'}">${cajaHoy.arqueo.diferencia===0?'✅ Cuadra':cajaHoy.arqueo.diferencia>0?`📈 +$${num(cajaHoy.arqueo.diferencia)}`:`📉 −$${num(Math.abs(cajaHoy.arqueo.diferencia))}`}</b></div>` : ""}
-        ${cajaHoy.horaCierre ? `<div style="font-size:11px;color:#66BB6A;margin-top:6px">Cerrada a las ${cajaHoy.horaCierre}</div>` : ""}
+      <div style="background:#F1F8E9;border-radius:12px;padding:12px 14px;margin-bottom:12px;border:1.5px solid #A5D6A7">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px">✅ Cierre de hoy</span>
+          ${cajaHoy.horaCierre?`<span style="font-size:11px;color:#66BB6A">${cajaHoy.horaCierre}</span>`:""}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr${cajaHoy.arqueo?" 1fr":""};gap:8px">
+          <div style="text-align:center">
+            <div style="font-size:9px;color:#2E7D32;font-weight:700;text-transform:uppercase">Facturado</div>
+            <div style="font-size:17px;font-weight:900;color:#1B5E20">$${num(cajaHoy.totalFacturado||0)}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:#2E7D32;font-weight:700;text-transform:uppercase">Cobrado</div>
+            <div style="font-size:17px;font-weight:900;color:#1B5E20">$${num(cajaHoy.totalCobrado||0)}</div>
+          </div>
+          ${cajaHoy.arqueo?`<div style="text-align:center">
+            <div style="font-size:9px;color:#2E7D32;font-weight:700;text-transform:uppercase">Arqueo</div>
+            <div style="font-size:15px;font-weight:900;color:${cajaHoy.arqueo.diferencia===0?"#2E7D32":cajaHoy.arqueo.diferencia>0?"#1565C0":"#C62828"}">${cajaHoy.arqueo.diferencia===0?"✅":cajaHoy.arqueo.diferencia>0?`+$${num(cajaHoy.arqueo.diferencia)}`:`−$${num(Math.abs(cajaHoy.arqueo.diferencia))}`}</div>
+          </div>`:""}
+        </div>
       </div>` : "";
     el.innerHTML = `
-      <div style="text-align:center;padding:30px 16px 20px">
-        <div style="font-size:48px;margin-bottom:12px">💵</div>
-        <div style="font-size:18px;font-weight:900;color:var(--azul);margin-bottom:6px">Caja cerrada</div>
-        <div style="font-size:13px;color:var(--suave);margin-bottom:24px;text-transform:capitalize">${hoyFmt}</div>
+      <div style="padding:16px 0 8px">
+        <!-- Header compacto estado cerrada -->
+        <div style="background:linear-gradient(135deg,#1B4FA8,#1565C0);border-radius:16px;padding:16px 18px;margin-bottom:14px;box-shadow:0 4px 18px rgba(27,79,168,.22)">
+          <div style="font-size:10px;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:1.2px">Olvisión · Caja</div>
+          <div style="font-size:20px;font-weight:900;color:#fff;margin-top:3px">🔒 Caja cerrada</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px;text-transform:capitalize">${hoyFmt}</div>
+        </div>
+
         ${resumenCierre}
-        <button onclick="abrirCaja()" style="background:var(--azul);color:var(--amarillo);border:none;border-radius:13px;padding:16px 32px;font-size:17px;font-weight:900;cursor:pointer;width:100%;max-width:320px">
-          🔓 Abrir Caja
+
+        <button onclick="abrirCaja()" class="of-btn-primary" style="background:linear-gradient(135deg,#1B4FA8,#1565C0);margin-bottom:8px">
+          🔓 Abrir caja
         </button>
-        <button onclick="verHistorialCajas()" style="background:var(--blanco);color:var(--azul);border:2px solid var(--azul);border-radius:13px;padding:12px 32px;font-size:14px;font-weight:800;cursor:pointer;width:100%;max-width:320px;margin-top:10px">
-          📅 Ver historial de cajas
-        </button>
-        <button onclick="syncSheets().then(()=>renderCaja())" style="background:transparent;color:var(--suave);border:none;border-radius:13px;padding:10px 32px;font-size:13px;font-weight:600;cursor:pointer;width:100%;max-width:320px;margin-top:4px">
-          🔄 Actualizar
-        </button>
+        <div style="display:flex;gap:8px">
+          <button onclick="verHistorialCajas()" class="of-btn-secondary" style="flex:1">📅 Historial</button>
+          <button onclick="syncSheets().then(()=>renderCaja())" class="of-btn-secondary" style="flex:1">🔄 Actualizar</button>
+        </div>
       </div>`;
     return;
   }
@@ -3624,138 +3853,128 @@ function renderCaja() {
   const gastosDia = getCajasVentas().filter(v => v.fecha === hoy && v.tipo === "gasto");
   const totalGastosDia = gastosDia.reduce((a,v)=>a+(v.total||0),0);
 
+  // Calcular pendientes con saldo para badge
+  const conSaldo = ordenesDia.filter(o => !o.pagado && parseFloat(o.total||0) > parseFloat(o.aCuenta||0));
+
   el.innerHTML = `
-    <div style="background:linear-gradient(135deg,var(--azul),var(--azul-dark));border-radius:16px;padding:16px;margin-bottom:12px;color:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <!-- HEADER GRADIENTE -->
+    <div style="background:linear-gradient(135deg,var(--azul),var(--azul-dark));border-radius:16px;padding:16px 18px;margin-bottom:12px;color:#fff;box-shadow:0 4px 18px rgba(27,79,168,.22)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
         <div>
-          <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px">Caja abierta</div>
-          <div style="font-size:13px;font-weight:700;margin-top:2px;text-transform:capitalize">${hoyFmt}</div>
+          <div style="font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:1.2px;font-weight:700">Olvisión · Caja</div>
+          <div style="font-size:13px;font-weight:700;margin-top:2px;text-transform:capitalize;opacity:.85">${hoyFmt}</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:10px;opacity:.7">Apertura</div>
-          <div style="font-size:16px;font-weight:900;color:var(--amarillo)">$${num(cajaHoy.montoApertura||0)}</div>
+          <div style="font-size:10px;opacity:.65">Apertura</div>
+          <div style="font-size:17px;font-weight:900;color:var(--amarillo)">$${num(cajaHoy.montoApertura||0)}</div>
         </div>
       </div>
-      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Órdenes</div>
-          <div style="font-size:22px;font-weight:900">${ordenesDia.length}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:9px 6px;text-align:center">
+          <div style="font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.5px">Órdenes</div>
+          <div style="font-size:22px;font-weight:900;line-height:1.2">${ordenesDia.length}</div>
+          ${conSaldo.length?`<div style="font-size:9px;color:#FFD54F;font-weight:700">${conSaldo.length} con saldo</div>`:""}
         </div>
-        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Facturado</div>
-          <div style="font-size:18px;font-weight:900;color:var(--amarillo)">$${num(resumen.totalFacturado)}</div>
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:9px 6px;text-align:center">
+          <div style="font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.5px">Facturado</div>
+          <div style="font-size:17px;font-weight:900;color:var(--amarillo);line-height:1.2">$${num(resumen.totalFacturado)}</div>
         </div>
-        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;opacity:.7;text-transform:uppercase">Cobrado</div>
-          <div style="font-size:18px;font-weight:900;color:#A5F3A5">$${num(resumen.totalCobrado)}</div>
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:9px 6px;text-align:center">
+          <div style="font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.5px">Cobrado</div>
+          <div style="font-size:17px;font-weight:900;color:#A5F3A5;line-height:1.2">$${num(resumen.totalCobrado)}</div>
         </div>
       </div>
     </div>
 
-    <!-- Efectivo en caja en tiempo real -->
-    <div style="background:#E3F2FD;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid #90CAF9">
-      <div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💵 Efectivo en caja ahora</div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;color:#1565C0;padding:3px 0">
-        <span>Apertura</span><span>$${num(cajaHoy.montoApertura||0)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;color:#1565C0;padding:3px 0">
-        <span>+ Cobrado en efectivo</span><span>$${num(resumen.porMedio["Efectivo"]||0)}</span>
-      </div>
-      ${totalGastosDia > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#C0392B;padding:3px 0">
-        <span>− Gastos / retiros</span><span>$${num(totalGastosDia)}</span>
-      </div>` : ""}
-      <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900;color:#0D47A1;border-top:1.5px solid #90CAF9;margin-top:8px;padding-top:8px">
-        <span>Total en caja</span><span>$${num(resumen.efectivoEnCaja)}</span>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <button onclick="nuevaVenta()" style="background:var(--amarillo);color:var(--azul-dark);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
-        ➕ Nueva venta
-      </button>
-      <button onclick="cobrarSaldoPendiente()" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
-        💰 Cobrar saldo
-      </button>
-    </div>
+    <!-- ACCIONES — grid 2x2 compacto -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <button onclick="registrarGasto()" style="background:#FFF3E0;color:#E65100;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
-        📤 Gasto / retiro
-      </button>
-      <button onclick="cerrarCaja()" style="background:#FDECEA;color:#C0392B;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer">
-        🔒 Cerrar caja
-      </button>
+      <button onclick="nuevaVenta()" style="background:var(--amarillo);color:var(--azul-dark);border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">➕ Nueva venta</button>
+      <button onclick="cobrarSaldoPendiente()" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">💰 Cobrar saldo</button>
+      <button onclick="registrarGasto()" style="background:#FFF3E0;color:#E65100;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">📤 Gasto / retiro</button>
+      <button onclick="cerrarCaja()" style="background:#FDECEA;color:#C0392B;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">🔒 Cerrar caja</button>
     </div>
 
-    <!-- Medios de pago del día -->
-    <div class="card" style="margin-bottom:10px">
-      <div class="fsec-tit" style="margin-bottom:12px">💳 Cobrado por medio de pago</div>
-      ${renderMediosPago(resumen.porMedio)}
-    </div>
-
-    <!-- Ventas rápidas del día -->
-    ${renderVentasRapidasDia(hoy)}
-
-    <!-- Órdenes del día -->
-    <div class="fsec-tit" style="margin-bottom:8px;padding:0 2px;margin-top:10px">📋 Órdenes del día</div>
+    <!-- ÓRDENES DEL DÍA — primero, es lo más consultado -->
+    <div style="font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 2px">📋 Órdenes del día</div>
     ${ordenesDia.length === 0
-      ? `<div class="empty" style="padding:20px"><span>📋</span>Sin órdenes hoy todavía</div>`
+      ? `<div class="empty" style="padding:16px"><span>📋</span>Sin órdenes hoy todavía</div>`
       : ordenesDia.sort((a,b)=>String(b.num).localeCompare(String(a.num),undefined,{numeric:true})).map(o => {
           const idx = D.orders.findIndex(x => x.id === o.id);
           const saldoO = parseFloat(o.total||0) - parseFloat(o.aCuenta||0);
           const tieneAcuenta = parseFloat(o.aCuenta||0) > 0 && saldoO > 0;
-          // Info lentes: juntar ant1 y ant2
+          const accentColor = o.pagado?"#2E7D32":tieneAcuenta?"#F57F17":"var(--azul)";
           const infoLentes = [
-            o.tratamiento ? `✨ ${o.tratamiento.replace(" | "," / ")}` : "",
-            o.dosAnteojos && o.b_tratamiento ? `· ✨ ${o.b_tratamiento.replace(" | "," / ")}` : ""
-          ].filter(Boolean).join(" ");
-          return `<div class="card" style="margin-bottom:8px;border-left:4px solid ${o.pagado?"#2E7D32":tieneAcuenta?"#F57F17":"var(--azul)"}">
-            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="verDetalle(${idx})" onmouseenter="this.style.background='#F0F5FF'" onmouseleave="this.style.background=''">
-              <div style="flex:1;min-width:0;padding:2px 0">
-                <div style="font-weight:800;font-size:15px">${o.nombre||"—"} <span style="font-size:12px;color:var(--suave);font-weight:400">N° ${o.num}</span></div>
-                <div style="font-size:12px;color:var(--suave);margin-top:2px">
-                  ${o.dosAnteojos?`<span style="background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px;margin-right:4px">2 anteojos</span>`:""}
-                  ${infoLentes}
-                  ${o.oSocial?` · 🏥 ${o.oSocial}`:""}
+            o.tratamiento ? o.tratamiento.replace(" | "," / ") : "",
+            o.dosAnteojos && o.b_tratamiento ? o.b_tratamiento.replace(" | "," / ") : ""
+          ].filter(Boolean).join(" · ");
+          return `<div style="background:#fff;border-radius:12px;border:1.5px solid var(--gris-borde);border-left:4px solid ${accentColor};margin-bottom:7px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer" onclick="verDetalle(${idx})">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px">
+                  ${o.nombre||"—"}
+                  <span style="font-size:11px;color:var(--suave);font-weight:400">N°${o.num}</span>
+                  ${o.dosAnteojos?`<span style="background:#E3F2FD;color:#1565C0;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px">2 ant.</span>`:""}
                 </div>
-                <div style="font-size:12px;margin-top:3px">
-                  ${o.pagado?`<span style="color:#2E7D32;font-weight:700">✅ Cobrado completo</span>`:tieneAcuenta?`<span style="color:#E65100;font-weight:700">💵 A cuenta $${num(o.aCuenta)} · Saldo $${num(saldoO)}</span>`:o.ctaCte?`<span style="color:#E65100;font-weight:700">📒 Cta.Cte</span>`:""}
+                <div style="font-size:11px;color:var(--suave);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                  ${infoLentes}${o.oSocial?` · 🏥 ${o.oSocial}`:""}
+                </div>
+                <div style="font-size:11px;margin-top:2px">
+                  ${o.pagado?`<span style="color:#2E7D32;font-weight:700">✅ Cobrado</span>`:tieneAcuenta?`<span style="color:#E65100;font-weight:700">A cuenta $${num(o.aCuenta)} · Saldo $${num(saldoO)}</span>`:o.ctaCte?`<span style="color:#E65100;font-weight:700">📒 Cta.Cte</span>`:""}
                   ${o.formaPago?`<span style="color:var(--suave)"> · ${o.formaPago}</span>`:""}
                 </div>
               </div>
-              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:10px">
-                <div style="text-align:right">
-                  ${o.total?`<div style="font-weight:900;font-size:15px;color:var(--azul)">$${num(o.total)}</div>`:""}
-                </div>
-                <button onclick="event.stopPropagation();eliminarOrdenCaja(${idx})" style="background:#FDECEA;color:#C0392B;border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:15px;flex-shrink:0">🗑</button>
+              <div style="display:flex;align-items:center;gap:7px;flex-shrink:0;margin-left:8px">
+                ${o.total?`<div style="font-weight:900;font-size:14px;color:var(--azul)">$${num(o.total)}</div>`:""}
+                <button onclick="event.stopPropagation();eliminarOrdenCaja(${idx})" style="background:#FDECEA;color:#C0392B;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;flex-shrink:0">🗑</button>
               </div>
             </div>
           </div>`;
         }).join("")
     }
 
-    <!-- Notas de caja -->
-    <div class="card" style="margin-bottom:10px">
-      <div class="fsec-tit" style="margin-bottom:8px">📝 Notas de caja</div>
-      <textarea id="caja-notas" placeholder="Observaciones del día, retiros, gastos..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:10px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none;resize:none;height:80px">${cajaHoy.notas||""}</textarea>
-      <button onclick="guardarNotasCaja()" style="margin-top:8px;background:var(--azul-light);color:var(--azul);border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar notas</button>
-    </div>
+    <!-- MOVIMIENTOS RÁPIDOS -->
+    ${renderVentasRapidasDia(hoy)}
 
-    <div style="margin-top:8px">
-      <button onclick="verHistorialCajas()" style="background:var(--blanco);color:var(--azul);border:2px solid var(--azul);border-radius:13px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
-        📅 Ver historial de cajas
-      </button>
+    <!-- EFECTIVO EN CAJA — colapsable -->
+    <details style="margin-top:10px;margin-bottom:8px">
+      <summary style="font-size:12px;font-weight:700;color:#1565C0;cursor:pointer;padding:10px 14px;background:#E3F2FD;border-radius:11px;list-style:none;display:flex;justify-content:space-between;align-items:center">
+        <span>💵 Efectivo en caja</span>
+        <span style="font-size:17px;font-weight:900">$${num(resumen.efectivoEnCaja)}</span>
+      </summary>
+      <div style="background:#EEF7FF;border-radius:0 0 11px 11px;padding:10px 14px;font-size:13px;color:#1565C0">
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span style="opacity:.8">Apertura</span><span>$${num(cajaHoy.montoApertura||0)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span style="opacity:.8">+ Cobrado efectivo</span><span>$${num(resumen.porMedio["Efectivo"]||0)}</span></div>
+        ${totalGastosDia > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;color:#C0392B"><span>− Gastos / retiros</span><span>$${num(totalGastosDia)}</span></div>` : ""}
+      </div>
+    </details>
+
+    <!-- MEDIOS DE PAGO — colapsable -->
+    <details style="margin-bottom:8px">
+      <summary style="font-size:12px;font-weight:700;color:var(--suave);cursor:pointer;padding:10px 14px;background:var(--gris);border-radius:11px;list-style:none;display:flex;align-items:center;gap:5px">
+        <span style="font-size:10px">▸</span> 💳 Medios de pago
+      </summary>
+      <div style="background:#FAFBFF;border-radius:0 0 11px 11px;padding:10px 14px">
+        ${renderMediosPago(resumen.porMedio)}
+      </div>
+    </details>
+
+    <!-- NOTAS DE CAJA — colapsable -->
+    <details style="margin-bottom:12px">
+      <summary style="font-size:12px;font-weight:700;color:var(--suave);cursor:pointer;padding:10px 14px;background:var(--gris);border-radius:11px;list-style:none;display:flex;align-items:center;gap:5px">
+        <span style="font-size:10px">▸</span> 📝 Notas de caja
+        ${cajaHoy.notas?`<span style="margin-left:auto;font-size:10px;background:#FDE68A;color:#B45309;padding:2px 7px;border-radius:10px;font-weight:700">Hay notas</span>`:""}
+      </summary>
+      <div style="background:#FAFBFF;border-radius:0 0 11px 11px;padding:10px 14px">
+        <textarea id="caja-notas" placeholder="Observaciones del día..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 11px;font-size:13px;background:#fff;font-family:inherit;outline:none;resize:none;height:70px;box-sizing:border-box">${cajaHoy.notas||""}</textarea>
+        <button onclick="guardarNotasCaja()" style="margin-top:6px;background:var(--azul-light);color:var(--azul);border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">💾 Guardar notas</button>
+      </div>
+    </details>
+
+    <!-- PIE -->
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button onclick="verHistorialCajas()" class="of-btn-secondary" style="flex:1;font-size:13px">📅 Historial</button>
+      <button onclick="syncSheets().then(()=>renderCaja())" class="of-btn-secondary" style="flex:1;font-size:13px">🔄 Actualizar</button>
     </div>
-    <div style="margin-top:8px">
-      <button onclick="syncSheets().then(()=>renderCaja())" style="background:transparent;color:var(--suave);border:1.5px solid var(--gris-borde);border-radius:13px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">
-        🔄 Actualizar caja
-      </button>
-    </div>
-    <div style="margin-top:8px">
-      <button onclick="debugCajaSync()" style="background:transparent;color:#999;border:1px dashed #ccc;border-radius:13px;padding:8px;font-size:11px;cursor:pointer;width:100%">
-        🔍 Debug sync (temporal)
-      </button>
-    </div>
-    <div style="height:20px"></div>
   `;
 }
 
