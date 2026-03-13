@@ -3194,45 +3194,77 @@ function abrirPagoSaldo(idx, desde) {
   const cfg = getCfg();
   const vends = cfg.vendedores || [];
   const vendSelect = vends.length
-    ? `<select id="ps-vendedora" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+    ? `<select id="ps-vendedora" class="of-select" style="-webkit-appearance:none;appearance:none">
         <option value="">— Seleccioná —</option>
         ${vends.map(v=>`<option value="${v}">${v}</option>`).join('')}
       </select>`
-    : `<input id="ps-vendedora" placeholder="Nombre..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;outline:none">`;
+    : `<input id="ps-vendedora" class="of-input" placeholder="Nombre...">`;
 
   document.getElementById("modal-body").innerHTML = `
-    <div style="font-size:18px;font-weight:900;color:#1B5E20;margin-bottom:4px">💰 Registrar pago</div>
-    <div style="background:#FFF8E1;border-radius:10px;padding:12px 14px;margin-bottom:16px">
-      <div style="font-weight:800;font-size:15px">${o.nombre||"—"} · N° ${o.num}</div>
-      <div style="font-size:13px;color:var(--suave);margin-top:4px">
-        Total: $${num(total)} · A cuenta: $${num(acuenta)} · <b style="color:#E65100">Saldo: $${num(saldo)}</b>
+  <div class="of-wrap">
+
+    <!-- Header verde -->
+    <div style="background:linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%);border-radius:16px;padding:16px 20px;margin-bottom:12px;box-shadow:0 4px 18px rgba(27,94,32,.3)">
+      <div style="font-size:10px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Cobro de Saldo</div>
+      <div style="font-size:20px;font-weight:900;color:#fff">💰 Registrar pago</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:3px">${new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})}</div>
+    </div>
+
+    <!-- Info de la orden -->
+    <div class="of-card" style="border-color:#C8E6C9;background:linear-gradient(135deg,#F1F8E9 0%,#E8F5E9 100%)">
+      <div style="font-size:15px;font-weight:800;color:#1B5E20;margin-bottom:6px">${o.nombre||"—"} · N° ${o.num}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:#fff;border-radius:10px;padding:10px;text-align:center;border:1px solid #C8E6C9">
+          <div style="font-size:10px;font-weight:700;color:#388E3C;text-transform:uppercase;margin-bottom:2px">Total</div>
+          <div style="font-size:16px;font-weight:900;color:#1B5E20">$${num(total)}</div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:10px;text-align:center;border:1px solid #C8E6C9">
+          <div style="font-size:10px;font-weight:700;color:#388E3C;text-transform:uppercase;margin-bottom:2px">Pagado</div>
+          <div style="font-size:16px;font-weight:900;color:#2E7D32">$${num(acuenta)}</div>
+        </div>
+        <div style="background:#FFF3E0;border-radius:10px;padding:10px;text-align:center;border:1px solid #FFCC80">
+          <div style="font-size:10px;font-weight:700;color:#E65100;text-transform:uppercase;margin-bottom:2px">Saldo</div>
+          <div style="font-size:16px;font-weight:900;color:#E65100">$${num(saldo)}</div>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label>Monto que abona ahora</label>
-      <input id="ps-monto" inputmode="numeric" placeholder="0"
-        style="width:100%;border:2px solid #A5D6A7;border-radius:9px;padding:14px;font-size:22px;font-weight:700;background:#F1F8E9;font-family:inherit;outline:none;text-align:center;color:#1B5E20">
-    </div>
-    <div class="field">
-      <label>Forma de pago</label>
-      <select id="ps-pago" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-        <option value="">— Seleccioná —</option>
-        ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join('')}
-      </select>
-    </div>
-    <div class="field">
-      <label>Vendedora</label>
-      ${vendSelect}
+    <!-- Monto y pago -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#E8F5E9">💵</div>
+        Monto que abona ahora
+      </div>
+      <div class="of-monto-field" style="margin-bottom:14px">
+        <span class="of-monto-symbol">$</span>
+        <input id="ps-monto" inputmode="numeric" placeholder="0" class="of-monto-input"
+          style="border-color:#A5D6A7;font-size:26px;padding-left:28px">
+      </div>
+      <div class="of-field">
+        <label class="of-label">Forma de pago</label>
+        <select id="ps-pago" class="of-select" style="-webkit-appearance:none;appearance:none">
+          <option value="">— Seleccioná —</option>
+          ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join('')}
+        </select>
+      </div>
+      <div class="of-field" style="margin-bottom:0">
+        <label class="of-label">Vendedora</label>
+        ${vendSelect}
+      </div>
     </div>
 
-    <button onclick="confirmarPagoSaldo(${idx})"
-      style="width:100%;padding:15px;border-radius:12px;border:none;background:#2E7D32;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
-      ✅ Confirmar pago
-    </button>
-    <button onclick="${desde==='pendientes' ? 'closeModal()' : 'cobrarSaldo()'}" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--gris-borde);background:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;color:var(--texto)">
-      ← Cancelar
-    </button>
+    <!-- Acciones -->
+    <div class="of-actions">
+      <button onclick="confirmarPagoSaldo(${idx})" class="of-btn-primary"
+        style="background:linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%)">
+        ✅ Confirmar pago
+      </button>
+      <button onclick="${desde==='pendientes' ? 'closeModal()' : 'cobrarSaldo()'}" class="of-btn-secondary">
+        ← Cancelar
+      </button>
+    </div>
+    <div style="height:14px"></div>
+  </div>
   `;
   setTimeout(()=>{ const m=document.getElementById("ps-monto"); if(m) bindMontoField(m); },50);
 }
@@ -3370,63 +3402,98 @@ function ventaRapida(tipo) {
 
   const ACCESORIOS = ["Líquido limpiador", "Estuche", "Cadenas / cordones"];
   const TALLER     = ["Soldadura", "Cambio de patillas", "Cambio de plaquetas"];
-  const items = esAccesorio ? ACCESORIOS : TALLER;
-  const color  = esAccesorio ? "#6A1B9A" : "#F57F17";
-  const bgColor = esAccesorio ? "#F3E5F5" : "#FFF8E1";
+  const items  = esAccesorio ? ACCESORIOS : TALLER;
+  const color  = esAccesorio ? "#6A1B9A" : "#B45309";
+  const bgHdr  = esAccesorio
+    ? "linear-gradient(135deg,#6A1B9A 0%,#7B1FA2 100%)"
+    : "linear-gradient(135deg,#B45309 0%,#D97706 100%)";
   const emoji  = esAccesorio ? "🛍️" : "🔧";
+  const titulo = esAccesorio ? "Accesorio / Líquido" : "Taller";
 
   document.getElementById("modal-body").innerHTML = `
-    <div style="font-size:18px;font-weight:900;color:${color};margin-bottom:4px">${emoji} ${esAccesorio ? "Accesorio / Líquido" : "Taller"}</div>
-    <div style="font-size:12px;color:var(--suave);margin-bottom:16px">${new Date().toLocaleDateString("es-AR")}</div>
+  <div class="of-wrap">
 
-    <div class="field">
-      <label>Producto / Servicio</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <!-- Header -->
+    <div style="background:${bgHdr};border-radius:16px;padding:16px 20px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)">
+      <div style="font-size:10px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Venta Rápida</div>
+      <div style="font-size:20px;font-weight:900;color:#fff">${emoji} ${titulo}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:3px">${new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})}</div>
+    </div>
+
+    <!-- Producto -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#F3E5F5">${emoji}</div>
+        Producto / Servicio
+      </div>
+      <div class="of-check-grid" style="margin-bottom:10px">
         ${items.map(item => `
-          <label class="check-item" onclick="selVentaItem(event,this,'${item}')" style="justify-content:center">
+          <label class="of-check-item" onclick="selVentaItem(event,this,'${item}')">
             <input type="radio" name="venta-item" value="${item}">
-            <span class="cbox"></span>
-            <span class="clabel" style="font-size:13px">${item}</span>
+            <div class="of-cbox"></div>
+            <span class="of-clabel">${item}</span>
           </label>`).join("")}
       </div>
-      <input id="venta-item-custom" placeholder="O escribí otro producto/servicio..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+      <input id="venta-item-custom" class="of-input" placeholder="O escribí otro producto / servicio...">
     </div>
 
-    <div class="g2">
-      <div class="field">
-        <label>Precio $</label>
-        <input id="venta-precio" type="number" inputmode="decimal" placeholder="0" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+    <!-- Precio y cantidad -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#E8F5E9">💰</div>
+        Importe
       </div>
-      <div class="field">
-        <label>Cantidad</label>
-        <input id="venta-cantidad" type="number" inputmode="numeric" placeholder="1" value="1" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+      <div class="of-g2">
+        <div>
+          <div class="of-monto-label">Precio $</div>
+          <div class="of-monto-field">
+            <span class="of-monto-symbol">$</span>
+            <input id="venta-precio" type="number" inputmode="decimal" placeholder="0" class="of-monto-input">
+          </div>
+        </div>
+        <div>
+          <div class="of-monto-label">Cantidad</div>
+          <input id="venta-cantidad" type="number" inputmode="numeric" placeholder="1" value="1"
+            class="of-input" style="font-size:18px;font-weight:800;text-align:center">
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label>Forma de pago</label>
-      <select id="venta-pago" onchange="onPagoVentaChange(this.value,'venta')" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-        <option value="">— Seleccioná —</option>
-        ${(cfg.formaPago||[]).map(p => `<option value="${p}">${p}</option>`).join("")}
-        <option value="Sin cargo">Sin cargo</option>
-      </select>
+    <!-- Pago y datos -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#EEF3FF">💳</div>
+        Pago y datos
+      </div>
+      <div class="of-field">
+        <label class="of-label">Forma de pago</label>
+        <select id="venta-pago" class="of-select" onchange="onPagoVentaChange(this.value,'venta')" style="-webkit-appearance:none;appearance:none">
+          <option value="">— Seleccioná —</option>
+          ${(cfg.formaPago||[]).map(p => `<option value="${p}">${p}</option>`).join("")}
+          <option value="Sin cargo">Sin cargo</option>
+        </select>
+      </div>
+      ${renderTarjetaWrap("venta", cfg)}
+      <div class="of-field">
+        <label class="of-label">Notas (opcional)</label>
+        <input id="venta-notas" class="of-input" placeholder="Ej: cliente habitual, color especial...">
+      </div>
+      <div class="of-field" style="margin-bottom:0">
+        <label class="of-label">Vendedora</label>
+        ${vendedoraSelect("venta-vendedora", "")}
+      </div>
     </div>
-    ${renderTarjetaWrap("venta", cfg)}
 
-    <div class="field">
-      <label>Notas (opcional)</label>
-      <input id="venta-notas" placeholder="Ej: armazón Ray-Ban, cliente habitual..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+    <!-- Acciones -->
+    <div class="of-actions">
+      <button onclick="guardarVentaRapida('${tipo}')" class="of-btn-primary"
+        style="background:${bgHdr}">
+        💾 Registrar venta
+      </button>
+      <button class="of-btn-secondary" onclick="closeModal()">Cancelar</button>
     </div>
-    <div class="field">
-      <label>👤 Vendedora</label>
-      ${vendedoraSelect("venta-vendedora", "")}
-    </div>
-
-    <button onclick="guardarVentaRapida('${tipo}')" style="width:100%;padding:15px;border-radius:12px;border:none;background:${color};color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
-      💾 Registrar venta
-    </button>
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-    <div style="height:12px"></div>
+    <div style="height:14px"></div>
+  </div>
   `;
   document.getElementById("overlay").classList.add("open");
   setTimeout(()=>{ const p=document.getElementById("venta-precio"); if(p) bindMontoField(p); },50);
@@ -3435,13 +3502,14 @@ function ventaRapida(tipo) {
 let _lcTipo = ""; // variable global para tipo de LC seleccionado
 
 function selTipoLC(value) {
-  _lcTipo = (_lcTipo === value) ? "" : value; // toggle
+  _lcTipo = (_lcTipo === value) ? "" : value;
   document.querySelectorAll("#lc-tipo-grid button").forEach(b => {
     const activo = b.dataset.lc === _lcTipo && _lcTipo !== "";
-    b.style.background   = activo ? "var(--azul-light)" : "var(--gris)";
-    b.style.borderColor  = activo ? "var(--azul)"       : "var(--gris-borde)";
-    b.style.color        = activo ? "var(--azul)"       : "var(--texto)";
-    b.style.fontWeight   = activo ? "800"               : "600";
+    b.style.background  = activo ? "#E0F2F1" : "#F8FAFF";
+    b.style.borderColor = activo ? "#00695C"  : "#E0E7F5";
+    b.style.color       = activo ? "#00695C"  : "#4A6284";
+    b.style.fontWeight  = activo ? "800"      : "600";
+    b.style.boxShadow   = activo ? "0 0 0 3px rgba(0,105,92,.12)" : "none";
   });
   actualizarCamposLC();
 }
@@ -3494,15 +3562,17 @@ function toggleLcLiquido(e, label) {
 function selVentaItem(e, label, value) {
   e.preventDefault();
   document.querySelectorAll("input[name='venta-item']").forEach(r => {
-    const l = r.closest(".check-item");
+    const l = r.closest(".check-item") || r.closest(".of-check-item");
+    if (!l) return;
     l.classList.remove("checked");
-    l.querySelector(".cbox").textContent = "";
+    const box = l.querySelector(".cbox") || l.querySelector(".of-cbox");
+    if (box) box.textContent = "";
     r.checked = false;
   });
   label.classList.add("checked");
   label.querySelector("input[type=radio]").checked = true;
-  label.querySelector(".cbox").textContent = "✓";
-  // Llenar campo custom con el valor seleccionado
+  const box = label.querySelector(".cbox") || label.querySelector(".of-cbox");
+  if (box) box.textContent = "✓";
   const custom = document.getElementById("venta-item-custom");
   if (custom) custom.value = value;
 }
@@ -3528,11 +3598,21 @@ function ventaLC() {
     : `<input id="lc-marca" placeholder="Marca de lente..." style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">`;
 
   document.getElementById("modal-body").innerHTML = `
-    <div style="font-size:18px;font-weight:900;color:#006064;margin-bottom:4px">👁️ Lentes de Contacto</div>
-    <div style="font-size:12px;color:var(--suave);margin-bottom:16px">${new Date().toLocaleDateString("es-AR")}</div>
+  <div class="of-wrap">
 
-    <div class="field">
-      <label>Presentación</label>
+    <!-- Header teal -->
+    <div style="background:linear-gradient(135deg,#004D40 0%,#00695C 100%);border-radius:16px;padding:16px 20px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,77,64,.3)">
+      <div style="font-size:10px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Venta Rápida</div>
+      <div style="font-size:20px;font-weight:900;color:#fff">👁️ Lentes de Contacto</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:3px">${new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})}</div>
+    </div>
+
+    <!-- Presentación -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#E0F2F1">🔲</div>
+        Presentación
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="lc-tipo-grid">
         ${[
           ["par","Par completo"],
@@ -3541,121 +3621,139 @@ function ventaLC() {
           ["2medios","2 medios pares\n(dist. grad.)"]
         ].map(([v,l]) => `
           <button type="button" data-lc="${v}" onclick="selTipoLC('${v}')"
-            style="padding:10px 8px;border-radius:9px;border:1.5px solid var(--gris-borde);background:var(--gris);
-              font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--texto);
+            style="padding:11px 8px;border-radius:10px;border:1.5px solid #E0E7F5;background:#F8FAFF;
+              font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#4A6284;
               white-space:pre-line;line-height:1.3;transition:all .15s">
             ${l}
           </button>`).join("")}
       </div>
     </div>
 
-    <div class="field" style="display:flex;gap:8px;align-items:flex-end">
-      <div style="flex:1">
-        <label>Marca</label>
+    <!-- Marca y graduación -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#E0F2F1">👁️</div>
+        Lente
+      </div>
+      <div class="of-field">
+        <label class="of-label">Marca</label>
         ${marcaSelect}
       </div>
-    </div>
-    <div style="margin-bottom:4px">
-      <input id="lc-marca-custom" placeholder="O escribí otra marca..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 12px;font-size:13px;background:var(--gris);font-family:inherit;outline:none">
-    </div>
-
-    <!-- Graduaciones -->
-    <div id="lc-grad-box">
-      <!-- Par completo: un solo campo -->
-      <div id="lc-par-box" style="display:none;margin-top:8px">
-        <div class="field">
-          <label>Graduación (ambos ojos)</label>
-          <select id="lc-grad-par" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;font-weight:700">
-            <option value="">— Elegir —</option>
-            ${gradOpts()}
-          </select>
-        </div>
+      <div class="of-field" style="margin-bottom:0">
+        <input id="lc-marca-custom" class="of-input" placeholder="O escribí otra marca...">
       </div>
-      <!-- OD / OI por separado -->
-      <div id="lc-separado-box" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-        <div class="field" id="lc-od-box">
-          <label>Graduación OD</label>
-          <select id="lc-grad-od" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;font-weight:700">
+
+      <!-- Graduaciones — se muestran según el tipo -->
+      <div id="lc-grad-box" style="margin-top:12px">
+        <div id="lc-par-box" style="display:none">
+          <label class="of-label">Graduación (ambos ojos)</label>
+          <select id="lc-grad-par" class="of-select" style="-webkit-appearance:none;appearance:none;font-weight:700">
             <option value="">— Elegir —</option>
             ${gradOpts()}
           </select>
         </div>
-        <div class="field" id="lc-oi-box">
-          <label>Graduación OI</label>
-          <select id="lc-grad-oi" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:15px;background:var(--gris);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;font-weight:700">
-            <option value="">— Elegir —</option>
-            ${gradOpts()}
-          </select>
+        <div id="lc-separado-box" style="display:none;grid-template-columns:1fr 1fr;gap:10px">
+          <div id="lc-od-box">
+            <label class="of-label">Graduación OD</label>
+            <select id="lc-grad-od" class="of-select" style="-webkit-appearance:none;appearance:none;font-weight:700">
+              <option value="">— Elegir —</option>
+              ${gradOpts()}
+            </select>
+          </div>
+          <div id="lc-oi-box">
+            <label class="of-label">Graduación OI</label>
+            <select id="lc-grad-oi" class="of-select" style="-webkit-appearance:none;appearance:none;font-weight:700">
+              <option value="">— Elegir —</option>
+              ${gradOpts()}
+            </select>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="field">
-      <label>Precio $</label>
-      <input id="lc-precio" type="number" inputmode="decimal" placeholder="0"
-        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px;font-size:18px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+    <!-- Precio -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#E8F5E9">💰</div>
+        Precio
+      </div>
+      <div class="of-monto-field">
+        <span class="of-monto-symbol">$</span>
+        <input id="lc-precio" type="number" inputmode="decimal" placeholder="0" class="of-monto-input" style="font-size:24px">
+      </div>
     </div>
 
-    <!-- Líquidos / Soluciones -->
-    <div class="fsec" style="margin-top:8px">
+    <!-- Líquidos multipropósito (accordion) -->
+    <div class="of-card" style="padding:0;overflow:hidden">
       <div onclick="toggleLcLiqDropdown()" id="lc-liq-header"
-        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gris-borde);background:var(--gris);user-select:none">
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 18px;user-select:none;border-radius:14px">
         <div style="display:flex;align-items:center;gap:8px">
-          <span>💧</span>
-          <span style="font-size:14px;font-weight:700;color:var(--texto)">Líquidos multipropósito</span>
-          <span id="lc-liq-badge" style="display:none;background:#006064;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
+          <div style="width:24px;height:24px;border-radius:7px;background:#E0F2F1;display:flex;align-items:center;justify-content:center;font-size:13px">💧</div>
+          <span style="font-size:13px;font-weight:700;color:#1a2d4f">Líquidos multipropósito</span>
+          <span id="lc-liq-badge" style="display:none;background:#00695C;color:#fff;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:800"></span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:10px;font-weight:600;color:var(--suave)">opcional</span>
-          <span id="lc-liq-arrow" style="font-size:13px;color:var(--suave);transition:transform .2s">▼</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="font-size:10px;font-weight:600;color:#7B95B8">opcional</span>
+          <span id="lc-liq-arrow" style="font-size:11px;color:#7B95B8;transition:transform .2s">▼</span>
         </div>
       </div>
-      <div id="lc-liq-panel" style="display:none;border:1.5px solid var(--gris-borde);border-top:none;border-radius:0 0 10px 10px;padding:10px 10px 8px;background:var(--fondo)">
+      <div id="lc-liq-panel" style="display:none;border-top:1.5px solid #EEF3FF;padding:12px 16px 14px">
         <div id="lc-liquidos-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
           ${(cfg.liquidosLC||[]).map((liq,i)=>`
             <div style="display:flex;align-items:center;gap:8px">
               <label class="check-item" onclick="toggleLcLiquido(event,this)" data-liq="${i}"
-                style="flex:1;margin-bottom:0;padding:8px 12px">
+                style="flex:1;margin-bottom:0;padding:9px 12px">
                 <input type="checkbox" name="lc-liq" value="${liq}">
                 <span class="cbox"></span>
                 <span class="clabel" style="font-size:13px">${liq}</span>
               </label>
               <input type="number" id="lc-liq-qty-${i}" inputmode="numeric" placeholder="1" value="1" min="1"
-                style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:8px;font-size:14px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+                class="of-input" style="width:54px;text-align:center;padding:9px 4px;font-weight:700">
             </div>`).join("")}
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <input id="lc-liq-custom" oninput="updateLcLiqBadge()" placeholder="Otro líquido..." style="flex:1;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 12px;font-size:13px;background:var(--gris);font-family:inherit;outline:none">
+          <input id="lc-liq-custom" oninput="updateLcLiqBadge()" placeholder="Otro líquido..." class="of-input" style="flex:1">
           <input type="number" id="lc-liq-custom-qty" inputmode="numeric" placeholder="1" value="1" min="1"
-            style="width:54px;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px;font-size:13px;font-weight:700;background:var(--gris);font-family:inherit;outline:none;text-align:center">
+            class="of-input" style="width:54px;text-align:center;padding:9px 4px;font-weight:700">
         </div>
       </div>
     </div>
 
-    <div class="field">
-      <label>Forma de pago</label>
-      <select id="lc-pago" onchange="onPagoVentaChange(this.value,'lc')" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:14px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-        <option value="">— Seleccioná —</option>
-        ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
-        <option value="Sin cargo">Sin cargo</option>
-      </select>
+    <!-- Pago y datos -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#EEF3FF">💳</div>
+        Pago y datos
+      </div>
+      <div class="of-field">
+        <label class="of-label">Forma de pago</label>
+        <select id="lc-pago" class="of-select" onchange="onPagoVentaChange(this.value,'lc')" style="-webkit-appearance:none;appearance:none">
+          <option value="">— Seleccioná —</option>
+          ${(cfg.formaPago||[]).map(p=>`<option value="${p}">${p}</option>`).join("")}
+          <option value="Sin cargo">Sin cargo</option>
+        </select>
+      </div>
+      ${renderTarjetaWrap("lc", cfg)}
+      <div class="of-field">
+        <label class="of-label">Notas (opcional)</label>
+        <input id="lc-notas" class="of-input" placeholder="Cliente habitual, reposición mensual...">
+      </div>
+      <div class="of-field" style="margin-bottom:0">
+        <label class="of-label">Vendedora</label>
+        ${vendedoraSelect("lc-vendedora", "")}
+      </div>
     </div>
-    ${renderTarjetaWrap("lc", cfg)}
 
-    <div class="field">
-      <label>Notas (opcional)</label>
-      <input id="lc-notas" placeholder="Ej: cliente habitual, reposición mensual..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+    <!-- Acciones -->
+    <div class="of-actions">
+      <button onclick="guardarVentaLC()" class="of-btn-primary"
+        style="background:linear-gradient(135deg,#004D40 0%,#00695C 100%)">
+        💾 Registrar venta
+      </button>
+      <button class="of-btn-secondary" onclick="closeModal()">Cancelar</button>
     </div>
-    <div class="field">
-      <label>👤 Vendedora</label>
-      ${vendedoraSelect("lc-vendedora", "")}
-    </div>
-
-    <button onclick="guardarVentaLC()" style="width:100%;padding:15px;border-radius:12px;border:none;background:#006064;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
-      💾 Registrar venta
-    </button>
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-    <div style="height:12px"></div>
+    <div style="height:14px"></div>
+  </div>
   `;
   _lcTipo = ""; // reset al abrir el modal
   document.getElementById("overlay").classList.add("open");
@@ -3673,24 +3771,29 @@ function actualizarCamposLC() {
   const oiBox       = document.getElementById("lc-oi-box");
   if (!parBox || !separadoBox) return;
 
+  const setLabel = (box, txt) => {
+    const el = box?.querySelector(".of-label") || box?.querySelector("label");
+    if (el) el.textContent = txt;
+  };
+
   if (tipo === "par") {
     parBox.style.display = "";
     separadoBox.style.display = "none";
   } else if (tipo === "od") {
     parBox.style.display = "none";
     separadoBox.style.display = "grid";
-    if (odBox) { odBox.style.display = ""; odBox.querySelector("label").textContent = "Graduación OD"; }
+    if (odBox) { odBox.style.display = ""; setLabel(odBox, "Graduación OD"); }
     if (oiBox) oiBox.style.display = "none";
   } else if (tipo === "oi") {
     parBox.style.display = "none";
     separadoBox.style.display = "grid";
     if (odBox) odBox.style.display = "none";
-    if (oiBox) { oiBox.style.display = ""; oiBox.querySelector("label").textContent = "Graduación OI"; }
+    if (oiBox) { oiBox.style.display = ""; setLabel(oiBox, "Graduación OI"); }
   } else if (tipo === "2medios") {
     parBox.style.display = "none";
     separadoBox.style.display = "grid";
-    if (odBox) { odBox.style.display = ""; odBox.querySelector("label").textContent = "Grad. OD (½ par)"; }
-    if (oiBox) { oiBox.style.display = ""; oiBox.querySelector("label").textContent = "Grad. OI (½ par)"; }
+    if (odBox) { odBox.style.display = ""; setLabel(odBox, "Grad. OD (½ par)"); }
+    if (oiBox) { oiBox.style.display = ""; setLabel(oiBox, "Grad. OI (½ par)"); }
   } else {
     parBox.style.display = "none";
     separadoBox.style.display = "none";
@@ -4125,57 +4228,85 @@ function renderCajaConVentas() { renderCaja(); }
 function registrarGasto() {
   const cfg = getCfg();
   document.getElementById("modal-body").innerHTML = `
-    <div style="font-size:18px;font-weight:900;color:#C62828;margin-bottom:4px">💸 Gasto / Retiro</div>
-    <div style="font-size:12px;color:var(--suave);margin-bottom:16px">${new Date().toLocaleDateString("es-AR")} — descuenta del efectivo en caja</div>
+  <div class="of-wrap">
 
-    <div class="field">
-      <label>Descripción</label>
-      <input id="gasto-desc" placeholder="Ej: Retiro propietario, pago proveedor, materiales..." 
-        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+    <!-- Header rojo -->
+    <div style="background:linear-gradient(135deg,#B71C1C 0%,#C62828 100%);border-radius:16px;padding:16px 20px;margin-bottom:12px;box-shadow:0 4px 18px rgba(183,28,28,.3)">
+      <div style="font-size:10px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Movimiento de caja</div>
+      <div style="font-size:20px;font-weight:900;color:#fff">💸 Gasto / Retiro</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:3px">${new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})} — descuenta del efectivo</div>
     </div>
 
-    <div class="field">
-      <label>Monto $</label>
-      <input id="gasto-monto" type="number" inputmode="decimal" placeholder="0" 
-        style="width:100%;border:2px solid #FFCDD2;border-radius:9px;padding:14px;font-size:22px;font-weight:700;background:#FFF8F8;font-family:inherit;outline:none;text-align:center;color:#C62828">
+    <!-- Descripción y categoría -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#FFEBEE">📝</div>
+        Detalle del gasto
+      </div>
+      <div class="of-field">
+        <label class="of-label">Descripción</label>
+        <input id="gasto-desc" class="of-input" placeholder="Retiro propietario, pago proveedor, materiales...">
+      </div>
+      <div class="of-field" style="margin-bottom:0">
+        <label class="of-label">Categoría (opcional)</label>
+        <select id="gasto-cat" class="of-select" style="-webkit-appearance:none;appearance:none">
+          <option value="">— Sin categoría —</option>
+          <option value="Retiro propietario">Retiro propietario</option>
+          <option value="Pago proveedor">Pago proveedor</option>
+          <option value="Gastos varios">Gastos varios</option>
+          <option value="Flete / envío">Flete / envío</option>
+          <option value="Materiales / insumos">Materiales / insumos</option>
+          <option value="Servicios">Servicios</option>
+        </select>
+      </div>
     </div>
 
-    <div class="field">
-      <label>Quién retira / responsable</label>
-      ${(cfg.vendedores||[]).length
-        ? `<select id="gasto-quien" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-            <option value="">— Seleccioná —</option>
-            ${(cfg.vendedores||[]).map(v=>`<option value="${v}">${v}</option>`).join("")}
-            <option value="Dueño / Propietario">Dueño / Propietario</option>
-           </select>`
-        : `<input id="gasto-quien" placeholder="Nombre..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">`
-      }
+    <!-- Monto -->
+    <div class="of-card" style="border-color:#FFCDD2;background:linear-gradient(135deg,#FFF8F8 0%,#FFEBEE 100%)">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#FFEBEE">💵</div>
+        Monto
+      </div>
+      <div class="of-monto-field">
+        <span class="of-monto-symbol" style="color:#C62828">$</span>
+        <input id="gasto-monto" type="number" inputmode="decimal" placeholder="0" class="of-monto-input"
+          style="border-color:#FFCDD2;color:#C62828;font-size:26px">
+      </div>
     </div>
 
-    <div class="field">
-      <label>Categoría (opcional)</label>
-      <select id="gasto-cat" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-        <option value="">— Sin categoría —</option>
-        <option value="Retiro propietario">Retiro propietario</option>
-        <option value="Pago proveedor">Pago proveedor</option>
-        <option value="Gastos varios">Gastos varios</option>
-        <option value="Flete / envío">Flete / envío</option>
-        <option value="Materiales / insumos">Materiales / insumos</option>
-        <option value="Servicios">Servicios</option>
-      </select>
+    <!-- Responsable y notas -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#EEF3FF">👤</div>
+        Responsable
+      </div>
+      <div class="of-field">
+        <label class="of-label">Quién retira / responsable</label>
+        ${(cfg.vendedores||[]).length
+          ? `<select id="gasto-quien" class="of-select" style="-webkit-appearance:none;appearance:none">
+              <option value="">— Seleccioná —</option>
+              ${(cfg.vendedores||[]).map(v=>`<option value="${v}">${v}</option>`).join("")}
+              <option value="Dueño / Propietario">Dueño / Propietario</option>
+             </select>`
+          : `<input id="gasto-quien" class="of-input" placeholder="Nombre...">`
+        }
+      </div>
+      <div class="of-field" style="margin-bottom:0">
+        <label class="of-label">Notas (opcional)</label>
+        <input id="gasto-notas" class="of-input" placeholder="Detalle adicional...">
+      </div>
     </div>
 
-    <div class="field">
-      <label>Notas (opcional)</label>
-      <input id="gasto-notas" placeholder="Detalle adicional..." 
-        style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:11px 12px;font-size:14px;background:var(--gris);font-family:inherit;outline:none">
+    <!-- Acciones -->
+    <div class="of-actions">
+      <button onclick="guardarGasto()" class="of-btn-primary"
+        style="background:linear-gradient(135deg,#B71C1C 0%,#C62828 100%)">
+        💸 Registrar gasto
+      </button>
+      <button class="of-btn-secondary" onclick="closeModal()">Cancelar</button>
     </div>
-
-    <button onclick="guardarGasto()" style="width:100%;padding:15px;border-radius:12px;border:none;background:#C62828;color:#fff;font-size:16px;font-weight:900;cursor:pointer;margin-top:4px">
-      💸 Registrar gasto
-    </button>
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-    <div style="height:12px"></div>
+    <div style="height:14px"></div>
+  </div>
   `;
   document.getElementById("overlay").classList.add("open");
   setTimeout(()=>{ const m=document.getElementById("gasto-monto"); if(m) bindMontoField(m); },50);
