@@ -5154,53 +5154,75 @@ function openOrdenForm(data={}) {
   const sel = data.tipos ? data.tipos.split(",") : [];
 
   document.getElementById("modal-body").innerHTML = `
-    <div class="orden-header">
-      <div>
-        <div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Orden de Trabajo</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:14px;font-weight:800;color:var(--azul)">N°</span>
-          <input id="f-num" type="text" inputmode="numeric" value="${data.num||nextNum}"
-            style="width:85px;border:none;border-bottom:2px solid var(--azul);border-radius:0;background:transparent;font-size:20px;font-weight:900;color:var(--azul);padding:2px 4px;outline:none;font-family:inherit;">
+    <div class="of-wrap">
+
+      <!-- HEADER -->
+      <div style="background:linear-gradient(135deg,#1B4FA8 0%,#1565C0 100%);border-radius:14px;padding:14px 18px;margin-bottom:14px;box-shadow:0 4px 18px rgba(27,79,168,.28)">
+        <div style="font-size:10px;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:1.2px">Olvisión · ${data.id ? "Editar Orden" : "Nueva Orden"}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:rgba(255,255,255,.7);font-weight:700">N°</span>
+            <input id="f-num" type="text" inputmode="numeric" value="${data.num||nextNum}"
+              style="width:80px;border:none;border-bottom:2px solid rgba(255,255,255,.5);background:transparent;font-size:22px;font-weight:900;color:#fff;padding:2px 4px;outline:none;font-family:inherit;">
+          </div>
+          <input id="f-fecha" type="date" value="${today}"
+            style="border:none;border-bottom:2px solid rgba(255,255,255,.35);background:transparent;font-size:13px;color:rgba(255,255,255,.85);outline:none;font-family:inherit;text-align:right;">
         </div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Fecha</div>
-        <input id="f-fecha" type="date" value="${today}"
-          style="border:none;border-bottom:2px solid var(--gris-borde);border-radius:0;background:transparent;font-size:14px;color:var(--texto);outline:none;font-family:inherit;">
-      </div>
-    </div>
 
-    <div class="fsec">
-      <div class="fsec-tit">👤 Datos del Paciente</div>
-      <div class="field"><label>Apellido y Nombre *</label><input id="f-nombre" placeholder="Pérez Juan Carlos" value="${data.nombre||""}" autocomplete="name"></div>
-      <div class="g2">
-        <div class="field"><label>DNI</label><input id="f-dni" inputmode="numeric" placeholder="30.000.000" value="${data.dni||""}"></div>
-        <div class="field"><label>Celular</label><input id="f-cel" type="tel" placeholder="0381-XXXXXXX" value="${data.cel||""}"></div>
-      </div>
-      <div class="g2">
-        <div class="field"><label>Edad</label><input id="f-edad" inputmode="numeric" placeholder="35" value="${data.edad||""}"></div>
-        <div class="field"><label>Fecha Nac.</label><input id="f-fechaNac" type="date" value="${data.fechaNac||""}"></div>
-      </div>
-      <div class="field"><label>Dirección</label><input id="f-dir" placeholder="Calle 123, Tucumán" value="${data.dir||""}"></div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">🏥 Datos Médicos</div>
-      <div class="field"><label>Doctor</label>${doctorSelect("f-doctor", data.doctor||"")}</div>
-      <div class="g2">
-        <div class="field">
-          <label>Obra Social</label>
-          <select id="f-oSocial" onchange="onOSocialChange(this.value)" style="-webkit-appearance:none;appearance:none;">
-            <option value="">— Sin obra social —</option>
-            ${(getCfg().obraSocial||[]).map(os=>`<option value="${os}" ${(data.oSocial||"")=== os?"selected":""}>${os}</option>`).join("")}
-          </select>
+      <!-- PACIENTE -->
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">👤 Paciente</div>
+        <div class="of-field">
+          <label class="of-label">Apellido y Nombre *</label>
+          <input id="f-nombre" class="of-input" placeholder="Pérez Juan Carlos" value="${data.nombre||""}" autocomplete="name">
         </div>
-        <div class="field"><label>Laboratorio</label>${laboratorioSelect("f-lab", data.laboratorio||"")}</div>
+        <div class="of-g2">
+          <div class="of-field">
+            <label class="of-label">DNI</label>
+            <input id="f-dni" class="of-input" inputmode="numeric" placeholder="30.000.000" value="${data.dni||""}">
+          </div>
+          <div class="of-field">
+            <label class="of-label">Celular</label>
+            <input id="f-cel" class="of-input" type="tel" placeholder="0381-XXXXXXX" value="${data.cel||""}">
+          </div>
+        </div>
+        <div class="of-g2">
+          <div class="of-field">
+            <label class="of-label">Edad</label>
+            <input id="f-edad" class="of-input" inputmode="numeric" placeholder="35" value="${data.edad||""}">
+          </div>
+          <div class="of-field">
+            <label class="of-label">Fecha Nac.</label>
+            <input id="f-fechaNac" class="of-input" type="date" value="${data.fechaNac||""}">
+          </div>
+        </div>
+        <div class="of-field" style="margin-bottom:0">
+          <label class="of-label">Dirección</label>
+          <input id="f-dir" class="of-input" placeholder="Calle 123, Tucumán" value="${data.dir||""}">
+        </div>
       </div>
-      <div id="pami-opciones" style="display:${(data.oSocial||'').toUpperCase()==='PAMI'?'block':'none'};margin-top:4px">
-        <div class="field">
-          <label style="color:#1B4FA8;font-weight:800">🏥 Cobertura PAMI</label>
-          <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
+
+      <!-- DATOS MÉDICOS -->
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🏥 Datos Médicos</div>
+        <div class="of-field">${doctorSelect("f-doctor", data.doctor||"")}</div>
+        <div class="of-g2">
+          <div class="of-field">
+            <label class="of-label">Obra Social</label>
+            <select id="f-oSocial" class="of-select" onchange="onOSocialChange(this.value)">
+              <option value="">— Sin obra social —</option>
+              ${(getCfg().obraSocial||[]).map(os=>`<option value="${os}" ${(data.oSocial||"")===os?"selected":""}>${os}</option>`).join("")}
+            </select>
+          </div>
+          <div class="of-field">
+            <label class="of-label">Laboratorio</label>
+            ${laboratorioSelect("f-lab", data.laboratorio||"")}
+          </div>
+        </div>
+        <div id="pami-opciones" style="display:${(data.oSocial||'').toUpperCase()==='PAMI'?'block':'none'}">
+          <label class="of-label" style="color:#1B4FA8">🏥 Cobertura PAMI</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
             ${["1 Anteojo Lejos","1 Anteojo Cerca","Bifocal"].map(op=>`
             <label class="check-item ${(data.pamiOpciones||[]).includes(op)?"checked":""}" onclick="toggleCheck(event,this)" style="width:100%">
               <input type="checkbox" value="${op}" name="pami-op" ${(data.pamiOpciones||[]).includes(op)?"checked":""}>
@@ -5210,298 +5232,300 @@ function openOrdenForm(data={}) {
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- TOGGLE 1/2 ANTEOJOS -->
-    <div class="fsec" style="padding-bottom:0">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:13px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.5px">👓 Anteojos en esta orden</span>
-        <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--azul);flex-shrink:0">
+      <!-- TOGGLE 1/2 ANTEOJOS -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px">
+        <span style="font-size:12px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.5px">👓 Anteojos</span>
+        <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--azul)">
           <button type="button" id="btn-1ant" onclick="setDosAnteojos(false)"
-            style="padding:8px 18px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:background .15s;background:${data.dosAnteojos?'#fff':'var(--azul)'};color:${data.dosAnteojos?'var(--azul)':'#fff'}">
+            style="padding:7px 16px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:inherit;transition:background .15s;background:${data.dosAnteojos?'#fff':'var(--azul)'};color:${data.dosAnteojos?'var(--azul)':'#fff'}">
             1 Anteojo
           </button>
           <button type="button" id="btn-2ant" onclick="setDosAnteojos(true)"
-            style="padding:8px 18px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:background .15s;background:${data.dosAnteojos?'var(--azul)':'#fff'};color:${data.dosAnteojos?'#fff':'var(--azul)'}">
+            style="padding:7px 16px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:inherit;transition:background .15s;background:${data.dosAnteojos?'var(--azul)':'#fff'};color:${data.dosAnteojos?'#fff':'var(--azul)'}">
             2 Anteojos
           </button>
         </div>
       </div>
+
+      <!-- CONTENEDOR ANTEOJOS -->
+      <div id="anteojos-container" style="display:${data.dosAnteojos?'grid':'block'};grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+
+        <!-- ══ ANTEOJO 1 ══ -->
+        <div id="ant1-bloque">
+          ${data.dosAnteojos?`<div style="text-align:center;font-size:11px;font-weight:900;color:#fff;background:var(--azul);border-radius:8px;padding:5px 0;margin-bottom:8px;letter-spacing:.5px">ANTEOJO 1</div>`:''}
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">📌 Tipo de Trabajo</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
+              <label class="check-item ${data.tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:90px;justify-content:center">
+                <input type="radio" name="tipo-trabajo" value="${t}" ${data.tipoTrabajo===t?"checked":""}>
+                <span class="cbox">${data.tipoTrabajo===t?"✓":""}</span>
+                <span class="clabel" style="font-size:11px">${t}</span>
+              </label>`).join("")}
+            </div>
+          </div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">🔭 Graduación Lejos</div>
+            <div class="gtbl-wrap"><table class="gtbl">
+              <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+              <tr><td class="rl">D</td><td>${gradCell('lEsf',data.lEsf,'esf')}</td><td>${gradCell('lCil',data.lCil,'cil')}</td><td><input id="lEje" class="grad-val" placeholder="—" value="${data.lEje||''}"></td><td>${gradCell('lAdd',data.lAdd,'add')}</td></tr>
+              <tr><td class="rl">I</td><td>${gradCell('lEsfI',data.lEsfI,'esf')}</td><td>${gradCell('lCilI',data.lCilI,'cil')}</td><td><input id="lEjeI" class="grad-val" placeholder="—" value="${data.lEjeI||''}"></td><td>${gradCell('lAddI',data.lAddI,'add')}</td></tr>
+            </table></div>
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin:10px 0 6px">🔬 Graduación Cerca</div>
+            <div class="gtbl-wrap"><table class="gtbl">
+              <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+              <tr><td class="rl">D</td><td>${gradCell('cEsf',data.cEsf,'esf')}</td><td>${gradCell('cCil',data.cCil,'cil')}</td><td><input id="cEje" class="grad-val" placeholder="—" value="${data.cEje||''}"></td><td>${gradCell('cAdd',data.cAdd,'add')}</td></tr>
+              <tr><td class="rl">I</td><td>${gradCell('cEsfI',data.cEsfI,'esf')}</td><td>${gradCell('cCilI',data.cCilI,'cil')}</td><td><input id="cEjeI" class="grad-val" placeholder="—" value="${data.cEjeI||''}"></td><td>${gradCell('cAddI',data.cAddI,'add')}</td></tr>
+            </table></div>
+          </div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔭 Tipo de Lente</div>
+            <div class="check-grid">
+              ${(getCfg().lentes||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+                <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
+                <span class="cbox">${sel.includes(t)?"✓":""}</span>
+                <span class="clabel">${t}</span>
+              </label>`).join("")}
+            </div>
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin:10px 0 6px">✨ Tratamiento</div>
+            <div class="of-g2">
+              <div class="of-field" style="margin-bottom:0">
+                <label class="of-label">👁 Lejos</label>
+                <select id="f-tratamiento-lejos" class="of-select">
+                  <option value="">— Sin trat. —</option>
+                  ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
+                </select>
+              </div>
+              <div class="of-field" style="margin-bottom:0">
+                <label class="of-label">🔍 Cerca</label>
+                <select id="f-tratamiento-cerca" class="of-select">
+                  <option value="">— Sin trat. —</option>
+                  ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🕶️ Armazón</div>
+            <div class="check-grid" style="grid-template-columns:1fr 1fr">
+              ${(getCfg().armazon||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+                <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
+                <span class="cbox">${sel.includes(t)?"✓":""}</span>
+                <span class="clabel">${t}</span>
+              </label>`).join("")}
+            </div>
+            <div class="of-field" style="margin-top:8px;margin-bottom:0">
+              <label class="of-label">Descripción</label>
+              <input id="f-armazon-desc" class="of-input" placeholder="Marca, modelo, color..." value="${data.armazonDesc||""}">
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ANTEOJO 2 ══ -->
+        <div id="ant2-bloque" style="display:${data.dosAnteojos?'block':'none'}">
+          <div style="text-align:center;font-size:11px;font-weight:900;color:#fff;background:#6A1B9A;border-radius:8px;padding:5px 0;margin-bottom:8px;letter-spacing:.5px">ANTEOJO 2</div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">📌 Tipo de Trabajo</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
+              <label class="check-item ${data.b_tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:90px;justify-content:center">
+                <input type="radio" name="b-tipo-trabajo" value="${t}" ${data.b_tipoTrabajo===t?"checked":""}>
+                <span class="cbox">${data.b_tipoTrabajo===t?"✓":""}</span>
+                <span class="clabel" style="font-size:11px">${t}</span>
+              </label>`).join("")}
+            </div>
+          </div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">🔭 Graduación Lejos</div>
+            <div class="gtbl-wrap"><table class="gtbl">
+              <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+              <tr><td class="rl">D</td><td>${gradCell('b_lEsf',data.b_lEsf,'esf')}</td><td>${gradCell('b_lCil',data.b_lCil,'cil')}</td><td><input id="b_lEje" class="grad-val" placeholder="—" value="${data.b_lEje||''}"></td><td>${gradCell('b_lAdd',data.b_lAdd,'add')}</td></tr>
+              <tr><td class="rl">I</td><td>${gradCell('b_lEsfI',data.b_lEsfI,'esf')}</td><td>${gradCell('b_lCilI',data.b_lCilI,'cil')}</td><td><input id="b_lEjeI" class="grad-val" placeholder="—" value="${data.b_lEjeI||''}"></td><td>${gradCell('b_lAddI',data.b_lAddI,'add')}</td></tr>
+            </table></div>
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin:10px 0 6px">🔬 Graduación Cerca</div>
+            <div class="gtbl-wrap"><table class="gtbl">
+              <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+              <tr><td class="rl">D</td><td>${gradCell('b_cEsf',data.b_cEsf,'esf')}</td><td>${gradCell('b_cCil',data.b_cCil,'cil')}</td><td><input id="b_cEje" class="grad-val" placeholder="—" value="${data.b_cEje||''}"></td><td>${gradCell('b_cAdd',data.b_cAdd,'add')}</td></tr>
+              <tr><td class="rl">I</td><td>${gradCell('b_cEsfI',data.b_cEsfI,'esf')}</td><td>${gradCell('b_cCilI',data.b_cCilI,'cil')}</td><td><input id="b_cEjeI" class="grad-val" placeholder="—" value="${data.b_cEjeI||''}"></td><td>${gradCell('b_cAddI',data.b_cAddI,'add')}</td></tr>
+            </table></div>
+          </div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔭 Tipo de Lente</div>
+            <div class="check-grid" id="b-lentes-grid">
+              ${(()=>{const bSel=data.b_tipos?data.b_tipos.split(","):[];return(getCfg().lentes||[]).map(t=>`<label class="check-item b-lente-item ${bSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+                <input type="checkbox" value="${t}" ${bSel.includes(t)?"checked":""}>
+                <span class="cbox">${bSel.includes(t)?"✓":""}</span>
+                <span class="clabel">${t}</span>
+              </label>`).join("");})()}
+            </div>
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin:10px 0 6px">✨ Tratamiento</div>
+            <div class="of-g2">
+              <div class="of-field" style="margin-bottom:0">
+                <label class="of-label">👁 Lejos</label>
+                <select id="f-b-tratamiento-lejos" class="of-select">
+                  <option value="">— Sin trat. —</option>
+                  ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.b_tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
+                </select>
+              </div>
+              <div class="of-field" style="margin-bottom:0">
+                <label class="of-label">🔍 Cerca</label>
+                <select id="f-b-tratamiento-cerca" class="of-select">
+                  <option value="">— Sin trat. —</option>
+                  ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.b_tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="of-card" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🕶️ Armazón</div>
+            <div class="check-grid" style="grid-template-columns:1fr 1fr">
+              ${(()=>{const bArmSel=data.b_armazonDesc?(getCfg().armazon||[]).filter(t=>data.b_armazonDesc.includes(t)):[];return(getCfg().armazon||[]).map(t=>`<label class="check-item b-armazon-item ${bArmSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+                <input type="checkbox" value="${t}" ${bArmSel.includes(t)?"checked":""}>
+                <span class="cbox">${bArmSel.includes(t)?"✓":""}</span>
+                <span class="clabel">${t}</span>
+              </label>`).join("");})()}
+            </div>
+            <div class="of-field" style="margin-top:8px;margin-bottom:0">
+              <label class="of-label">Descripción</label>
+              <input id="f-b-armazon-desc" class="of-input" placeholder="Marca, modelo, color..." value="${data.b_armazonDesc||""}">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /anteojos-container -->
+
+      <!-- PAGO -->
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">💰 Pago</div>
+        <div class="of-g3">
+          <div class="of-field">
+            <label class="of-label">Total $</label>
+            <input id="f-total" class="of-input" type="number" inputmode="decimal" placeholder="0" value="${data.total||""}" style="font-size:16px;font-weight:800;text-align:center">
+          </div>
+          <div class="of-field">
+            <label class="of-label">A cuenta $</label>
+            <input id="f-acuenta" class="of-input" type="number" inputmode="decimal" placeholder="0" value="${data.aCuenta||""}" style="font-size:16px;font-weight:800;text-align:center">
+          </div>
+          <div class="of-field">
+            <label class="of-label">Saldo $</label>
+            <input id="f-saldo" class="of-input" placeholder="0" value="${data.saldo||""}" readonly style="background:#F8FAFF;color:var(--suave);font-size:16px;font-weight:800;text-align:center">
+          </div>
+        </div>
+        ${(()=>{
+          const fp=data.formaPago||"";
+          let fpBase=fp,fpCuotas="",fpTarjeta="";
+          if(fp.includes(" — ")){const[a,b]=fp.split(" — ");fpBase=a.trim();fpTarjeta=b.trim();}
+          const cuotasMatch=fpBase.match(/^(Tarjeta crédito)\s+(.+)$/);
+          if(cuotasMatch){fpBase=cuotasMatch[1];fpCuotas=cuotasMatch[2];}
+          const esTarjeta=fpBase==="Tarjeta crédito";
+          const cfg=getCfg();
+          return `
+          <div class="of-field">
+            <label class="of-label">Forma de pago</label>
+            <select id="f-pago" class="of-select" onchange="onFormaPagoChange(this.value)">
+              <option value="">— Seleccioná —</option>
+              ${(cfg.formaPago||[]).map(p=>`<option value="${p}" ${fpBase===p?"selected":""}>${p}</option>`).join("")}
+              <option value="Sin cargo" ${fp==="Sin cargo"?"selected":""}>Sin cargo</option>
+            </select>
+          </div>
+          <div id="f-tarjeta-wrap" style="display:${esTarjeta?"block":"none"}">
+            <div class="of-g2">
+              <div class="of-field" style="margin-bottom:0">
+                <label class="of-label">Cuotas</label>
+                <select id="f-cuotas" class="of-select">
+                  <option value="">— Cuotas —</option>
+                  <option value="1 cuota" ${fpCuotas==="1 cuota"?"selected":""}>1 cuota</option>
+                  <option value="3 cuotas s/i" ${fpCuotas==="3 cuotas s/i"?"selected":""}>3 cuotas s/i</option>
+                  <option value="5 cuotas s/i" ${fpCuotas==="5 cuotas s/i"?"selected":""}>5 cuotas s/i</option>
+                  <option value="6 cuotas s/i" ${fpCuotas==="6 cuotas s/i"?"selected":""}>6 cuotas s/i</option>
+                  <option value="12 cuotas" ${fpCuotas==="12 cuotas"?"selected":""}>12 cuotas</option>
+                </select>
+              </div>
+              <div class="of-field" style="margin-bottom:0">
+                <label class="of-label">Tarjeta</label>
+                <select id="f-tarjeta" class="of-select">
+                  <option value="">— Tarjeta —</option>
+                  ${(cfg.tarjetasCredito||[]).map(t=>`<option value="${t}" ${fpTarjeta===t?"selected":""}>${t}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+          </div>`;
+        })()}
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <label class="check-item ${data.pagado?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
+            <input type="checkbox" id="f-pagado" ${data.pagado?"checked":""}>
+            <span class="cbox">${data.pagado?"✓":""}</span>
+            <span class="clabel" style="font-size:13px;font-weight:700;color:#2E7D32">✅ Pagado</span>
+          </label>
+          <label class="check-item ${data.ctaCte?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
+            <input type="checkbox" id="f-ctacte" ${data.ctaCte?"checked":""}>
+            <span class="cbox">${data.ctaCte?"✓":""}</span>
+            <span class="clabel" style="font-size:13px;font-weight:700;color:#E65100">📒 Cta. Cte.</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ESTADO -->
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">📋 Estado</div>
+        <div class="of-g2">
+          <div class="of-field">
+            <label class="of-label">Estado actual</label>
+            <select id="f-estado" class="of-select">
+              <option value="pendiente_envio"   ${(data.estado||'pendiente_envio')==='pendiente_envio'?'selected':''}>🔬 Pend. laboratorio</option>
+              <option value="en_laboratorio"    ${data.estado==='en_laboratorio'?'selected':''}>🏭 En laboratorio</option>
+              <option value="demorado"          ${data.estado==='demorado'?'selected':''}>⚠️ Demorado</option>
+              <option value="listo_laboratorio" ${data.estado==='listo_laboratorio'?'selected':''}>📦 Listo en lab.</option>
+              <option value="listo_retirar"     ${data.estado==='listo_retirar'?'selected':''}>📲 Listo retirar</option>
+              <option value="entregado"         ${data.estado==='entregado'?'selected':''}>✅ Entregado</option>
+            </select>
+          </div>
+          <div class="of-field">
+            <label class="of-label">Fecha entrega est.</label>
+            <input id="f-fechaEntrega" class="of-input" type="date" value="${data.fechaEntrega||''}">
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTAS + VENDEDORA + COSTO colapsados -->
+      <details style="margin-bottom:10px">
+        <summary style="font-size:12px;font-weight:600;color:var(--suave);cursor:pointer;padding:8px 0;list-style:none;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--gris-borde)">
+          <span style="font-size:10px">▸</span> Notas, vendedora y costo
+          ${data.notas||data.vendedora||data.costo?`<span style="margin-left:auto;font-size:10px;background:#FDE68A;color:#B45309;padding:2px 7px;border-radius:10px;font-weight:700">Hay datos</span>`:""}
+        </summary>
+        <div style="padding-top:10px">
+          <div class="of-field">
+            <label class="of-label">Notas</label>
+            <textarea id="f-notas" class="of-textarea" placeholder="Observaciones, indicaciones especiales..." style="height:65px">${data.notas||""}</textarea>
+          </div>
+          <div class="of-g2">
+            <div class="of-field">
+              <label class="of-label">Vendedora</label>
+              ${vendedoraSelect("f-vendedora", data.vendedora||"")}
+            </div>
+            <div class="of-field">
+              <label class="of-label">Costo $ <span style="font-size:9px;color:var(--suave)">(margen)</span></label>
+              <input id="f-costo" class="of-input" type="number" inputmode="decimal" placeholder="0" value="${data.costo||""}">
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="of-actions">
+        <button class="of-btn-primary" style="background:linear-gradient(135deg,#1B4FA8,#1565C0)" onclick="submitOrden('${data.id||""}')">💾 Guardar Orden</button>
+        <button class="of-btn-secondary" onclick="closeModal()">Cancelar</button>
+      </div>
+      <div style="height:12px"></div>
     </div>
-
-    <!-- CONTENEDOR PRINCIPAL: 1 columna o 2 columnas -->
-    <div id="anteojos-container" style="display:${data.dosAnteojos?'grid':'block'};grid-template-columns:1fr 1fr;gap:14px;align-items:start">
-
-      <!-- ══════════════ ANTEOJO 1 (siempre visible) ══════════════ -->
-      <div id="ant1-bloque">
-        ${data.dosAnteojos?`<div style="text-align:center;font-size:12px;font-weight:900;color:#fff;background:var(--azul);border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px">ANTEOJO 1</div>`:''}
-
-        <div class="fsec">
-          <div class="fsec-tit">📌 Tipo de Trabajo</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
-            <label class="check-item ${data.tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:100px;justify-content:center">
-              <input type="radio" name="tipo-trabajo" value="${t}" ${data.tipoTrabajo===t?"checked":""}>
-              <span class="cbox">${data.tipoTrabajo===t?"✓":""}</span>
-              <span class="clabel" style="font-size:12px">${t}</span>
-            </label>`).join("")}
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Graduación — LEJOS</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('lEsf',data.lEsf,'esf')}</td><td>${gradCell('lCil',data.lCil,'cil')}</td><td><input id="lEje" class="grad-val" placeholder="—" value="${data.lEje||''}"></td><td>${gradCell('lAdd',data.lAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('lEsfI',data.lEsfI,'esf')}</td><td>${gradCell('lCilI',data.lCilI,'cil')}</td><td><input id="lEjeI" class="grad-val" placeholder="—" value="${data.lEjeI||''}"></td><td>${gradCell('lAddI',data.lAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔬 Graduación — CERCA</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('cEsf',data.cEsf,'esf')}</td><td>${gradCell('cCil',data.cCil,'cil')}</td><td><input id="cEje" class="grad-val" placeholder="—" value="${data.cEje||''}"></td><td>${gradCell('cAdd',data.cAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('cEsfI',data.cEsfI,'esf')}</td><td>${gradCell('cCilI',data.cCilI,'cil')}</td><td><input id="cEjeI" class="grad-val" placeholder="—" value="${data.cEjeI||''}"></td><td>${gradCell('cAddI',data.cAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Tipo de Lente</div>
-          <div class="check-grid">
-            ${(getCfg().lentes||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
-              <span class="cbox">${sel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("")}
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">✨ Tratamiento</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">👁 Lejos</label>
-              <select id="f-tratamiento-lejos" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">🔍 Cerca</label>
-              <select id="f-tratamiento-cerca" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🕶️ Armazón</div>
-          <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:260px">
-            ${(getCfg().armazon||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
-              <span class="cbox">${sel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("")}
-          </div>
-          <div class="field" style="margin-top:10px">
-            <label style="font-size:11px;font-weight:700;color:var(--suave)">Descripción</label>
-            <input id="f-armazon-desc" placeholder="Marca, modelo, color..." value="${data.armazonDesc||""}">
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════ ANTEOJO 2 (solo visible si dosAnteojos) ══════════════ -->
-      <div id="ant2-bloque" style="display:${data.dosAnteojos?'block':'none'}">
-        <div style="text-align:center;font-size:12px;font-weight:900;color:#fff;background:#6A1B9A;border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px">ANTEOJO 2</div>
-
-        <div class="fsec">
-          <div class="fsec-tit">📌 Tipo de Trabajo</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
-            <label class="check-item ${data.b_tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:100px;justify-content:center">
-              <input type="radio" name="b-tipo-trabajo" value="${t}" ${data.b_tipoTrabajo===t?"checked":""}>
-              <span class="cbox">${data.b_tipoTrabajo===t?"✓":""}</span>
-              <span class="clabel" style="font-size:12px">${t}</span>
-            </label>`).join("")}
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Graduación — LEJOS</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('b_lEsf',data.b_lEsf,'esf')}</td><td>${gradCell('b_lCil',data.b_lCil,'cil')}</td><td><input id="b_lEje" class="grad-val" placeholder="—" value="${data.b_lEje||''}"></td><td>${gradCell('b_lAdd',data.b_lAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('b_lEsfI',data.b_lEsfI,'esf')}</td><td>${gradCell('b_lCilI',data.b_lCilI,'cil')}</td><td><input id="b_lEjeI" class="grad-val" placeholder="—" value="${data.b_lEjeI||''}"></td><td>${gradCell('b_lAddI',data.b_lAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔬 Graduación — CERCA</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('b_cEsf',data.b_cEsf,'esf')}</td><td>${gradCell('b_cCil',data.b_cCil,'cil')}</td><td><input id="b_cEje" class="grad-val" placeholder="—" value="${data.b_cEje||''}"></td><td>${gradCell('b_cAdd',data.b_cAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('b_cEsfI',data.b_cEsfI,'esf')}</td><td>${gradCell('b_cCilI',data.b_cCilI,'cil')}</td><td><input id="b_cEjeI" class="grad-val" placeholder="—" value="${data.b_cEjeI||''}"></td><td>${gradCell('b_cAddI',data.b_cAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Tipo de Lente</div>
-          <div class="check-grid" id="b-lentes-grid">
-            ${(()=>{const bSel=data.b_tipos?data.b_tipos.split(","):[];return(getCfg().lentes||[]).map(t=>`<label class="check-item b-lente-item ${bSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${bSel.includes(t)?"checked":""}>
-              <span class="cbox">${bSel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("");})()}
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">✨ Tratamiento</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">👁 Lejos</label>
-              <select id="f-b-tratamiento-lejos" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.b_tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">🔍 Cerca</label>
-              <select id="f-b-tratamiento-cerca" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.b_tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🕶️ Armazón</div>
-          <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:260px">
-            ${(()=>{const bArmSel=data.b_armazonDesc?(getCfg().armazon||[]).filter(t=>data.b_armazonDesc.includes(t)):[];return(getCfg().armazon||[]).map(t=>`<label class="check-item b-armazon-item ${bArmSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${bArmSel.includes(t)?"checked":""}>
-              <span class="cbox">${bArmSel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("");})()}
-          </div>
-          <div class="field" style="margin-top:10px">
-            <label style="font-size:11px;font-weight:700;color:var(--suave)">Descripción</label>
-            <input id="f-b-armazon-desc" placeholder="Marca, modelo, color..." value="${data.b_armazonDesc||""}">
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /anteojos-container -->
-
-    <div class="fsec">
-      <div class="fsec-tit">💰 Pago</div>
-      <div class="g3">
-        <div class="field"><label>Total $</label><input id="f-total" type="number" inputmode="decimal" placeholder="0" value="${data.total||""}"></div>
-        <div class="field"><label>A cuenta $</label><input id="f-acuenta" type="number" inputmode="decimal" placeholder="0" value="${data.aCuenta||""}"></div>
-        <div class="field"><label>Saldo $</label><input id="f-saldo" placeholder="0" value="${data.saldo||""}" readonly style="background:#f0f0f0;color:var(--suave);"></div>
-      </div>
-      ${(()=>{
-        // Parsear el formaPago guardado para restaurar los tres selectores
-        // Formato posible: "Tarjeta crédito 3 cuotas s/i — Visa"  |  "Efectivo"  |  "Sin cargo"
-        const fp = data.formaPago || "";
-        let fpBase = fp, fpCuotas = "", fpTarjeta = "";
-        if (fp.includes(" — ")) {
-          const [a, b] = fp.split(" — ");
-          fpBase = a.trim(); fpTarjeta = b.trim();
-        }
-        // Detectar cuotas en fpBase: "Tarjeta crédito 3 cuotas s/i" → base="Tarjeta crédito", cuotas="3 cuotas s/i"
-        const cuotasMatch = fpBase.match(/^(Tarjeta crédito)\s+(.+)$/);
-        if (cuotasMatch) { fpBase = cuotasMatch[1]; fpCuotas = cuotasMatch[2]; }
-        const esTarjeta = fpBase === "Tarjeta crédito";
-        const cfg = getCfg();
-        return `
-        <div class="field">
-          <label>Forma de pago</label>
-          <select id="f-pago" onchange="onFormaPagoChange(this.value)" style="-webkit-appearance:none;appearance:none;">
-            <option value="">— Seleccioná —</option>
-            ${(cfg.formaPago||[]).map(p=>`<option value="${p}" ${fpBase===p?"selected":""}>${p}</option>`).join("")}
-            <option value="Sin cargo" ${fp==="Sin cargo"?"selected":""}>Sin cargo</option>
-          </select>
-        </div>
-        <div id="f-tarjeta-wrap" style="display:${esTarjeta?"block":"none"};margin-top:2px">
-          <div style="display:flex;gap:8px">
-            <div class="field" style="flex:1;margin-bottom:0">
-              <label>Cuotas</label>
-              <select id="f-cuotas" style="-webkit-appearance:none;appearance:none;">
-                <option value="">— Cuotas —</option>
-                <option value="1 cuota" ${ fpCuotas==="1 cuota"?"selected":""}>1 cuota</option>
-                <option value="3 cuotas s/i" ${ fpCuotas==="3 cuotas s/i"?"selected":""}>3 cuotas s/i</option>
-                <option value="5 cuotas s/i" ${ fpCuotas==="5 cuotas s/i"?"selected":""}>5 cuotas s/i</option>
-                <option value="6 cuotas s/i" ${ fpCuotas==="6 cuotas s/i"?"selected":""}>6 cuotas s/i</option>
-                <option value="12 cuotas" ${ fpCuotas==="12 cuotas"?"selected":""}>12 cuotas</option>
-              </select>
-            </div>
-            <div class="field" style="flex:1;margin-bottom:0">
-              <label>Tarjeta</label>
-              <select id="f-tarjeta" style="-webkit-appearance:none;appearance:none;">
-                <option value="">— Tarjeta —</option>
-                ${(cfg.tarjetasCredito||[]).map(t=>`<option value="${t}" ${fpTarjeta===t?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-        </div>`;
-      })()}
-      <div style="display:flex;gap:10px;margin-top:4px">
-        <label class="check-item ${data.pagado?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
-          <input type="checkbox" id="f-pagado" ${data.pagado?"checked":""}>
-          <span class="cbox">${data.pagado?"✓":""}</span>
-          <span class="clabel" style="font-size:14px;font-weight:700;color:#2E7D32">✅ Pagado</span>
-        </label>
-        <label class="check-item ${data.ctaCte?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
-          <input type="checkbox" id="f-ctacte" ${data.ctaCte?"checked":""}>
-          <span class="cbox">${data.ctaCte?"✓":""}</span>
-          <span class="clabel" style="font-size:14px;font-weight:700;color:#E65100">📒 Cuenta Corriente</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">📋 Estado de la orden</div>
-      <div class="field">
-        <label>Estado actual</label>
-        <select id="f-estado" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
-          <option value="pendiente_envio"   ${(data.estado||'pendiente_envio')==='pendiente_envio'   ?'selected':''}>🔬 Pendiente de enviar al laboratorio</option>
-          <option value="en_laboratorio"    ${data.estado==='en_laboratorio'   ?'selected':''}>🏭 En laboratorio</option>
-          <option value="demorado"          ${data.estado==='demorado'         ?'selected':''}>⚠️ Demorado</option>
-          <option value="listo_laboratorio" ${data.estado==='listo_laboratorio'?'selected':''}>📦 Listo en laboratorio</option>
-          <option value="listo_retirar"     ${data.estado==='listo_retirar'    ?'selected':''}>📲 Listo para retirar</option>
-          <option value="entregado"         ${data.estado==='entregado'        ?'selected':''}>✅ Entregado</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>📅 Fecha estimada de entrega <span style="font-size:10px;color:var(--suave)">(opcional)</span></label>
-        <input id="f-fechaEntrega" type="date" value="${data.fechaEntrega||''}">
-      </div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">📝 Notas</div>
-      <div class="field"><textarea id="f-notas" placeholder="Observaciones, indicaciones especiales...">${data.notas||""}</textarea></div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">👤 Vendedora</div>
-      <div class="field">
-        <label>¿Quién atendió?</label>
-        ${vendedoraSelect("f-vendedora", data.vendedora||"")}
-      </div>
-      <div class="field">
-        <label>💰 Costo del trabajo $ <span style="font-size:10px;color:var(--suave)">(opcional — para calcular margen)</span></label>
-        <input id="f-costo" type="number" inputmode="decimal" placeholder="0" value="${data.costo||""}">
-      </div>
-    </div>
-
-    <button class="btn-save" onclick="submitOrden('${data.id||""}')">💾 Guardar Orden</button>
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-    <div style="height:12px"></div>
   `;
 
   ["f-total","f-acuenta"].forEach(id=>{
