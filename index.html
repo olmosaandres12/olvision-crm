@@ -135,6 +135,316 @@
   .btn-cancel:hover { background: var(--gris); border-color: #9AB0D4; color: var(--texto); }
   .btn-cancel:active { transform: scale(.97); background: #EBF0FA; }
 
+  /* ═══════════════════════════════════════════════════
+     FORMULARIO ORDEN — REDISEÑO PREMIUM
+  ═══════════════════════════════════════════════════ */
+  .of-wrap { display:flex; flex-direction:column; gap:0; }
+
+  /* Header de orden rediseñado */
+  .of-header {
+    background: linear-gradient(135deg, #1B4FA8 0%, #1565C0 50%, #0D47A1 100%);
+    border-radius: 16px; padding: 18px 20px; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    box-shadow: 0 4px 20px rgba(27,79,168,.35);
+    position: relative; overflow: hidden;
+  }
+  .of-header::before {
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:120px; height:120px; border-radius:50%;
+    background:rgba(255,255,255,.06); pointer-events:none;
+  }
+  .of-header-left { display:flex; align-items:center; gap:14px; }
+  .of-header-num-label { font-size:10px; color:rgba(255,255,255,.65); font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:3px; }
+  .of-header-num-row { display:flex; align-items:center; gap:6px; }
+  .of-num-sign { font-size:13px; font-weight:800; color:rgba(245,232,124,.85); }
+  .of-num-input {
+    width:80px; border:none; border-bottom:2px solid rgba(255,255,255,.35);
+    border-radius:0; background:transparent; font-size:22px; font-weight:900;
+    color:#fff; padding:2px 4px; outline:none; font-family:inherit;
+  }
+  .of-header-right { text-align:right; }
+  .of-header-date-label { font-size:10px; color:rgba(255,255,255,.65); font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
+  .of-header-date-input {
+    border:none; border-bottom:2px solid rgba(255,255,255,.3); border-radius:0;
+    background:transparent; font-size:14px; color:#fff; outline:none;
+    font-family:inherit; text-align:right;
+  }
+  .of-estado-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,.15); border-radius:20px;
+    padding:4px 10px; font-size:11px; font-weight:700; color:#fff;
+    margin-top:8px; backdrop-filter:blur(4px);
+  }
+  .of-pami-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#F5E87C; border-radius:20px;
+    padding:3px 10px; font-size:11px; font-weight:800; color:#1B4FA8;
+    margin-left:8px;
+  }
+
+  /* Buscador de cliente */
+  .of-buscador {
+    background:#fff; border-radius:14px; padding:14px 16px;
+    margin-bottom:10px; border:1.5px solid #E0E7F5;
+    box-shadow:0 1px 6px rgba(27,79,168,.07);
+  }
+  .of-buscador-row { display:flex; gap:8px; align-items:center; }
+  .of-search-input {
+    flex:1; border:1.5px solid #D8E3F5; border-radius:10px;
+    padding:10px 14px 10px 36px; font-size:14px; font-family:inherit;
+    background:#F7FAFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%231B4FA8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z'/%3E%3C/svg%3E") no-repeat 12px center;
+    outline:none; transition:border .15s;
+    color:#1a2d4f;
+  }
+  .of-search-input:focus { border-color:#1B4FA8; background-color:#fff; box-shadow:0 0 0 3px rgba(27,79,168,.1); }
+  .of-btn-nuevo {
+    white-space:nowrap; border:1.5px solid #1B4FA8; background:#1B4FA8;
+    color:#fff; border-radius:10px; padding:10px 14px; font-size:13px;
+    font-weight:700; cursor:pointer; transition:all .15s; font-family:inherit;
+  }
+  .of-btn-nuevo:hover { background:#1565C0; }
+  .of-search-results {
+    margin-top:8px; border:1.5px solid #D8E3F5; border-radius:10px;
+    overflow:hidden; display:none;
+    box-shadow:0 4px 16px rgba(27,79,168,.12);
+  }
+  .of-search-item {
+    padding:10px 14px; cursor:pointer; border-bottom:1px solid #EEF3FF;
+    transition:background .12s; display:flex; justify-content:space-between; align-items:center;
+  }
+  .of-search-item:last-child { border-bottom:none; }
+  .of-search-item:hover { background:#EEF3FF; }
+  .of-search-name { font-size:14px; font-weight:700; color:#1a2d4f; }
+  .of-search-meta { font-size:12px; color:#6B84A8; }
+
+  /* Tarjetas de sección rediseñadas */
+  .of-card {
+    background:#fff; border-radius:14px; padding:16px 18px;
+    margin-bottom:10px; border:1.5px solid #E8EFF8;
+    box-shadow:0 1px 6px rgba(27,79,168,.06);
+  }
+  .of-card-title {
+    display:flex; align-items:center; gap:8px;
+    font-size:11px; font-weight:800; color:#7B95B8;
+    text-transform:uppercase; letter-spacing:1.1px;
+    margin-bottom:14px; padding-bottom:10px;
+    border-bottom:1.5px solid #EEF3FF;
+  }
+  .of-card-title-icon {
+    width:24px; height:24px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; flex-shrink:0;
+  }
+
+  /* Grids de campos */
+  .of-g2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .of-g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .of-field { margin-bottom:12px; }
+  .of-field:last-child { margin-bottom:0; }
+  .of-label {
+    display:block; font-size:11px; font-weight:700; color:#7B95B8;
+    text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px;
+  }
+  .of-input {
+    width:100%; border:1.5px solid #E0E7F5; border-radius:10px;
+    padding:10px 12px; font-size:14px; font-family:inherit; color:#1a2d4f;
+    background:#F8FAFF; outline:none; box-sizing:border-box;
+    transition:border .15s, box-shadow .15s;
+  }
+  .of-input:focus { border-color:#1B4FA8; background:#fff; box-shadow:0 0 0 3px rgba(27,79,168,.1); }
+  .of-select {
+    width:100%; border:1.5px solid #E0E7F5; border-radius:10px;
+    padding:10px 12px; font-size:14px; font-family:inherit; color:#1a2d4f;
+    background:#F8FAFF; outline:none; -webkit-appearance:none; appearance:none;
+    cursor:pointer; transition:border .15s;
+  }
+  .of-select:focus { border-color:#1B4FA8; box-shadow:0 0 0 3px rgba(27,79,168,.1); }
+  .of-textarea {
+    width:100%; border:1.5px solid #E0E7F5; border-radius:10px;
+    padding:10px 12px; font-size:14px; font-family:inherit; color:#1a2d4f;
+    background:#F8FAFF; outline:none; resize:vertical; min-height:80px;
+    box-sizing:border-box; transition:border .15s;
+  }
+  .of-textarea:focus { border-color:#1B4FA8; background:#fff; box-shadow:0 0 0 3px rgba(27,79,168,.1); }
+
+  /* Toggle tipo anteojos */
+  .of-toggle-wrap {
+    display:flex; background:#EEF3FF; border-radius:12px; padding:3px; gap:3px;
+  }
+  .of-toggle-btn {
+    flex:1; padding:9px 0; font-size:13px; font-weight:800;
+    border:none; border-radius:10px; cursor:pointer; transition:all .18s;
+    font-family:inherit; color:#7B95B8; background:transparent;
+  }
+  .of-toggle-btn.active { background:#1B4FA8; color:#fff; box-shadow:0 2px 10px rgba(27,79,168,.3); }
+
+  /* Selector tipo trabajo */
+  .of-tipo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .of-tipo-btn {
+    padding:10px 6px; border-radius:10px; border:1.5px solid #E0E7F5;
+    background:#F8FAFF; font-size:12px; font-weight:700; color:#7B95B8;
+    cursor:pointer; text-align:center; transition:all .15s; font-family:inherit;
+  }
+  .of-tipo-btn.sel { border-color:#1B4FA8; background:#EEF3FF; color:#1B4FA8; }
+
+  /* Anteojo header badge */
+  .of-ant-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.8px; padding:5px 12px; border-radius:8px;
+    margin-bottom:12px;
+  }
+  .of-ant-badge-1 { background:#EEF3FF; color:#1B4FA8; border:1.5px solid #C8D9F5; }
+  .of-ant-badge-2 { background:#F3E5F5; color:#6A1B9A; border:1.5px solid #E1BEE7; }
+
+  /* Tabla graduación rediseñada */
+  .of-grad-table { width:100%; border-collapse:collapse; }
+  .of-grad-table th {
+    background:#1B4FA8; color:rgba(245,232,124,.9);
+    font-size:10px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.5px; padding:7px 4px; text-align:center;
+    border:none;
+  }
+  .of-grad-table th:first-child { border-radius:8px 0 0 0; }
+  .of-grad-table th:last-child { border-radius:0 8px 0 0; }
+  .of-grad-table td { border:1px solid #E8EFF8; padding:2px; vertical-align:middle; }
+  .of-grad-table .of-rl {
+    background:#EEF3FF; color:#1B4FA8; font-weight:900;
+    font-size:14px; text-align:center; padding:7px 6px; width:28px;
+  }
+  .of-grad-wrap { overflow-x:auto; border-radius:10px; border:1.5px solid #E0E7F5; }
+  .of-grad-section { margin-bottom:14px; }
+  .of-grad-label {
+    font-size:11px; font-weight:800; color:#7B95B8; text-transform:uppercase;
+    letter-spacing:.8px; margin-bottom:6px; display:flex; align-items:center; gap:5px;
+  }
+
+  /* Check items de lentes/armazón - rediseñados */
+  .of-check-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .of-check-item {
+    display:flex; align-items:center; gap:8px; cursor:pointer;
+    padding:9px 11px; border-radius:10px; border:1.5px solid #E0E7F5;
+    background:#F8FAFF; transition:all .15s; user-select:none;
+  }
+  .of-check-item.checked { background:#EEF3FF; border-color:#1B4FA8; }
+  .of-check-item input { display:none; }
+  .of-cbox {
+    width:18px; height:18px; border-radius:5px; border:1.5px solid #C8D4E8;
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:900; flex-shrink:0; transition:all .15s;
+    color:transparent;
+  }
+  .of-check-item.checked .of-cbox { background:#1B4FA8; border-color:#1B4FA8; color:#F5E87C; }
+  .of-clabel { font-size:13px; font-weight:600; color:#4A6284; }
+  .of-check-item.checked .of-clabel { color:#1B4FA8; font-weight:700; }
+
+  /* PAMI radio selector */
+  .of-pami-options { display:flex; flex-direction:column; gap:8px; }
+  .of-pami-opt {
+    display:flex; align-items:center; gap:10px; cursor:pointer;
+    padding:11px 14px; border-radius:11px; border:1.5px solid #E0E7F5;
+    background:#F8FAFF; transition:all .15s; user-select:none;
+  }
+  .of-pami-opt.checked { background:#FFF8E7; border-color:#F5A623; }
+  .of-pami-opt input { display:none; }
+  .of-pami-dot {
+    width:18px; height:18px; border-radius:50%; border:2px solid #C8D4E8;
+    background:#fff; flex-shrink:0; transition:all .15s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .of-pami-opt.checked .of-pami-dot { border-color:#F5A623; background:#F5A623; }
+  .of-pami-dot::after { content:''; width:7px; height:7px; border-radius:50%; background:#fff; display:none; }
+  .of-pami-opt.checked .of-pami-dot::after { display:block; }
+  .of-pami-label { font-size:14px; font-weight:700; color:#4A6284; }
+  .of-pami-opt.checked .of-pami-label { color:#B07D00; }
+
+  /* Bloque económico */
+  .of-econ-card {
+    background: linear-gradient(135deg, #F0F7FF 0%, #E8F0FE 100%);
+    border:1.5px solid #C8D9F5; border-radius:14px; padding:16px 18px;
+    margin-bottom:10px;
+  }
+  .of-monto-field { position:relative; }
+  .of-monto-label { font-size:10px; font-weight:800; color:#7B95B8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+  .of-monto-input {
+    width:100%; border:1.5px solid #C8D9F5; border-radius:10px;
+    padding:11px 12px 11px 28px; font-size:16px; font-weight:800;
+    font-family:inherit; color:#1a2d4f; background:#fff; outline:none;
+    box-sizing:border-box; transition:border .15s;
+  }
+  .of-monto-input:focus { border-color:#1B4FA8; box-shadow:0 0 0 3px rgba(27,79,168,.1); }
+  .of-monto-symbol {
+    position:absolute; left:10px; bottom:12px;
+    font-size:14px; font-weight:800; color:#7B95B8;
+  }
+  .of-saldo-display {
+    background:#fff; border:1.5px solid #C8D9F5; border-radius:10px;
+    padding:11px 12px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .of-saldo-label { font-size:11px; font-weight:700; color:#7B95B8; text-transform:uppercase; letter-spacing:.5px; }
+  .of-saldo-val { font-size:20px; font-weight:900; color:#1B4FA8; }
+  .of-total-highlight { font-size:28px; font-weight:900; color:#1B4FA8; }
+
+  /* Estado chips */
+  .of-estado-opts { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .of-estado-chip {
+    padding:9px 8px; border-radius:10px; border:1.5px solid #E0E7F5;
+    background:#F8FAFF; font-size:12px; font-weight:700; color:#7B95B8;
+    cursor:pointer; text-align:center; transition:all .15s; font-family:inherit;
+  }
+  .of-estado-chip.sel { border-color:#1B4FA8; background:#EEF3FF; color:#1B4FA8; }
+
+  /* Toggles pagado/ctacte */
+  .of-flag-row { display:flex; gap:8px; }
+  .of-flag {
+    flex:1; display:flex; align-items:center; gap:8px; cursor:pointer;
+    padding:11px 12px; border-radius:11px; border:1.5px solid #E0E7F5;
+    background:#F8FAFF; transition:all .15s; user-select:none;
+  }
+  .of-flag.checked-green { background:#E8F5E9; border-color:#2E7D32; }
+  .of-flag.checked-orange { background:#FFF3E0; border-color:#E65100; }
+  .of-flag input { display:none; }
+  .of-flag-icon { font-size:16px; }
+  .of-flag-text { font-size:13px; font-weight:700; color:#6B84A8; }
+  .of-flag.checked-green .of-flag-text { color:#2E7D32; }
+  .of-flag.checked-orange .of-flag-text { color:#E65100; }
+
+  /* Botones de acción finales */
+  .of-actions { display:flex; flex-direction:column; gap:8px; margin-top:4px; padding-top:4px; }
+  .of-btn-primary {
+    width:100%; padding:16px; border-radius:13px; border:none;
+    background:linear-gradient(135deg, #1B4FA8 0%, #2563eb 100%);
+    color:#F5E87C; font-size:17px; font-weight:900; cursor:pointer;
+    letter-spacing:.3px; transition:all .18s; font-family:inherit;
+    box-shadow:0 4px 16px rgba(27,79,168,.35);
+  }
+  .of-btn-primary:hover { filter:brightness(1.08); transform:translateY(-1px); box-shadow:0 6px 22px rgba(27,79,168,.45); }
+  .of-btn-primary:active { transform:scale(.97); }
+  .of-btn-secondary {
+    width:100%; padding:13px; border-radius:13px;
+    border:1.5px solid #D8E3F5; background:#fff;
+    color:#7B95B8; font-size:14px; font-weight:700; cursor:pointer;
+    transition:all .15s; font-family:inherit;
+  }
+  .of-btn-secondary:hover { background:#F0F5FF; border-color:#9AB0D4; color:#1B4FA8; }
+
+  /* Tratamiento select styled */
+  .of-trat-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .of-trat-label { font-size:11px; font-weight:700; color:#7B95B8; margin-bottom:4px; }
+
+  /* Vendedora select dentro del header oscuro */
+  .of-header select, .of-header input[type=text] {
+    background:rgba(255,255,255,.15) !important;
+    border:1px solid rgba(255,255,255,.25) !important;
+    color:#fff !important;
+    border-radius:8px !important;
+    padding:7px 10px !important;
+    font-size:13px !important;
+    font-weight:600 !important;
+    -webkit-appearance:none; appearance:none;
+  }
+  .of-header select option { background:#1B4FA8; color:#fff; }
+
   /* Botones ícono (tarjetas) */
   .bico { transition: all .15s ease; }
   .bedit:hover { background: #D0E0F5; transform: scale(1.08); }
@@ -263,7 +573,6 @@
     <button class="nav-item"        id="nav-pendientes"  onclick="setTab('pendientes',this)">  <span class="nav-icon">⏳</span><span>Pendientes</span></button>
     <button class="nav-item"        id="nav-clientes"    onclick="setTab('clientes',this)">    <span class="nav-icon">👤</span><span>Clientes</span></button>
     <button class="nav-item"        id="nav-osocial"     onclick="setTab('osocial',this)">     <span class="nav-icon">🏥</span><span>Obra Social</span></button>
-    <button class="nav-item"        id="nav-pami"        onclick="setTab('pami',this)">        <span class="nav-icon">🩺</span><span>PAMI</span></button>
     <button class="nav-item"        id="nav-ctacte"      onclick="setTab('ctacte',this)">      <span class="nav-icon">📒</span><span>Cta. Corriente</span></button>
     <div style="padding:10px 14px 4px;font-size:9px;font-weight:800;color:#F5E87C;text-transform:uppercase;letter-spacing:1.5px;margin-top:4px">Fidelización</div>
     <button class="nav-item"        id="nav-fidelizacion" onclick="setTab('fidelizacion',this)"><span class="nav-icon">⭐</span><span>Fidelizar</span></button>
@@ -371,14 +680,6 @@
     <input id="q-osocial" type="search" placeholder="Buscar por nombre u obra social..." oninput="renderOSocial(this.value)">
   </div>
   <div id="lista-osocial"><div class="empty"><span>🏥</span>Cargando...</div></div>
-</div>
-
-<div id="screen-pami" class="screen">
-  <div class="search-wrap">
-    <span class="si">🔍</span>
-    <input id="q-pami" type="search" placeholder="Buscar por nombre, DNI o N° afiliado..." oninput="renderPami(this.value)">
-  </div>
-  <div id="lista-pami"><div class="empty"><span>🩺</span>Cargando...</div></div>
 </div>
 
 <div id="screen-ctacte" class="screen">
@@ -669,104 +970,73 @@ async function syncSheets() {
     }
 
     // ── Órdenes ──
-    // Helpers
-    const fNorm = (v) => { if(!v) return ""; const s=String(v); if(s.includes("T")) return s.slice(0,10); return s; };
-    const TIPOS_VALIDOS = ["Monofocales","Bifocales","Progresivo","Ocupacional","Alto Índice","Armazon Nuevo","Armazon Usado"];
-    const boolVal = (v) => v===true || String(v)==="true";
-
-    // Detectar si existe fila HEADERS (sheet nuevo con migración)
-    const headersRow = rows.find(r => Array.isArray(r) && r[0] === "HEADERS");
-    const hMap = {}; // campo → índice de columna
-    if (headersRow) {
-      headersRow.forEach((h, i) => { if (h) hMap[String(h)] = i; });
-    }
-    const hasHeaders = Object.keys(hMap).length > 0;
-
-    // Función para leer un campo: usa hMap si existe, sino índice legacy
-    const col = (r, campo, legacyIdx) => {
-      if (hasHeaders) return hMap[campo] !== undefined ? r[hMap[campo]] : undefined;
-      return r[legacyIdx];
-    };
-
     const orders = [];
-    rows.forEach(r => {
-      if (!Array.isArray(r)) return;
-      if (String(r[0]).trim() !== "ORDEN") return;
-
-      // Normalizar fecha
-      let fechaRaw = col(r, "fecha", 6) ? String(col(r, "fecha", 6)) : "";
-      if (fechaRaw && fechaRaw.includes("Date(")) fechaRaw = "";
-      if (fechaRaw && !fechaRaw.includes("-") && !fechaRaw.includes("/")) {
-        try { const d = new Date(fechaRaw); if (!isNaN(d)) fechaRaw = d.toISOString().slice(0,10); else fechaRaw = ""; } catch { fechaRaw = ""; }
+    const dataRows = rows[0][0] === "ORDEN" ? rows : rows.slice(1);
+    dataRows.forEach(r => {
+      if (String(r[0]).trim() === "ORDEN") {
+        // Normalizar fecha — puede venir como Date de Sheets
+        let fecha = r[6] ? String(r[6]) : "";
+        if (fecha && fecha.includes("Date(")) fecha = "";
+        if (fecha && !fecha.includes("-") && !fecha.includes("/")) {
+          // intento parsear número de serie de Excel/Sheets
+          try {
+            const d = new Date(fecha);
+            if (!isNaN(d)) fecha = d.toISOString().slice(0,10);
+            else fecha = "";
+          } catch { fecha = ""; }
+        }
+        // Normalizar fecha ISO a YYYY-MM-DD
+        const fNorm = (v) => { if(!v) return ""; const s=String(v); if(s.includes("T")) return s.slice(0,10); return s; };
+        // Limpiar tipos: sacar "on", tipoTrabajo duplicado
+        const tiposRaw = String(r[30]||"");
+        const tipoTrabajo = String(r[29]||"");
+        const TIPOS_VALIDOS = ["Monofocales","Bifocales","Progresivo","Ocupacional","Alto Índice","Armazon Nuevo","Armazon Usado"];
+        const tipos = tiposRaw.split(",").filter(t => TIPOS_VALIDOS.includes(t.trim())).join(",");
+        orders.push({
+          id:    String(r[1]||uid()),
+          num:   String(r[2]||""),
+          nombre:String(r[3]||""),
+          dni:   String(r[4]||""),
+          dir:   String(r[5]||""),
+          fecha: fNorm(r[6]),
+          edad:  String(r[7]||""),
+          fechaNac: fNorm(r[8]),
+          cel:   String(r[9]||""),
+          laboratorio:String(r[10]||""),
+          doctor:String(r[11]||""),
+          oSocial:String(r[12]||""),
+          lEsf:String(r[13]||""),lCil:String(r[14]||""),lEje:String(r[15]||""),lAdd:String(r[16]||""),
+          lEsfI:String(r[17]||""),lCilI:String(r[18]||""),lEjeI:String(r[19]||""),lAddI:String(r[20]||""),
+          cEsf:String(r[21]||""),cCil:String(r[22]||""),cEje:String(r[23]||""),cAdd:String(r[24]||""),
+          cEsfI:String(r[25]||""),cCilI:String(r[26]||""),cEjeI:String(r[27]||""),cAddI:String(r[28]||""),
+          tipoTrabajo,
+          tipos,
+          tratamiento:String(r[31]||""),
+          armazonDesc:String(r[32]||""),
+          pamiOpciones:r[33]?String(r[33]).split(",").filter(Boolean):[],
+          total:String(r[34]||""),
+          aCuenta:String(r[35]||""),
+          saldo:String(r[36]||""),
+          formaPago:String(r[37]||""),
+          pagado: r[38]===true || String(r[38])==="true",
+          ctaCte: r[39]===true || String(r[39])==="true",
+          notas:String(r[40]||""),
+          estado:String(r[41]||"") || "pendiente_envio",
+          fechaEntrega:fNorm(r[42]),
+          vendedora:String(r[43]||""),
+          costo:String(r[44]||""),
+          retirado: r[45]===true || String(r[45])==="true",
+          updatedAt: r[46] ? Number(r[46]) : 0
+        });
+        // Expandir campos del anteojo 2 desde extras (columna 48)
+        const lastOrder = orders[orders.length-1];
+        if (r[47]) {
+          try {
+            const extras = JSON.parse(String(r[47]));
+            Object.assign(lastOrder, extras);
+          } catch {}
+        }
       }
-
-      const tiposRaw = String(col(r, "tipos", 30)||"");
-      const tipoTrabajo = String(col(r, "tipoTrabajo", 29)||"");
-      const tipos = tiposRaw.split(",").filter(t => TIPOS_VALIDOS.includes(t.trim())).join(",");
-
-      const o = {
-        id:         String(col(r,"id",1)||uid()),
-        num:        String(col(r,"num",2)||""),
-        nombre:     String(col(r,"nombre",3)||""),
-        dni:        String(col(r,"dni",4)||""),
-        dir:        String(col(r,"dir",5)||""),
-        fecha:      fNorm(fechaRaw),
-        edad:       String(col(r,"edad",7)||""),
-        fechaNac:   fNorm(col(r,"fechaNac",8)),
-        cel:        String(col(r,"cel",9)||""),
-        laboratorio:String(col(r,"laboratorio",10)||""),
-        doctor:     String(col(r,"doctor",11)||""),
-        oSocial:    String(col(r,"oSocial",12)||""),
-        lEsf: String(col(r,"lEsf",13)||""),  lCil: String(col(r,"lCil",14)||""),  lEje: String(col(r,"lEje",15)||""),  lAdd: String(col(r,"lAdd",16)||""),
-        lEsfI:String(col(r,"lEsfI",17)||""), lCilI:String(col(r,"lCilI",18)||""), lEjeI:String(col(r,"lEjeI",19)||""), lAddI:String(col(r,"lAddI",20)||""),
-        cEsf: String(col(r,"cEsf",21)||""),  cCil: String(col(r,"cCil",22)||""),  cEje: String(col(r,"cEje",23)||""),  cAdd: String(col(r,"cAdd",24)||""),
-        cEsfI:String(col(r,"cEsfI",25)||""), cCilI:String(col(r,"cCilI",26)||""), cEjeI:String(col(r,"cEjeI",27)||""), cAddI:String(col(r,"cAddI",28)||""),
-        tipoTrabajo,
-        tipos,
-        tratamiento:  String(col(r,"tratamiento",31)||""),
-        armazonDesc:  String(col(r,"armazonDesc",32)||""),
-        pamiOpciones: col(r,"pamiOpciones",33) ? String(col(r,"pamiOpciones",33)).split(",").filter(Boolean) : [],
-        total:      String(col(r,"total",34)||""),
-        aCuenta:    String(col(r,"aCuenta",35)||""),
-        saldo:      String(col(r,"saldo",36)||""),
-        formaPago:  String(col(r,"formaPago",37)||""),
-        pagado:     boolVal(col(r,"pagado",38)),
-        ctaCte:     boolVal(col(r,"ctaCte",39)),
-        notas:      String(col(r,"notas",40)||""),
-        estado:     String(col(r,"estado",41)||"") || "pendiente_envio",
-        fechaEntrega:fNorm(col(r,"fechaEntrega",42)),
-        vendedora:  String(col(r,"vendedora",43)||""),
-        costo:      String(col(r,"costo",44)||""),
-        retirado:   boolVal(col(r,"retirado",45)),
-        updatedAt:  col(r,"updatedAt",46) ? Number(col(r,"updatedAt",46)) : 0,
-        // ── Campos anteojo 2 (columnas propias desde migración)
-        dosAnteojos:  boolVal(col(r,"dosAnteojos",undefined)),
-        b_tipoTrabajo:String(col(r,"b_tipoTrabajo",undefined)||""),
-        b_lEsf: String(col(r,"b_lEsf",undefined)||""),  b_lCil: String(col(r,"b_lCil",undefined)||""),  b_lEje: String(col(r,"b_lEje",undefined)||""),  b_lAdd: String(col(r,"b_lAdd",undefined)||""),
-        b_lEsfI:String(col(r,"b_lEsfI",undefined)||""), b_lCilI:String(col(r,"b_lCilI",undefined)||""), b_lEjeI:String(col(r,"b_lEjeI",undefined)||""), b_lAddI:String(col(r,"b_lAddI",undefined)||""),
-        b_cEsf: String(col(r,"b_cEsf",undefined)||""),  b_cCil: String(col(r,"b_cCil",undefined)||""),  b_cEje: String(col(r,"b_cEje",undefined)||""),  b_cAdd: String(col(r,"b_cAdd",undefined)||""),
-        b_cEsfI:String(col(r,"b_cEsfI",undefined)||""), b_cCilI:String(col(r,"b_cCilI",undefined)||""), b_cEjeI:String(col(r,"b_cEjeI",undefined)||""), b_cAddI:String(col(r,"b_cAddI",undefined)||""),
-        b_tipos:       String(col(r,"b_tipos",undefined)||""),
-        b_tratamiento: String(col(r,"b_tratamiento",undefined)||""),
-        b_armazonDesc: String(col(r,"b_armazonDesc",undefined)||""),
-        // ── Campos PAMI
-        esPami:          boolVal(col(r,"esPami",undefined)),
-        pamiAfiliado:    String(col(r,"pamiAfiliado",undefined)||""),
-        pamiPrestacion:  String(col(r,"pamiPrestacion",undefined)||""),
-        pamiTratamiento: String(col(r,"pamiTratamiento",undefined)||""),
-        pamiDiferencia:  boolVal(col(r,"pamiDiferencia",undefined)),
-        pamiSinCargo:    boolVal(col(r,"pamiSinCargo",undefined)),
-      };
-
-      // Retrocompatibilidad: si es sheet viejo (sin HEADERS), leer extras JSON para anteojo 2
-      if (!hasHeaders && col(r,"extras",47)) {
-        try { Object.assign(o, JSON.parse(String(col(r,"extras",47)))); } catch {}
-      }
-
-      // Si oSocial es PAMI y no tiene esPami explícito, marcarlo
-      if (!o.esPami && (o.oSocial||"").toUpperCase() === "PAMI") o.esPami = true;
-
-      orders.push(o);
     });
     // Re-render caja si hubo cambios en cajas remotas
     if (cajasRow && cajasRow[1]) {
@@ -946,7 +1216,6 @@ function setTab(t,btn) {
   window.scrollTo(0,0);
   // Render inmediato con datos locales (sin esperar red)
   if(t==="osocial")      renderOSocial();
-  if(t==="pami")         renderPami();
   if(t==="ctacte")       renderCtaCte();
   if(t==="config")       renderConfig();
   if(t==="stats")        renderStats();
@@ -971,7 +1240,6 @@ function setTab(t,btn) {
     if(t==="clientes")     renderClientes();
     if(t==="caja")         renderCaja();
     if(t==="osocial")      renderOSocial();
-    if(t==="pami")         renderPami();
     if(t==="ctacte")       renderCtaCte();
     if(t==="stats")        renderStats();
     if(t==="fidelizacion") renderFidelizacion();
@@ -1417,57 +1685,6 @@ function verFichaCliente(nombreEnc) {
   `;
   document.getElementById("overlay").classList.add("open");
   setTimeout(()=>{ document.getElementById("modal-inner").scrollTop=0; },50);
-}
-
-function renderPami(q="") {
-  const el = document.getElementById("lista-pami");
-  if (!el) return;
-  const ESTADOS = {pendiente_envio:"⏳ Pendiente",en_laboratorio:"🔬 En Lab.",demorado:"⚠ Demorado",listo_laboratorio:"✅ Listo Lab.",listo_retirar:"👓 Listo",entregado:"✔ Entregado"};
-  const list = D.orders.filter(o => o.esPami || (o.oSocial||"").toUpperCase()==="PAMI").sort((a,b)=>String(b.num).localeCompare(String(a.num),undefined,{numeric:true}));
-  const ql = q.toLowerCase();
-  const filtered = q ? list.filter(o =>
-    (o.nombre||"").toLowerCase().includes(ql) ||
-    (o.dni||"").includes(q) ||
-    (o.pamiAfiliado||"").includes(q) ||
-    String(o.num).includes(q)
-  ) : list;
-  if (!filtered.length) {
-    el.innerHTML=`<div class="empty"><span>🩺</span>${list.length===0?"No hay órdenes PAMI cargadas":"Sin resultados"}</div>`;
-    return;
-  }
-  el.innerHTML = filtered.map(o => {
-    const idx = D.orders.indexOf(o);
-    const saldoN = o.saldo ? parseFloat(o.saldo) : (o.total&&o.aCuenta ? parseFloat(o.total)-parseFloat(o.aCuenta) : 0);
-    const estadoLabel = ESTADOS[o.estado] || o.estado || "—";
-    return `<div class="card" style="border-left:4px solid #1565C0">
-      <div class="card-top">
-        <div style="flex:1;min-width:0">
-          <span class="card-num">Orden N° ${o.num}</span>
-          <div class="card-name">${o.nombre||"—"}</div>
-          <div class="card-meta">
-            ${o.fecha?`<span>📅 ${fmtDate(o.fecha)}</span>`:""}
-            ${o.dni?`<span>🪪 DNI ${o.dni}</span>`:""}
-            ${o.pamiAfiliado?`<span>🩺 Afil. ${o.pamiAfiliado}</span>`:""}
-          </div>
-        </div>
-        <div class="card-actions">
-          <button class="bico bedit" onclick="editOrden(${idx})">✏️</button>
-        </div>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-        ${o.pamiPrestacion?`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-weight:800">📋 ${o.pamiPrestacion}</span>`:""}
-        ${o.pamiTratamiento?`<span class="chip" style="background:#E8EAF6;color:#283593">🔬 ${o.pamiTratamiento}</span>`:""}
-        ${o.pamiDiferencia?`<span class="chip" style="background:#FFF3E0;color:#E65100;font-weight:700">💲 Abona diferencia</span>`:""}
-        ${o.pamiSinCargo?`<span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">✅ Sin cargo</span>`:""}
-        ${o.pamiOpciones&&o.pamiOpciones.length?o.pamiOpciones.map(p=>`<span class="chip" style="background:#E3F2FD;color:#1565C0;font-size:11px">${p}</span>`).join(""):""}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:12px;font-weight:700;color:var(--suave)">${estadoLabel}</span>
-        ${o.total?`<span class="chip">Total $${num(o.total)}</span>`:""}
-        ${saldoN>0?`<span class="chip chip-saldo">⚠ Saldo $${num(saldoN)}</span>`:`<span class="chip" style="background:#E8F5E9;color:#2E7D32;font-weight:700">✅ Pagado</span>`}
-      </div>
-    </div>`;
-  }).join("");
 }
 
 function renderOSocial(q="") {
@@ -4901,315 +5118,353 @@ function openOrdenForm(data={}) {
   const nextNum = data.num || (D.orders.length ? Math.max(...D.orders.map(o=>parseInt(o.num)||0))+1 : 1);
   const today = data.fecha || getHoy();
   const sel = data.tipos ? data.tipos.split(",") : [];
+  const isPami = (data.oSocial||'').toUpperCase() === 'PAMI';
 
-  document.getElementById("modal-body").innerHTML = `
-    <div class="orden-header">
-      <div>
-        <div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Orden de Trabajo</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:14px;font-weight:800;color:var(--azul)">N°</span>
-          <input id="f-num" type="text" inputmode="numeric" value="${data.num||nextNum}"
-            style="width:85px;border:none;border-bottom:2px solid var(--azul);border-radius:0;background:transparent;font-size:20px;font-weight:900;color:var(--azul);padding:2px 4px;outline:none;font-family:inherit;">
+  // ── helpers internos ──────────────────────────────────────────────────────
+  const ofCheck = (id, val, tipo, cls='') => {
+    const bSel = val ? val.split(",") : sel;
+    return (getCfg()[tipo]||[]).map(t => `
+      <label class="of-check-item ${cls} ${bSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+        <input type="checkbox" value="${t}" ${bSel.includes(t)?"checked":""}>
+        <div class="of-cbox">${bSel.includes(t)?"✓":""}</div>
+        <span class="of-clabel">${t}</span>
+      </label>`).join("");
+  };
+  const ofSelect = (id, opts, selVal, placeholder) => `
+    <select id="${id}" class="of-select" style="-webkit-appearance:none;appearance:none;">
+      <option value="">${placeholder}</option>
+      ${opts.map(o=>`<option value="${o}" ${selVal===o?"selected":""}>${o}</option>`).join("")}
+    </select>`;
+  const ofGradTable = (prefix, d) => `
+    <div class="of-grad-wrap">
+      <table class="of-grad-table">
+        <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+        <tr>
+          <td class="of-rl">D</td>
+          <td>${gradCell(prefix+'lEsf',d[prefix+'lEsf']||'',"esf")}</td>
+          <td>${gradCell(prefix+'lCil',d[prefix+'lCil']||'',"cil")}</td>
+          <td><input id="${prefix}lEje" class="grad-val" placeholder="—" value="${d[prefix+'lEje']||''}"></td>
+          <td>${gradCell(prefix+'lAdd',d[prefix+'lAdd']||'',"add")}</td>
+        </tr>
+        <tr>
+          <td class="of-rl">I</td>
+          <td>${gradCell(prefix+'lEsfI',d[prefix+'lEsfI']||'',"esf")}</td>
+          <td>${gradCell(prefix+'lCilI',d[prefix+'lCilI']||'',"cil")}</td>
+          <td><input id="${prefix}lEjeI" class="grad-val" placeholder="—" value="${d[prefix+'lEjeI']||''}"></td>
+          <td>${gradCell(prefix+'lAddI',d[prefix+'lAddI']||'',"add")}</td>
+        </tr>
+      </table>
+    </div>`;
+  const ofGradCercaTable = (prefix, d) => `
+    <div class="of-grad-wrap">
+      <table class="of-grad-table">
+        <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+        <tr>
+          <td class="of-rl">D</td>
+          <td>${gradCell(prefix+'cEsf',d[prefix+'cEsf']||'',"esf")}</td>
+          <td>${gradCell(prefix+'cCil',d[prefix+'cCil']||'',"cil")}</td>
+          <td><input id="${prefix}cEje" class="grad-val" placeholder="—" value="${d[prefix+'cEje']||''}"></td>
+          <td>${gradCell(prefix+'cAdd',d[prefix+'cAdd']||'',"add")}</td>
+        </tr>
+        <tr>
+          <td class="of-rl">I</td>
+          <td>${gradCell(prefix+'cEsfI',d[prefix+'cEsfI']||'',"esf")}</td>
+          <td>${gradCell(prefix+'cCilI',d[prefix+'cCilI']||'',"cil")}</td>
+          <td><input id="${prefix}cEjeI" class="grad-val" placeholder="—" value="${d[prefix+'cEjeI']||''}"></td>
+          <td>${gradCell(prefix+'cAddI',d[prefix+'cAddI']||'',"add")}</td>
+        </tr>
+      </table>
+    </div>`;
+  const ofTipoTrabajo = (name, val) => ["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
+    <button type="button" class="of-tipo-btn ${val===t?'sel':''}"
+      onclick="ofSelectTipo(this,'${name}')"
+      data-val="${t}">${t}</button>`).join("");
+  const ofBloqueAnteojo = (prefix, d, badgeClass, badgeLabel) => `
+    <div id="${prefix===''?'ant1-bloque':'inner-ant2-bloque'}">
+      ${badgeLabel ? `<div class="of-ant-badge ${badgeClass}">👓 ${badgeLabel}</div>` : ''}
+
+      <div class="of-card" style="margin-bottom:10px">
+        <div class="of-card-title">
+          <div class="of-card-title-icon" style="background:#EEF3FF">📌</div>
+          Tipo de Trabajo
+        </div>
+        <div class="of-tipo-grid">${ofTipoTrabajo(prefix+'tipo-trabajo', prefix===''?d.tipoTrabajo||"":d.b_tipoTrabajo||"")}</div>
+      </div>
+
+      <div class="of-card" style="margin-bottom:10px">
+        <div class="of-card-title">
+          <div class="of-card-title-icon" style="background:#EEF3FF">🔭</div>
+          Graduación Lejos
+        </div>
+        ${ofGradTable(prefix, d)}
+        <div style="margin-top:12px">
+        <div class="of-card-title" style="margin-bottom:8px">
+          <div class="of-card-title-icon" style="background:#E8F5E9">🔬</div>
+          Graduación Cerca
+        </div>
+        ${ofGradCercaTable(prefix, d)}
         </div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:10px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Fecha</div>
-        <input id="f-fecha" type="date" value="${today}"
-          style="border:none;border-bottom:2px solid var(--gris-borde);border-radius:0;background:transparent;font-size:14px;color:var(--texto);outline:none;font-family:inherit;">
-      </div>
-    </div>
 
-    <div class="fsec">
-      <div class="fsec-tit">👤 Datos del Paciente</div>
-      <div class="field"><label>Apellido y Nombre *</label><input id="f-nombre" placeholder="Pérez Juan Carlos" value="${data.nombre||""}" autocomplete="name"></div>
-      <div class="g2">
-        <div class="field"><label>DNI</label><input id="f-dni" inputmode="numeric" placeholder="30.000.000" value="${data.dni||""}"></div>
-        <div class="field"><label>Celular</label><input id="f-cel" type="tel" placeholder="0381-XXXXXXX" value="${data.cel||""}"></div>
-      </div>
-      <div class="g2">
-        <div class="field"><label>Edad</label><input id="f-edad" inputmode="numeric" placeholder="35" value="${data.edad||""}"></div>
-        <div class="field"><label>Fecha Nac.</label><input id="f-fechaNac" type="date" value="${data.fechaNac||""}"></div>
-      </div>
-      <div class="field"><label>Dirección</label><input id="f-dir" placeholder="Calle 123, Tucumán" value="${data.dir||""}"></div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">🏥 Datos Médicos</div>
-      <div class="field"><label>Doctor</label>${doctorSelect("f-doctor", data.doctor||"")}</div>
-      <div class="g2">
-        <div class="field">
-          <label>Obra Social</label>
-          <select id="f-oSocial" onchange="onOSocialChange(this.value)" style="-webkit-appearance:none;appearance:none;">
-            <option value="">— Sin obra social —</option>
-            ${(getCfg().obraSocial||[]).map(os=>`<option value="${os}" ${(data.oSocial||"")=== os?"selected":""}>${os}</option>`).join("")}
-          </select>
+      <div class="of-card" style="margin-bottom:10px">
+        <div class="of-card-title">
+          <div class="of-card-title-icon" style="background:#EEF3FF">💎</div>
+          Cristales y Tratamiento
         </div>
-        <div class="field"><label>Laboratorio</label>${laboratorioSelect("f-lab", data.laboratorio||"")}</div>
-      </div>
-      <div id="pami-opciones" style="display:${(data.oSocial||'').toUpperCase()==='PAMI'?'block':'none'};margin-top:4px;background:#EEF4FF;border-radius:12px;padding:12px;border:1.5px solid #90CAF9">
-        <div style="font-size:13px;font-weight:900;color:#1B4FA8;margin-bottom:10px">🏥 Datos PAMI</div>
-        <div class="g2">
-          <div class="field">
-            <label style="color:#1B4FA8;font-weight:800">N° Afiliado PAMI *</label>
-            <input id="f-pami-afiliado" placeholder="Ej: 12345678" value="${data.pamiAfiliado||''}" style="border-color:#90CAF9">
+        <div style="margin-bottom:12px">
+          <div class="of-label">Tipo de Lente</div>
+          <div class="of-check-grid" ${prefix==='b_'?'id="b-lentes-grid"':''}>
+            ${(()=>{const bSel=prefix==='b_'?(d.b_tipos?d.b_tipos.split(","):[]):sel;return(getCfg().lentes||[]).map(t=>`
+            <label class="of-check-item ${prefix==='b_'?'b-lente-item':''} ${bSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+              <input type="checkbox" value="${t}" ${bSel.includes(t)?"checked":""}>
+              <div class="of-cbox">${bSel.includes(t)?"✓":""}</div>
+              <span class="of-clabel">${t}</span>
+            </label>`).join("");})()}
           </div>
-          <div class="field">
-            <label style="color:#1B4FA8;font-weight:800">Tipo de Prestación *</label>
-            <select id="f-pami-prestacion" style="-webkit-appearance:none;appearance:none;border-color:#90CAF9">
-              <option value="">— Seleccionar —</option>
-              ${["Anteojo de lejos","Anteojo de cerca","Ambos anteojos","Bifocal"].map(op=>`<option value="${op}" ${(data.pamiPrestacion||"")=== op?"selected":""}>${op}</option>`).join("")}
+        </div>
+        <div class="of-trat-row">
+          <div>
+            <div class="of-trat-label">Lejos</div>
+            <select id="${prefix==='b_'?'f-b-tratamiento-lejos':'f-tratamiento-lejos'}" class="of-select" style="-webkit-appearance:none;appearance:none;">
+              <option value="">— Sin trat. —</option>
+              ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=((prefix==='b_'?d.b_tratamiento:d.tratamiento)||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <div class="of-trat-label">Cerca</div>
+            <select id="${prefix==='b_'?'f-b-tratamiento-cerca':'f-tratamiento-cerca'}" class="of-select" style="-webkit-appearance:none;appearance:none;">
+              <option value="">— Sin trat. —</option>
+              ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=((prefix==='b_'?d.b_tratamiento:d.tratamiento)||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
             </select>
           </div>
         </div>
-        <div class="field" style="margin-top:6px">
-          <label style="color:#1B4FA8;font-weight:800">Tratamiento PAMI</label>
-          <input id="f-pami-tratamiento" placeholder="Ej: Orgánico Blue, Fotocromático..." value="${data.pamiTratamiento||''}">
+      </div>
+
+      <div class="of-card" style="margin-bottom:10px">
+        <div class="of-card-title">
+          <div class="of-card-title-icon" style="background:#FFF8E7">🕶️</div>
+          Armazón
         </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <label class="check-item ${data.pamiDiferencia?'checked':''}" onclick="toggleCheck(event,this)" style="flex:1">
-            <input type="checkbox" id="f-pami-diferencia" ${data.pamiDiferencia?"checked":""}>
-            <span class="cbox">${data.pamiDiferencia?"✓":""}</span>
-            <span class="clabel" style="font-size:13px">Abona diferencia</span>
-          </label>
-          <label class="check-item ${data.pamiSinCargo?'checked':''}" onclick="toggleCheck(event,this)" style="flex:1">
-            <input type="checkbox" id="f-pami-sincargo" ${data.pamiSinCargo?"checked":""}>
-            <span class="cbox">${data.pamiSinCargo?"✓":""}</span>
-            <span class="clabel" style="font-size:13px">Sin cargo</span>
-          </label>
+        <div class="of-check-grid" style="grid-template-columns:1fr 1fr;max-width:260px;margin-bottom:10px">
+          ${(()=>{const bArmSel=prefix==='b_'?(d.b_armazonDesc?(getCfg().armazon||[]).filter(t=>d.b_armazonDesc.includes(t)):[]):sel.filter(t=>(getCfg().armazon||[]).includes(t));return(getCfg().armazon||[]).map(t=>`
+          <label class="of-check-item ${prefix==='b_'?'b-armazon-item':''} ${bArmSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
+            <input type="checkbox" value="${t}" ${bArmSel.includes(t)?"checked":""}>
+            <div class="of-cbox">${bArmSel.includes(t)?"✓":""}</div>
+            <span class="of-clabel">${t}</span>
+          </label>`).join("");})()}
         </div>
-        <div class="field" style="margin-top:8px">
-          <label style="color:#1B4FA8;font-weight:800">Cobertura PAMI</label>
-          <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
-            ${["1 Anteojo Lejos","1 Anteojo Cerca","Bifocal"].map(op=>`
-            <label class="check-item ${(data.pamiOpciones||[]).includes(op)?"checked":""}" onclick="toggleCheck(event,this)" style="width:100%">
-              <input type="checkbox" value="${op}" name="pami-op" ${(data.pamiOpciones||[]).includes(op)?"checked":""}>
-              <span class="cbox">${(data.pamiOpciones||[]).includes(op)?"✓":""}</span>
-              <span class="clabel">${op}</span>
-            </label>`).join("")}
+        <input id="${prefix==='b_'?'f-b-armazon-desc':'f-armazon-desc'}" class="of-input" placeholder="Marca, modelo, color..." value="${(prefix==='b_'?data.b_armazonDesc:data.armazonDesc)||""}">
+      </div>
+    </div>`;
+
+  // Parsear formaPago guardado
+  const fp = data.formaPago || "";
+  let fpBase = fp, fpCuotas = "", fpTarjeta = "";
+  if (fp.includes(" — ")) { const [a, b] = fp.split(" — "); fpBase = a.trim(); fpTarjeta = b.trim(); }
+  const cuotasMatch = fpBase.match(/^(Tarjeta crédito)\s+(.+)$/);
+  if (cuotasMatch) { fpBase = cuotasMatch[1]; fpCuotas = cuotasMatch[2]; }
+  const esTarjeta = fpBase === "Tarjeta crédito";
+  const cfg = getCfg();
+
+  const estadoLabels = {
+    pendiente_envio:'🔬 Pte. laboratorio', en_laboratorio:'🏭 En laboratorio',
+    demorado:'⚠️ Demorado', listo_laboratorio:'📦 Listo en lab.',
+    listo_retirar:'📲 Listo retirar', entregado:'✅ Entregado'
+  };
+  const estadoActual = data.estado || 'pendiente_envio';
+
+  document.getElementById("modal-body").innerHTML = `
+  <div class="of-wrap">
+
+    <!-- ── HEADER ── -->
+    <div class="of-header">
+      <div class="of-header-left">
+        <div>
+          <div class="of-header-num-label">Orden de Trabajo</div>
+          <div class="of-header-num-row">
+            <span class="of-num-sign">N°</span>
+            <input id="f-num" type="text" inputmode="numeric" value="${data.num||nextNum}" class="of-num-input">
+          </div>
+          <div style="margin-top:6px">
+            <span class="of-estado-badge">${estadoLabels[estadoActual]||estadoActual}</span>
+            ${isPami?`<span class="of-pami-badge">🏥 PAMI</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div class="of-header-right">
+        <div class="of-header-date-label">Fecha</div>
+        <input id="f-fecha" type="date" value="${today}" class="of-header-date-input">
+        <div style="margin-top:10px">
+          <div class="of-header-date-label">Vendedor/a</div>
+          <div id="of-vendedora-header-wrap" style="min-width:130px">
+            ${vendedoraSelect("f-vendedora", data.vendedora||"")}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TOGGLE 1/2 ANTEOJOS -->
-    <div class="fsec" style="padding-bottom:0">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:13px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.5px">👓 Anteojos en esta orden</span>
-        <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--azul);flex-shrink:0">
-          <button type="button" id="btn-1ant" onclick="setDosAnteojos(false)"
-            style="padding:8px 18px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:background .15s;background:${data.dosAnteojos?'#fff':'var(--azul)'};color:${data.dosAnteojos?'var(--azul)':'#fff'}">
-            1 Anteojo
-          </button>
-          <button type="button" id="btn-2ant" onclick="setDosAnteojos(true)"
-            style="padding:8px 18px;font-size:13px;font-weight:800;border:none;cursor:pointer;transition:background .15s;background:${data.dosAnteojos?'var(--azul)':'#fff'};color:${data.dosAnteojos?'#fff':'var(--azul)'}">
-            2 Anteojos
-          </button>
+    <!-- ── BUSCADOR CLIENTE ── -->
+    ${!data.id ? `
+    <div class="of-buscador">
+      <div style="font-size:11px;font-weight:800;color:#7B95B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🔍 Buscar cliente existente</div>
+      <div class="of-buscador-row">
+        <input type="text" id="of-search-input" class="of-search-input" placeholder="Nombre, DNI o teléfono..."
+          oninput="ofSearchCliente(this.value)" autocomplete="off">
+      </div>
+      <div id="of-search-results" class="of-search-results"></div>
+    </div>` : ''}
+
+    <!-- ── DATOS DEL CLIENTE ── -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#EEF3FF">👤</div>
+        Datos del Paciente
+      </div>
+      <div class="of-field">
+        <label class="of-label">Apellido y Nombre *</label>
+        <input id="f-nombre" class="of-input" placeholder="Pérez Juan Carlos" value="${data.nombre||""}" autocomplete="name">
+      </div>
+      <div class="of-g2">
+        <div class="of-field">
+          <label class="of-label">DNI</label>
+          <input id="f-dni" class="of-input" inputmode="numeric" placeholder="30.000.000" value="${data.dni||""}">
+        </div>
+        <div class="of-field">
+          <label class="of-label">Celular</label>
+          <input id="f-cel" class="of-input" type="tel" placeholder="0381-XXXXXXX" value="${data.cel||""}">
+        </div>
+      </div>
+      <div class="of-g2">
+        <div class="of-field">
+          <label class="of-label">Edad</label>
+          <input id="f-edad" class="of-input" inputmode="numeric" placeholder="35" value="${data.edad||""}">
+        </div>
+        <div class="of-field">
+          <label class="of-label">Fecha Nac.</label>
+          <input id="f-fechaNac" class="of-input" type="date" value="${data.fechaNac||""}">
+        </div>
+      </div>
+      <div class="of-field" style="margin-bottom:0">
+        <label class="of-label">Dirección</label>
+        <input id="f-dir" class="of-input" placeholder="Calle 123, Tucumán" value="${data.dir||""}">
+      </div>
+    </div>
+
+    <!-- ── DATOS MÉDICOS ── -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#E8F5E9">🏥</div>
+        Datos Médicos y Cobertura
+      </div>
+      <div class="of-field">
+        <label class="of-label">Doctor</label>
+        ${doctorSelect("f-doctor", data.doctor||"")}
+      </div>
+      <div class="of-g2">
+        <div class="of-field">
+          <label class="of-label">Obra Social</label>
+          <select id="f-oSocial" class="of-select" onchange="onOSocialChange(this.value)" style="-webkit-appearance:none;appearance:none;">
+            <option value="">— Sin obra social —</option>
+            ${(getCfg().obraSocial||[]).map(os=>`<option value="${os}" ${(data.oSocial||"")===os?"selected":""}>${os}</option>`).join("")}
+          </select>
+        </div>
+        <div class="of-field">
+          <label class="of-label">Laboratorio</label>
+          ${laboratorioSelect("f-lab", data.laboratorio||"")}
+        </div>
+      </div>
+
+      <!-- PAMI opciones -->
+      <div id="pami-opciones" style="display:${isPami?'block':'none'}">
+        <div style="height:1px;background:#EEF3FF;margin:8px 0 12px"></div>
+        <div style="font-size:12px;font-weight:800;color:#B07D00;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🏥 Prestación PAMI</div>
+        <div class="of-pami-options">
+          ${["1 Anteojo Lejos","1 Anteojo Cerca","Bifocal"].map(op=>`
+          <label class="of-pami-opt ${(data.pamiOpciones||[]).includes(op)?"checked":""}"
+            onclick="ofTogglePami(event,this)">
+            <input type="checkbox" value="${op}" name="pami-op" ${(data.pamiOpciones||[]).includes(op)?"checked":""}>
+            <div class="of-pami-dot"></div>
+            <span class="of-pami-label">${op}</span>
+          </label>`).join("")}
         </div>
       </div>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL: 1 columna o 2 columnas -->
-    <div id="anteojos-container" style="display:${data.dosAnteojos?'grid':'block'};grid-template-columns:1fr 1fr;gap:14px;align-items:start">
-
-      <!-- ══════════════ ANTEOJO 1 (siempre visible) ══════════════ -->
-      <div id="ant1-bloque">
-        ${data.dosAnteojos?`<div style="text-align:center;font-size:12px;font-weight:900;color:#fff;background:var(--azul);border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px">ANTEOJO 1</div>`:''}
-
-        <div class="fsec">
-          <div class="fsec-tit">📌 Tipo de Trabajo</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
-            <label class="check-item ${data.tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:100px;justify-content:center">
-              <input type="radio" name="tipo-trabajo" value="${t}" ${data.tipoTrabajo===t?"checked":""}>
-              <span class="cbox">${data.tipoTrabajo===t?"✓":""}</span>
-              <span class="clabel" style="font-size:12px">${t}</span>
-            </label>`).join("")}
-          </div>
+    <!-- ── TOGGLE 1/2 ANTEOJOS ── -->
+    <div class="of-card" style="padding:12px 18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#1a2d4f">👓 Anteojos en esta orden</div>
+          <div style="font-size:12px;color:#7B95B8;margin-top:2px">Seleccioná si la orden incluye uno o dos anteojos</div>
         </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Graduación — LEJOS</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('lEsf',data.lEsf,'esf')}</td><td>${gradCell('lCil',data.lCil,'cil')}</td><td><input id="lEje" class="grad-val" placeholder="—" value="${data.lEje||''}"></td><td>${gradCell('lAdd',data.lAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('lEsfI',data.lEsfI,'esf')}</td><td>${gradCell('lCilI',data.lCilI,'cil')}</td><td><input id="lEjeI" class="grad-val" placeholder="—" value="${data.lEjeI||''}"></td><td>${gradCell('lAddI',data.lAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔬 Graduación — CERCA</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('cEsf',data.cEsf,'esf')}</td><td>${gradCell('cCil',data.cCil,'cil')}</td><td><input id="cEje" class="grad-val" placeholder="—" value="${data.cEje||''}"></td><td>${gradCell('cAdd',data.cAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('cEsfI',data.cEsfI,'esf')}</td><td>${gradCell('cCilI',data.cCilI,'cil')}</td><td><input id="cEjeI" class="grad-val" placeholder="—" value="${data.cEjeI||''}"></td><td>${gradCell('cAddI',data.cAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Tipo de Lente</div>
-          <div class="check-grid">
-            ${(getCfg().lentes||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
-              <span class="cbox">${sel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("")}
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">✨ Tratamiento</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">👁 Lejos</label>
-              <select id="f-tratamiento-lejos" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">🔍 Cerca</label>
-              <select id="f-tratamiento-cerca" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🕶️ Armazón</div>
-          <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:260px">
-            ${(getCfg().armazon||[]).map(t=>`<label class="check-item ${sel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${sel.includes(t)?"checked":""}>
-              <span class="cbox">${sel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("")}
-          </div>
-          <div class="field" style="margin-top:10px">
-            <label style="font-size:11px;font-weight:700;color:var(--suave)">Descripción</label>
-            <input id="f-armazon-desc" placeholder="Marca, modelo, color..." value="${data.armazonDesc||""}">
-          </div>
+        <div class="of-toggle-wrap" style="min-width:200px">
+          <button type="button" id="btn-1ant" class="of-toggle-btn ${!data.dosAnteojos?'active':''}" onclick="setDosAnteojos(false)">1 Anteojo</button>
+          <button type="button" id="btn-2ant" class="of-toggle-btn ${data.dosAnteojos?'active':''}" onclick="setDosAnteojos(true)">2 Anteojos</button>
         </div>
       </div>
+    </div>
 
-      <!-- ══════════════ ANTEOJO 2 (solo visible si dosAnteojos) ══════════════ -->
+    <!-- ── CONTENEDOR ANTEOJOS ── -->
+    <div id="anteojos-container" style="display:${data.dosAnteojos?'grid':'block'};grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+
+      <!-- ANTEOJO 1 -->
+      ${ofBloqueAnteojo('', data, 'of-ant-badge-1', data.dosAnteojos?'Anteojo 1':'')}
+
+      <!-- ANTEOJO 2 -->
       <div id="ant2-bloque" style="display:${data.dosAnteojos?'block':'none'}">
-        <div style="text-align:center;font-size:12px;font-weight:900;color:#fff;background:#6A1B9A;border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px">ANTEOJO 2</div>
+        ${ofBloqueAnteojo('b_', data, 'of-ant-badge-2', 'Anteojo 2')}
+      </div>
 
-        <div class="fsec">
-          <div class="fsec-tit">📌 Tipo de Trabajo</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t=>`
-            <label class="check-item ${data.b_tipoTrabajo===t?"checked":""}" onclick="selectTipoTrabajo(event,this)" style="flex:1;min-width:100px;justify-content:center">
-              <input type="radio" name="b-tipo-trabajo" value="${t}" ${data.b_tipoTrabajo===t?"checked":""}>
-              <span class="cbox">${data.b_tipoTrabajo===t?"✓":""}</span>
-              <span class="clabel" style="font-size:12px">${t}</span>
-            </label>`).join("")}
+    </div>
+
+    <!-- ── PAGO ── -->
+    <div class="of-econ-card">
+      <div class="of-card-title" style="margin-bottom:14px">
+        <div class="of-card-title-icon" style="background:#EEF3FF">💰</div>
+        Resumen Económico
+      </div>
+      <div class="of-g2" style="margin-bottom:10px">
+        <div>
+          <div class="of-monto-label">Total $</div>
+          <div class="of-monto-field">
+            <span class="of-monto-symbol">$</span>
+            <input id="f-total" type="number" inputmode="decimal" placeholder="0" value="${data.total||""}" class="of-monto-input">
           </div>
         </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Graduación — LEJOS</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('b_lEsf',data.b_lEsf,'esf')}</td><td>${gradCell('b_lCil',data.b_lCil,'cil')}</td><td><input id="b_lEje" class="grad-val" placeholder="—" value="${data.b_lEje||''}"></td><td>${gradCell('b_lAdd',data.b_lAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('b_lEsfI',data.b_lEsfI,'esf')}</td><td>${gradCell('b_lCilI',data.b_lCilI,'cil')}</td><td><input id="b_lEjeI" class="grad-val" placeholder="—" value="${data.b_lEjeI||''}"></td><td>${gradCell('b_lAddI',data.b_lAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔬 Graduación — CERCA</div>
-          <div class="gtbl-wrap"><table class="gtbl">
-            <tr><th style="width:28px"></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
-            <tr><td class="rl">D</td><td>${gradCell('b_cEsf',data.b_cEsf,'esf')}</td><td>${gradCell('b_cCil',data.b_cCil,'cil')}</td><td><input id="b_cEje" class="grad-val" placeholder="—" value="${data.b_cEje||''}"></td><td>${gradCell('b_cAdd',data.b_cAdd,'add')}</td></tr>
-            <tr><td class="rl">I</td><td>${gradCell('b_cEsfI',data.b_cEsfI,'esf')}</td><td>${gradCell('b_cCilI',data.b_cCilI,'cil')}</td><td><input id="b_cEjeI" class="grad-val" placeholder="—" value="${data.b_cEjeI||''}"></td><td>${gradCell('b_cAddI',data.b_cAddI,'add')}</td></tr>
-          </table></div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🔭 Tipo de Lente</div>
-          <div class="check-grid" id="b-lentes-grid">
-            ${(()=>{const bSel=data.b_tipos?data.b_tipos.split(","):[];return(getCfg().lentes||[]).map(t=>`<label class="check-item b-lente-item ${bSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${bSel.includes(t)?"checked":""}>
-              <span class="cbox">${bSel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("");})()}
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">✨ Tratamiento</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">👁 Lejos</label>
-              <select id="f-b-tratamiento-lejos" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[l]=(data.b_tratamiento||"").split(" | ");return l===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;color:var(--suave)">🔍 Cerca</label>
-              <select id="f-b-tratamiento-cerca" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 10px;font-size:13px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none;">
-                <option value="">— Sin trat. —</option>
-                ${(getCfg().tratamientos||[]).map(t=>`<option value="${t}" ${(()=>{const[,c]=(data.b_tratamiento||"").split(" | ");return c===t;})()?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="fsec">
-          <div class="fsec-tit">🕶️ Armazón</div>
-          <div class="check-grid" style="grid-template-columns:1fr 1fr;max-width:260px">
-            ${(()=>{const bArmSel=data.b_armazonDesc?(getCfg().armazon||[]).filter(t=>data.b_armazonDesc.includes(t)):[];return(getCfg().armazon||[]).map(t=>`<label class="check-item b-armazon-item ${bArmSel.includes(t)?"checked":""}" onclick="toggleCheck(event,this)">
-              <input type="checkbox" value="${t}" ${bArmSel.includes(t)?"checked":""}>
-              <span class="cbox">${bArmSel.includes(t)?"✓":""}</span>
-              <span class="clabel">${t}</span>
-            </label>`).join("");})()}
-          </div>
-          <div class="field" style="margin-top:10px">
-            <label style="font-size:11px;font-weight:700;color:var(--suave)">Descripción</label>
-            <input id="f-b-armazon-desc" placeholder="Marca, modelo, color..." value="${data.b_armazonDesc||""}">
+        <div>
+          <div class="of-monto-label">A cuenta $</div>
+          <div class="of-monto-field">
+            <span class="of-monto-symbol">$</span>
+            <input id="f-acuenta" type="number" inputmode="decimal" placeholder="0" value="${data.aCuenta||""}" class="of-monto-input">
           </div>
         </div>
       </div>
-
-    </div><!-- /anteojos-container -->
-
-    <div class="fsec">
-      <div class="fsec-tit">💰 Pago</div>
-      <div class="g3">
-        <div class="field"><label>Total $</label><input id="f-total" type="number" inputmode="decimal" placeholder="0" value="${data.total||""}"></div>
-        <div class="field"><label>A cuenta $</label><input id="f-acuenta" type="number" inputmode="decimal" placeholder="0" value="${data.aCuenta||""}"></div>
-        <div class="field"><label>Saldo $</label><input id="f-saldo" placeholder="0" value="${data.saldo||""}" readonly style="background:#f0f0f0;color:var(--suave);"></div>
+      <div class="of-saldo-display" style="margin-bottom:14px">
+        <div>
+          <div class="of-saldo-label">Saldo pendiente</div>
+          <input id="f-saldo" readonly value="${data.saldo||"0"}"
+            style="border:none;background:transparent;font-size:22px;font-weight:900;color:#1B4FA8;font-family:inherit;outline:none;width:160px;padding:0;margin-top:2px">
+        </div>
+        <div style="font-size:28px">💳</div>
       </div>
+
       ${(()=>{
-        // Parsear el formaPago guardado para restaurar los tres selectores
-        // Formato posible: "Tarjeta crédito 3 cuotas s/i — Visa"  |  "Efectivo"  |  "Sin cargo"
-        const fp = data.formaPago || "";
-        let fpBase = fp, fpCuotas = "", fpTarjeta = "";
-        if (fp.includes(" — ")) {
-          const [a, b] = fp.split(" — ");
-          fpBase = a.trim(); fpTarjeta = b.trim();
-        }
-        // Detectar cuotas en fpBase: "Tarjeta crédito 3 cuotas s/i" → base="Tarjeta crédito", cuotas="3 cuotas s/i"
-        const cuotasMatch = fpBase.match(/^(Tarjeta crédito)\s+(.+)$/);
-        if (cuotasMatch) { fpBase = cuotasMatch[1]; fpCuotas = cuotasMatch[2]; }
         const esTarjeta = fpBase === "Tarjeta crédito";
         const cfg = getCfg();
         return `
-        <div class="field">
-          <label>Forma de pago</label>
-          <select id="f-pago" onchange="onFormaPagoChange(this.value)" style="-webkit-appearance:none;appearance:none;">
+        <div class="of-field">
+          <label class="of-label">Forma de pago</label>
+          <select id="f-pago" class="of-select" onchange="onFormaPagoChange(this.value)" style="-webkit-appearance:none;appearance:none;">
             <option value="">— Seleccioná —</option>
             ${(cfg.formaPago||[]).map(p=>`<option value="${p}" ${fpBase===p?"selected":""}>${p}</option>`).join("")}
             <option value="Sin cargo" ${fp==="Sin cargo"?"selected":""}>Sin cargo</option>
           </select>
         </div>
-        <div id="f-tarjeta-wrap" style="display:${esTarjeta?"block":"none"};margin-top:2px">
-          <div style="display:flex;gap:8px">
-            <div class="field" style="flex:1;margin-bottom:0">
-              <label>Cuotas</label>
-              <select id="f-cuotas" style="-webkit-appearance:none;appearance:none;">
+        <div id="f-tarjeta-wrap" style="display:${esTarjeta?"block":"none"};margin-top:8px">
+          <div class="of-g2">
+            <div>
+              <label class="of-label">Cuotas</label>
+              <select id="f-cuotas" class="of-select" style="-webkit-appearance:none;appearance:none;">
                 <option value="">— Cuotas —</option>
                 <option value="1 cuota" ${ fpCuotas==="1 cuota"?"selected":""}>1 cuota</option>
                 <option value="3 cuotas s/i" ${ fpCuotas==="3 cuotas s/i"?"selected":""}>3 cuotas s/i</option>
@@ -5218,9 +5473,9 @@ function openOrdenForm(data={}) {
                 <option value="12 cuotas" ${ fpCuotas==="12 cuotas"?"selected":""}>12 cuotas</option>
               </select>
             </div>
-            <div class="field" style="flex:1;margin-bottom:0">
-              <label>Tarjeta</label>
-              <select id="f-tarjeta" style="-webkit-appearance:none;appearance:none;">
+            <div>
+              <label class="of-label">Tarjeta</label>
+              <select id="f-tarjeta" class="of-select" style="-webkit-appearance:none;appearance:none;">
                 <option value="">— Tarjeta —</option>
                 ${(cfg.tarjetasCredito||[]).map(t=>`<option value="${t}" ${fpTarjeta===t?"selected":""}>${t}</option>`).join("")}
               </select>
@@ -5228,25 +5483,30 @@ function openOrdenForm(data={}) {
           </div>
         </div>`;
       })()}
-      <div style="display:flex;gap:10px;margin-top:4px">
-        <label class="check-item ${data.pagado?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
+
+      <!-- Flags: Pagado / Cta Cte -->
+      <div class="of-flag-row" style="margin-top:12px">
+        <label class="of-flag ${data.pagado?"checked-green":""}" onclick="ofToggleFlag(event,this,'f-pagado','checked-green')">
           <input type="checkbox" id="f-pagado" ${data.pagado?"checked":""}>
-          <span class="cbox">${data.pagado?"✓":""}</span>
-          <span class="clabel" style="font-size:14px;font-weight:700;color:#2E7D32">✅ Pagado</span>
+          <span class="of-flag-icon">✅</span>
+          <span class="of-flag-text">Pagado</span>
         </label>
-        <label class="check-item ${data.ctaCte?"checked":""}" onclick="toggleCheck(event,this)" style="flex:1">
+        <label class="of-flag ${data.ctaCte?"checked-orange":""}" onclick="ofToggleFlag(event,this,'f-ctacte','checked-orange')">
           <input type="checkbox" id="f-ctacte" ${data.ctaCte?"checked":""}>
-          <span class="cbox">${data.ctaCte?"✓":""}</span>
-          <span class="clabel" style="font-size:14px;font-weight:700;color:#E65100">📒 Cuenta Corriente</span>
+          <span class="of-flag-icon">📒</span>
+          <span class="of-flag-text">Cuenta Corriente</span>
         </label>
       </div>
     </div>
 
-    <div class="fsec">
-      <div class="fsec-tit">📋 Estado de la orden</div>
-      <div class="field">
-        <label>Estado actual</label>
-        <select id="f-estado" style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:12px 14px;font-size:15px;background:var(--gris);font-family:inherit;color:var(--texto);outline:none;-webkit-appearance:none;appearance:none">
+    <!-- ── ESTADO ── -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#EEF3FF">📋</div>
+        Estado de la Orden
+      </div>
+      <div style="margin-bottom:12px">
+        <select id="f-estado" class="of-select" style="-webkit-appearance:none;appearance:none;">
           <option value="pendiente_envio"   ${(data.estado||'pendiente_envio')==='pendiente_envio'   ?'selected':''}>🔬 Pendiente de enviar al laboratorio</option>
           <option value="en_laboratorio"    ${data.estado==='en_laboratorio'   ?'selected':''}>🏭 En laboratorio</option>
           <option value="demorado"          ${data.estado==='demorado'         ?'selected':''}>⚠️ Demorado</option>
@@ -5255,32 +5515,35 @@ function openOrdenForm(data={}) {
           <option value="entregado"         ${data.estado==='entregado'        ?'selected':''}>✅ Entregado</option>
         </select>
       </div>
-      <div class="field">
-        <label>📅 Fecha estimada de entrega <span style="font-size:10px;color:var(--suave)">(opcional)</span></label>
-        <input id="f-fechaEntrega" type="date" value="${data.fechaEntrega||''}">
+      <div>
+        <label class="of-label">Fecha estimada de entrega <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+        <input id="f-fechaEntrega" class="of-input" type="date" value="${data.fechaEntrega||''}">
       </div>
     </div>
 
-    <div class="fsec">
-      <div class="fsec-tit">📝 Notas</div>
-      <div class="field"><textarea id="f-notas" placeholder="Observaciones, indicaciones especiales...">${data.notas||""}</textarea></div>
-    </div>
-
-    <div class="fsec">
-      <div class="fsec-tit">👤 Vendedora</div>
-      <div class="field">
-        <label>¿Quién atendió?</label>
-        ${vendedoraSelect("f-vendedora", data.vendedora||"")}
+    <!-- ── NOTAS ── -->
+    <div class="of-card">
+      <div class="of-card-title">
+        <div class="of-card-title-icon" style="background:#FFF8E7">📝</div>
+        Notas y Observaciones
       </div>
-      <div class="field">
-        <label>💰 Costo del trabajo $ <span style="font-size:10px;color:var(--suave)">(opcional — para calcular margen)</span></label>
-        <input id="f-costo" type="number" inputmode="decimal" placeholder="0" value="${data.costo||""}">
+      <div class="of-field" style="margin-bottom:12px">
+        <textarea id="f-notas" class="of-textarea" placeholder="Observaciones, indicaciones especiales...">${data.notas||""}</textarea>
+      </div>
+      <div>
+        <label class="of-label">Costo del trabajo $ <span style="font-weight:400;text-transform:none">(para calcular margen)</span></label>
+        <input id="f-costo" class="of-input" type="number" inputmode="decimal" placeholder="0" value="${data.costo||""}">
       </div>
     </div>
 
-    <button class="btn-save" onclick="submitOrden('${data.id||""}')">💾 Guardar Orden</button>
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-    <div style="height:12px"></div>
+    <!-- ── ACCIONES ── -->
+    <div class="of-actions">
+      <button class="of-btn-primary" onclick="submitOrden('${data.id||""}')">💾 Guardar Orden</button>
+      <button class="of-btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
   `;
 
   ["f-total","f-acuenta"].forEach(id=>{
@@ -5294,7 +5557,8 @@ function openOrdenForm(data={}) {
   // Fix: algunos browsers no aplican 'selected' correctamente al insertar HTML via innerHTML.
   // Seteamos el .value de cada select de graduación explícitamente después del render.
   setTimeout(() => {
-    const gradFields = ['lEsf','lCil','lAdd','lEsfI','lCilI','lAddI','cEsf','cCil','cAdd','cEsfI','cCilI','cAddI'];
+    const gradFields = ['lEsf','lCil','lAdd','lEsfI','lCilI','lAddI','cEsf','cCil','cAdd','cEsfI','cCilI','cAddI',
+                        'b_lEsf','b_lCil','b_lAdd','b_lEsfI','b_lCilI','b_lAddI','b_cEsf','b_cCil','b_cAdd','b_cEsfI','b_cCilI','b_cAddI'];
     gradFields.forEach(fid => {
       const wrap = document.getElementById(fid + "-wrap");
       const sel  = document.getElementById(fid);
@@ -5324,7 +5588,6 @@ function onOSocialChange(val) {
 }
 
 function onFormaPagoChange(val) {
-  // Mostrar/ocultar sub-selectores de cuotas y tarjeta
   const wrap = document.getElementById("f-tarjeta-wrap");
   if (wrap) {
     const esTarjeta = val === "Tarjeta crédito";
@@ -5337,13 +5600,12 @@ function onFormaPagoChange(val) {
     }
   }
   if (val === "Sin cargo") {
-    const lbl = document.querySelector("#f-pagado")?.closest(".check-item");
-    if (lbl && !lbl.classList.contains("checked")) {
-      lbl.classList.add("checked");
-      const cb = document.getElementById("f-pagado");
-      const box = lbl.querySelector(".cbox");
-      if (cb) cb.checked = true;
-      if (box) box.textContent = "✓";
+    // Marcar pagado con nuevo diseño
+    const cb = document.getElementById("f-pagado");
+    if (cb && !cb.checked) {
+      cb.checked = true;
+      const lbl = cb.closest(".of-flag");
+      if (lbl) lbl.classList.add("checked-green");
     }
     const total = document.getElementById("f-total");
     const acuenta = document.getElementById("f-acuenta");
@@ -5365,7 +5627,6 @@ function calcSaldo(){
 function setDosAnteojos(dos) {
   const container = document.getElementById("anteojos-container");
   const ant2 = document.getElementById("ant2-bloque");
-  const ant1Header = document.getElementById("ant1-header");
   const btn1 = document.getElementById("btn-1ant");
   const btn2 = document.getElementById("btn-2ant");
   if (!container || !ant2) return;
@@ -5373,26 +5634,28 @@ function setDosAnteojos(dos) {
   if (dos) {
     container.style.display = "grid";
     container.style.gridTemplateColumns = "1fr 1fr";
-    container.style.gap = "14px";
+    container.style.gap = "12px";
     ant2.style.display = "block";
-    // Mostrar header "ANTEOJO 1" si no existe
+    // Mostrar badge "ANTEOJO 1" si no existe
     let h = document.getElementById("ant1-dynamic-header");
     if (!h) {
       h = document.createElement("div");
       h.id = "ant1-dynamic-header";
-      h.style.cssText = "text-align:center;font-size:12px;font-weight:900;color:#fff;background:var(--azul);border-radius:8px;padding:5px 0;margin-bottom:10px;letter-spacing:.5px";
-      h.textContent = "ANTEOJO 1";
-      document.getElementById("ant1-bloque").prepend(h);
+      h.className = "of-ant-badge of-ant-badge-1";
+      h.innerHTML = "👓 Anteojo 1";
+      h.style.marginBottom = "12px";
+      const ant1 = document.getElementById("ant1-bloque");
+      if (ant1) ant1.prepend(h);
     }
-    btn1.style.background = "#fff"; btn1.style.color = "var(--azul)";
-    btn2.style.background = "var(--azul)"; btn2.style.color = "#fff";
+    if (btn1) { btn1.classList.remove("active"); }
+    if (btn2) { btn2.classList.add("active"); }
   } else {
     container.style.display = "block";
     ant2.style.display = "none";
     const h = document.getElementById("ant1-dynamic-header");
     if (h) h.remove();
-    btn1.style.background = "var(--azul)"; btn1.style.color = "#fff";
-    btn2.style.background = "#fff"; btn2.style.color = "var(--azul)";
+    if (btn1) { btn1.classList.add("active"); }
+    if (btn2) { btn2.classList.remove("active"); }
   }
 }
 
@@ -5413,14 +5676,89 @@ function selectTipoTrabajo(e, label) {
   label.querySelector(".cbox").textContent = "✓";
 }
 
+// Selector de tipo de trabajo en el nuevo diseño (botones .of-tipo-btn)
+function ofSelectTipo(btn, name) {
+  const container = btn.closest(".of-tipo-grid");
+  if (!container) return;
+  container.querySelectorAll(".of-tipo-btn").forEach(b => b.classList.remove("sel"));
+  btn.classList.add("sel");
+  // Sincronizar con el input radio oculto para submitOrden
+  const val = btn.dataset.val;
+  let inp = document.querySelector(`input[name='${name}']`);
+  if (!inp) {
+    inp = document.createElement("input");
+    inp.type = "radio"; inp.name = name; inp.style.display = "none";
+    document.body.appendChild(inp);
+  }
+  inp.value = val; inp.checked = true;
+}
+
+// Toggle para flags Pagado / Cta Cte con clases de color
+function ofToggleFlag(e, label, inputId, colorClass) {
+  e.preventDefault();
+  const isChecked = label.classList.contains(colorClass);
+  label.classList.toggle(colorClass, !isChecked);
+  const cb = document.getElementById(inputId);
+  if (cb) cb.checked = !isChecked;
+}
+
+// Toggle para opciones PAMI (estilo nuevo)
+function ofTogglePami(e, label) {
+  e.preventDefault();
+  const checked = !label.classList.contains("checked");
+  label.classList.toggle("checked", checked);
+  const cb = label.querySelector("input[type=checkbox]");
+  if (cb) cb.checked = checked;
+}
+
+// Buscador de cliente en el formulario de orden
+function ofSearchCliente(q) {
+  const res = document.getElementById("of-search-results");
+  if (!res) return;
+  const qn = q.trim().toLowerCase();
+  if (!qn || qn.length < 2) { res.style.display = "none"; return; }
+  const matches = D.orders.reduce((acc, o) => {
+    const key = o.nombre?.toLowerCase();
+    if (!key) return acc;
+    if (!acc.find(x => x.nombre === o.nombre) &&
+        (key.includes(qn) || (o.dni||"").includes(qn) || (o.cel||"").includes(qn))) {
+      acc.push(o);
+    }
+    return acc;
+  }, []).slice(0, 6);
+  if (!matches.length) { res.style.display = "none"; return; }
+  res.innerHTML = matches.map(o => `
+    <div class="of-search-item" onclick="ofFillCliente(${JSON.stringify(o).replace(/"/g,'&quot;')})">
+      <div>
+        <div class="of-search-name">${o.nombre}</div>
+        <div class="of-search-meta">${[o.dni, o.cel, o.dir].filter(Boolean).join(" · ")}</div>
+      </div>
+      <div style="font-size:11px;color:#7B95B8;flex-shrink:0">→</div>
+    </div>`).join("");
+  res.style.display = "block";
+}
+
+// Autocompletar datos del cliente seleccionado
+function ofFillCliente(o) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+  set("f-nombre", o.nombre); set("f-dni", o.dni); set("f-cel", o.cel);
+  set("f-edad", o.edad); set("f-fechaNac", o.fechaNac); set("f-dir", o.dir);
+  const res = document.getElementById("of-search-results");
+  const inp = document.getElementById("of-search-input");
+  if (res) res.style.display = "none";
+  if (inp) inp.value = "";
+  document.getElementById("f-nombre")?.focus();
+  toast("✅ Datos del cliente cargados");
+}
+
 function toggleCheck(e,label){
   e.preventDefault();
   const checked = !label.classList.contains("checked");
   label.classList.toggle("checked", checked);
   const cb = label.querySelector("input[type=checkbox]");
-  const box = label.querySelector(".cbox");
-  cb.checked = checked;
-  box.textContent = checked ? "✓" : "";
+  const box = label.querySelector(".cbox") || label.querySelector(".of-cbox");
+  if (cb) cb.checked = checked;
+  if (box) box.textContent = checked ? "✓" : "";
 }
 
 async function submitOrden(existingId){
@@ -5429,19 +5767,12 @@ async function submitOrden(existingId){
   const numIngresado = g("f-num");
   const numDupe = D.orders.find(o => String(o.num) === String(numIngresado) && o.id !== existingId);
   if(numDupe){toast("⚠ Ya existe la orden N° "+numIngresado+" ("+numDupe.nombre+")");return;}
-  const esPami = (document.getElementById("f-oSocial")?.value||"").toUpperCase() === "PAMI";
-  if (esPami) {
-    const pamiAfiliado = (document.getElementById("f-pami-afiliado")?.value||"").trim();
-    const pamiPrestacion = (document.getElementById("f-pami-prestacion")?.value||"").trim();
-    if (!pamiAfiliado) { toast("⚠ PAMI: ingresá el N° de afiliado"); return; }
-    if (!pamiPrestacion) { toast("⚠ PAMI: seleccioná el tipo de prestación"); return; }
-  }
   const dosAnteojos = document.getElementById("ant2-bloque")?.style.display !== "none";
-  const tipos=[...document.querySelectorAll("#ant1-bloque .check-grid .check-item.checked input[type=checkbox]")].filter(x=>x.name!=='pami-op').map(x=>x.value).join(",");
+  const tipos=[...document.querySelectorAll("#ant1-bloque .of-check-item.checked input[type=checkbox]")].filter(x=>x.name!=='pami-op').map(x=>x.value).join(",");
   const tratLejos=(document.getElementById("f-tratamiento-lejos")?.value||"").trim();
   const tratCerca=(document.getElementById("f-tratamiento-cerca")?.value||"").trim();
   const tratamiento = tratLejos && tratCerca && tratLejos!==tratCerca ? tratLejos+" | "+tratCerca : tratLejos || tratCerca;
-  const b_tipos = dosAnteojos ? [...document.querySelectorAll("#b-lentes-grid .check-item.checked input[type=checkbox]")].map(x=>x.value).join(",") : "";
+  const b_tipos = dosAnteojos ? [...document.querySelectorAll("#b-lentes-grid .of-check-item.checked input[type=checkbox]")].map(x=>x.value).join(",") : "";
   const b_tratLejos = dosAnteojos ? (document.getElementById("f-b-tratamiento-lejos")?.value||"").trim() : "";
   const b_tratCerca = dosAnteojos ? (document.getElementById("f-b-tratamiento-cerca")?.value||"").trim() : "";
   const b_tratamiento = dosAnteojos ? (b_tratLejos && b_tratCerca && b_tratLejos!==b_tratCerca ? b_tratLejos+" | "+b_tratCerca : b_tratLejos || b_tratCerca) : "";
@@ -5453,20 +5784,24 @@ async function submitOrden(existingId){
     edad:g("f-edad"),fechaNac:g("f-fechaNac"),cel:g("f-cel"),
     oSocial: document.getElementById("f-oSocial")?.value||"",
     pamiOpciones: [...document.querySelectorAll("input[name='pami-op']:checked")].map(x=>x.value),
-    esPami,
-    pamiAfiliado: esPami ? (document.getElementById("f-pami-afiliado")?.value||"").trim() : "",
-    pamiPrestacion: esPami ? (document.getElementById("f-pami-prestacion")?.value||"") : "",
-    pamiTratamiento: esPami ? (document.getElementById("f-pami-tratamiento")?.value||"").trim() : "",
-    pamiDiferencia: esPami ? (document.getElementById("f-pami-diferencia")?.checked||false) : false,
-    pamiSinCargo: esPami ? (document.getElementById("f-pami-sincargo")?.checked||false) : false,
     laboratorio:g("f-lab"),doctor:g("f-doctor"),
     lEsf:gGrad("lEsf"),lCil:gGrad("lCil"),lEje:g("lEje"),lAdd:gGrad("lAdd"),
     lEsfI:gGrad("lEsfI"),lCilI:gGrad("lCilI"),lEjeI:g("lEjeI"),lAddI:gGrad("lAddI"),
     cEsf:gGrad("cEsf"),cCil:gGrad("cCil"),cEje:g("cEje"),cAdd:gGrad("cAdd"),
     cEsfI:gGrad("cEsfI"),cCilI:gGrad("cCilI"),cEjeI:g("cEjeI"),cAddI:gGrad("cAddI"),
-    tipoTrabajo: (document.querySelector("input[name='tipo-trabajo']:checked")?.value||""),
+    tipoTrabajo: (()=>{
+      // Nuevo diseño: .of-tipo-btn.sel en #ant1-bloque
+      const btn = document.querySelector("#ant1-bloque .of-tipo-btn.sel");
+      if (btn) return btn.dataset.val || "";
+      // Fallback: radio oculto (compatibilidad)
+      return document.querySelector("input[name='tipo-trabajo']:checked")?.value || "";
+    })(),
     dosAnteojos,
-    b_tipoTrabajo: dosAnteojos?(document.querySelector("input[name='b-tipo-trabajo']:checked")?.value||""):"",
+    b_tipoTrabajo: dosAnteojos?(()=>{
+      const btn = document.querySelector("#ant2-bloque .of-tipo-btn.sel");
+      if (btn) return btn.dataset.val || "";
+      return document.querySelector("input[name='b_tipo-trabajo']:checked")?.value || "";
+    })():"",
     b_lEsf:dosAnteojos?gGrad("b_lEsf"):"",b_lCil:dosAnteojos?gGrad("b_lCil"):"",b_lEje:dosAnteojos?g("b_lEje"):"",b_lAdd:dosAnteojos?gGrad("b_lAdd"):"",
     b_lEsfI:dosAnteojos?gGrad("b_lEsfI"):"",b_lCilI:dosAnteojos?gGrad("b_lCilI"):"",b_lEjeI:dosAnteojos?g("b_lEjeI"):"",b_lAddI:dosAnteojos?gGrad("b_lAddI"):"",
     b_cEsf:dosAnteojos?gGrad("b_cEsf"):"",b_cCil:dosAnteojos?gGrad("b_cCil"):"",b_cEje:dosAnteojos?g("b_cEje"):"",b_cAdd:dosAnteojos?gGrad("b_cAdd"):"",
