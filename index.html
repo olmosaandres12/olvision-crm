@@ -3078,57 +3078,81 @@ function renderPendientes() {
 // NUEVA VENTA — selector de tipo
 // ══════════════════════════════════════════════════════════════
 function nuevaVenta() {
-  const lbl = (txt) => `<div style="font-size:9px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1.4px;margin-bottom:6px;padding-left:1px">${txt}</div>`;
-  const kbdO = (k) => `<span style="font-size:9px;font-weight:800;background:rgba(21,101,192,.15);color:#1565C0;border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">${k}</span>`;
-  const kbdN = (k) => `<span style="font-size:9px;font-weight:800;background:rgba(0,0,0,.07);color:var(--suave);border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">${k}</span>`;
-  const kbdV = (k,c) => `<span style="font-size:9px;font-weight:800;background:rgba(27,94,32,.15);color:${c};border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">${k}</span>`;
-  const BS = "position:relative;border-radius:10px;padding:9px 10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;text-align:left;width:100%;font-family:inherit;border:1.5px solid";
+  // Contadores en tiempo real para el header
+  const hoy = getHoy();
+  const pendientes = D.orders.filter(o => !o.pagado && parseFloat(o.total||0) > parseFloat(o.aCuenta||0)).length;
+  const enLab = D.orders.filter(o => o.estado === "en_laboratorio" || o.estado === "pendiente_envio").length;
+  const pamiHoy = D.orders.filter(o => o.oSocial === "PAMI" && o.fecha === hoy).length;
+
+  // Helpers
+  const kbd = (k, bg, color) =>
+    `<span style="width:20px;height:20px;border-radius:50%;background:${bg};color:${color};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:monospace;opacity:.45">${k}</span>`;
+  const kbdDark = (k) => kbd(k, "#1A2340", "#fff");
+  const kbdBlue = (k) => kbd(k, "rgba(255,255,255,.2)", "#fff");
+
+  const card = (icon, title, sub, kbdEl, action, bg, border, titleColor) =>
+    `<button onclick="${action}" data-nv-key="1"
+      style="background:${bg};border:1.5px solid ${border};border-radius:14px;padding:14px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;width:100%;font-family:inherit;transition:opacity .1s">
+      <span style="font-size:20px;line-height:1;flex-shrink:0">${icon}</span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:14px;font-weight:800;color:${titleColor};line-height:1.2">${title}</span>
+        <span style="display:block;font-size:11px;color:#9CA3AF;margin-top:2px">${sub}</span>
+      </span>
+      ${kbdEl}
+    </button>`;
+
+  const cardBlue  = (icon, title, sub, k, action) => card(icon, title, sub, kbdDark(k), action, "#EBF4FF", "#BBDEFB", "#1565C0");
+  const cardGray  = (icon, title, sub, k, action) => card(icon, title, sub, kbdDark(k), action, "#F8FAFC", "#E2E8F0", "#1E293B");
+  const cardGreen = (icon, title, sub, k, action) => card(icon, title, sub, kbdDark(k), action, "#F0FDF4", "#A5D6A7", "#1B5E20");
+  const cardRed   = (icon, title, sub, k, action) => card(icon, title, sub, kbdDark(k), action, "#FEF2F2", "#FECACA", "#C62828");
+
+  const secLabel = (txt) =>
+    `<div style="font-size:10px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;margin-top:4px">${txt}</div>`;
+
   document.getElementById("modal-body").innerHTML = `
-    <div style="font-size:17px;font-weight:900;color:var(--azul);margin-bottom:14px">➕ Nueva venta</div>
-
-    ${lbl("🔭 Óptica")}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('Recetado'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
-        <span style="font-size:16px">👓</span><span style="flex:1">Recetado</span>${kbdO("R")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('PAMI'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
-        <span style="font-size:16px">🏥</span><span style="flex:1">PAMI</span>${kbdO("P")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('Reposición de Cristales'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
-        <span style="font-size:16px">🔭</span><span style="flex:1">Reposición</span>${kbdO("K")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('Pase de Armazón'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
-        <span style="font-size:16px">🔄</span><span style="flex:1">Pase Armazón</span>${kbdO("A")}
-      </button>
+    <div style="background:linear-gradient(135deg,#1B4FA8,#2563EB);border-radius:16px;padding:16px 16px 14px;margin-bottom:16px">
+      <div style="font-size:10px;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:4px">POS · Nueva operación</div>
+      <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:3px">Cargar venta o cobro</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.55);margin-bottom:12px">1 clic · sin scroll · atajos de teclado</div>
+      <div style="display:flex;gap:8px">
+        <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:7px 12px;flex:1;text-align:center">
+          <div style="font-size:9px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:.8px">Pendientes</div>
+          <div style="font-size:20px;font-weight:900;color:#fff;line-height:1.2">${pendientes}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:7px 12px;flex:1;text-align:center">
+          <div style="font-size:9px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:.8px">PAMI hoy</div>
+          <div style="font-size:20px;font-weight:900;color:#fff;line-height:1.2">${pamiHoy}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:7px 12px;flex:1;text-align:center">
+          <div style="font-size:9px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:.8px">En laboratorio</div>
+          <div style="font-size:20px;font-weight:900;color:#fff;line-height:1.2">${enLab}</div>
+        </div>
+      </div>
     </div>
 
-    ${lbl("⚡ Ventas rápidas")}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-      <button onclick="closeModal();setTimeout(()=>ventaLC(),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
-        <span style="font-size:16px">👁️</span><span style="flex:1">LC</span>${kbdN("L")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>ventaSol(),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
-        <span style="font-size:16px">🕶️</span><span style="flex:1">Sol</span>${kbdN("S")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>ventaRapida('taller'),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
-        <span style="font-size:16px">🔧</span><span style="flex:1">Taller</span>${kbdN("T")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>ventaRapida('accesorio'),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
-        <span style="font-size:16px">🛍️</span><span style="flex:1">Accesorios</span>${kbdN("X")}
-      </button>
+    ${secLabel("Óptica")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+      ${cardBlue("👓","Recetado","Nueva operación","R","closeModal();setTimeout(()=>openOrdenFormTipo('Recetado'),100)")}
+      ${cardBlue("🏥","PAMI","Nueva operación","P","closeModal();setTimeout(()=>openOrdenFormTipo('PAMI'),100)")}
+      ${cardBlue("🔭","Reposición","Cristales","K","closeModal();setTimeout(()=>openOrdenFormTipo('Reposición de Cristales'),100)")}
+      ${cardBlue("🔄","Pase Armazón","Nueva operación","A","closeModal();setTimeout(()=>openOrdenFormTipo('Pase de Armazón'),100)")}
     </div>
 
-    ${lbl("💰 Cobros")}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
-      <button onclick="closeModal();setTimeout(()=>cobrarSaldo(),100)" style="${BS} #A5D6A7;background:#E8F5E9;color:#1B5E20">
-        <span style="font-size:16px">💰</span><span style="flex:1">Cobrar</span>${kbdV("F","#1B5E20")}
-      </button>
-      <button onclick="closeModal();setTimeout(()=>registrarGasto(),100)" style="${BS} #FECACA;background:#FEF2F2;color:#C62828">
-        <span style="font-size:16px">💸</span><span style="flex:1">Gasto</span><span style="font-size:9px;font-weight:800;background:rgba(198,40,40,.12);color:#C62828;border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">G</span>
-      </button>
+    ${secLabel("Ventas rápidas")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+      ${cardGray("🕶️","Anteojos Sol","Nueva operación","S","closeModal();setTimeout(()=>ventaSol(),100)")}
+      ${cardGray("👁️","Lentes Contacto","Nueva operación","L","closeModal();setTimeout(()=>ventaLC(),100)")}
+      ${cardGray("🛍️","Accesorios","Nueva operación","X","closeModal();setTimeout(()=>ventaRapida('accesorio'),100)")}
+      ${cardGray("🔧","Taller","Nueva operación","T","closeModal();setTimeout(()=>ventaRapida('taller'),100)")}
     </div>
 
-    <button class="btn-cancel" onclick="closeModal()" style="font-size:12px;padding:9px">
+    ${secLabel("Caja")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+      ${cardGreen("💰","Cobrar saldo","Nueva operación","F","closeModal();setTimeout(()=>cobrarSaldo(),100)")}
+      ${cardRed("💸","Gasto / retiro","Nueva operación","G","closeModal();setTimeout(()=>registrarGasto(),100)")}
+    </div>
+
+    <button class="btn-cancel" onclick="closeModal()" style="font-size:12px;padding:9px;color:#9CA3AF">
       Cancelar <span style="font-size:9px;font-family:monospace;opacity:.5;margin-left:4px">Esc</span>
     </button>
   `;
@@ -3152,7 +3176,6 @@ function nuevaVenta() {
   };
   document.addEventListener("keydown", function(e) {
     if (!document.getElementById("overlay")?.classList.contains("open")) return;
-    // Solo actúa cuando el modal de nueva venta está abierto (hay botones data-nv-key)
     if (!document.querySelector("[data-nv-key]")) return;
     const tag = document.activeElement?.tagName?.toLowerCase();
     if (tag === "input" || tag === "textarea" || tag === "select") return;
