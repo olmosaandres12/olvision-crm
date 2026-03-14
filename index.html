@@ -3744,17 +3744,34 @@ function actualizarCamposLC() {
 
 function guardarVentaLC() {
   const tipo = _lcTipo;
-  if (!tipo) { toast("⚠ Seleccioná la presentación"); return; }
-  const marcaSel = document.getElementById("lc-marca")?.value || "";
-  const marcaCustom = document.getElementById("lc-marca-custom")?.value.trim() || "";
-  const marca = marcaCustom || marcaSel;
-  if (!marca) { toast("⚠ Seleccioná o escribí la marca"); return; }
-  const gradPar = document.getElementById("lc-grad-par")?.value || "";
-  const gradOD = tipo === "par" ? gradPar : (tipo !== "oi" ? (document.getElementById("lc-grad-od")?.value || "") : "");
-  const gradOI = tipo === "par" ? gradPar : (tipo !== "od" ? (document.getElementById("lc-grad-oi")?.value || "") : "");
-  if (tipo === "par" && !gradPar) { toast("⚠ Seleccioná la graduación"); return; }
-  if (tipo !== "par" && tipo !== "oi" && !gradOD) { toast("⚠ Seleccioná la graduación OD"); return; }
-  if (tipo !== "par" && tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
+
+  // Verificar si hay líquidos seleccionados (venta solo líquidos, sin LC)
+  const liquidosPreCheck = [];
+  document.querySelectorAll("#lc-liquidos-lista .check-item.checked input[type=checkbox]").forEach((cb, idx) => {
+    const label = cb.closest(".check-item");
+    const dataIdx = label?.dataset.liq;
+    const qtyEl = document.getElementById(`lc-liq-qty-${dataIdx}`);
+    const qty = parseInt(qtyEl?.value) || 1;
+    liquidosPreCheck.push({ nombre: cb.value, cantidad: qty });
+  });
+  const liqCustomNombrePreCheck = document.getElementById("lc-liq-custom")?.value.trim() || "";
+  const soloLiquidos = !tipo && (liquidosPreCheck.length > 0 || liqCustomNombrePreCheck);
+
+  let marca = "", gradOD = "", gradOI = "";
+
+  if (!soloLiquidos) {
+    if (!tipo) { toast("⚠ Seleccioná la presentación o elegí un líquido"); return; }
+    const marcaSel = document.getElementById("lc-marca")?.value || "";
+    const marcaCustom = document.getElementById("lc-marca-custom")?.value.trim() || "";
+    marca = marcaCustom || marcaSel;
+    if (!marca) { toast("⚠ Seleccioná o escribí la marca"); return; }
+    const gradPar = document.getElementById("lc-grad-par")?.value || "";
+    gradOD = tipo === "par" ? gradPar : (tipo !== "oi" ? (document.getElementById("lc-grad-od")?.value || "") : "");
+    gradOI = tipo === "par" ? gradPar : (tipo !== "od" ? (document.getElementById("lc-grad-oi")?.value || "") : "");
+    if (tipo === "par" && !gradPar) { toast("⚠ Seleccioná la graduación"); return; }
+    if (tipo !== "par" && tipo !== "oi" && !gradOD) { toast("⚠ Seleccioná la graduación OD"); return; }
+    if (tipo !== "par" && tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
+  }
   const precio = parseFloat(getRawMonto(document.getElementById("lc-precio"))) || parseFloat(document.getElementById("lc-precio")?.value) || 0;
   if (!precio) { toast("⚠ Ingresá el precio"); return; }
   const pagoBase = document.getElementById("lc-pago")?.value || "";
@@ -3776,23 +3793,28 @@ function guardarVentaLC() {
   const liqCustomQty = parseInt(document.getElementById("lc-liq-custom-qty")?.value) || 1;
   if (liqCustomNombre) liquidosSeleccionados.push({ nombre: liqCustomNombre, cantidad: liqCustomQty });
 
-  const tipoLabel = { par:"Par completo", od:"Medio par OD", oi:"Medio par OI", "2medios":"2 medios pares" }[tipo];
-  let gradDesc = "";
-  if (tipo === "par" || tipo === "2medios") gradDesc = `OD ${gradOD} / OI ${gradOI}`;
-  else if (tipo === "od") gradDesc = `OD ${gradOD}`;
-  else if (tipo === "oi") gradDesc = `OI ${gradOI}`;
-
-  let item = `${marca} · ${tipoLabel} · ${gradDesc}`;
-  if (liquidosSeleccionados.length > 0) {
+  let item;
+  if (soloLiquidos) {
     const liqDesc = liquidosSeleccionados.map(l => l.cantidad > 1 ? `${l.cantidad}x ${l.nombre}` : l.nombre).join(", ");
-    item += ` + ${liqDesc}`;
+    item = liqDesc;
+  } else {
+    const tipoLabel = { par:"Par completo", od:"Medio par OD", oi:"Medio par OI", "2medios":"2 medios pares" }[tipo];
+    let gradDesc = "";
+    if (tipo === "par" || tipo === "2medios") gradDesc = `OD ${gradOD} / OI ${gradOI}`;
+    else if (tipo === "od") gradDesc = `OD ${gradOD}`;
+    else if (tipo === "oi") gradDesc = `OI ${gradOI}`;
+    item = `${marca} · ${tipoLabel} · ${gradDesc}`;
+    if (liquidosSeleccionados.length > 0) {
+      const liqDesc = liquidosSeleccionados.map(l => l.cantidad > 1 ? `${l.cantidad}x ${l.nombre}` : l.nombre).join(", ");
+      item += ` + ${liqDesc}`;
+    }
   }
 
   const venta = {
     id: uid(), fecha: getHoy(),
     hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     tipo: "lc",
-    item, marca, tipoLC: tipo, gradOD, gradOI,
+    item, marca, tipoLC: tipo || "", gradOD, gradOI,
     precio, cantidad: 1, total: precio, pago
   };
   if (liquidosSeleccionados.length > 0) venta.liquidosLC = liquidosSeleccionados;
@@ -3803,7 +3825,7 @@ function guardarVentaLC() {
   ventas.push(venta);
   saveCajasVentas(ventas);
   closeModal();
-  toast(`✅ LC registrada · $${num(precio)}`);
+  toast(`\u2705 ${soloLiquidos ? "L\u00edquido registrado" : "LC registrada"} \u00b7 $${num(precio)}`);
   if (document.getElementById("screen-caja")?.classList.contains("active")) renderCajaConVentas();
 }
 
