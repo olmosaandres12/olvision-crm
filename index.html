@@ -69,7 +69,7 @@
   .card:hover { border-color: #2A4478; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
   .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .card-num { display: inline-block; background: var(--azul); color: var(--amarillo); font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 20px; margin-bottom: 3px; }
-  .card-name { font-size: 16.5px; font-weight: 800; }
+  .card-name { font-size: 16.5px; font-weight: 800; color: var(--texto); }
   .card-meta { font-size: 12.5px; color: var(--suave); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 8px; }
   .card-actions { display: flex; gap: 7px; flex-shrink: 0; }
   .bico { width: 33px; height: 33px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .15s ease; }
@@ -173,7 +173,7 @@
   .nav-item.active { padding-left: 22px; }
 
   /* Clases utilitarias para botones inline */
-  .btn-green { background: #E8F5E9; color: #2E7D32; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .btn-green { background: rgba(46,125,50,0.2); color: #2E7D32; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
   .btn-green:hover { background: #C8E6C9; transform: translateY(-1px); }
   .btn-green:active { transform: scale(.95); }
   .btn-wa { background: #E7F9EE; color: #25D366; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
@@ -238,7 +238,7 @@
 /* ── SISTEMA OF-* — MODALES MINIMALISTAS ──────────────────────────────── */
 .of-wrap { padding: 0 0 4px; }
 .of-card {
-  background: #fff;
+  background: var(--blanco);
   border: 1.5px solid var(--gris-borde);
   border-radius: 13px;
   padding: 13px 15px;
@@ -260,7 +260,7 @@
   border-radius: 10px;
   padding: 11px 13px;
   font-size: 15px;
-  background: #F8FAFF;
+  background: #0D1E38;
   font-family: inherit;
   color: var(--texto);
   outline: none;
@@ -269,7 +269,7 @@
 }
 .of-input:focus, .of-select:focus, .of-textarea:focus {
   border-color: var(--azul);
-  background: #fff;
+  background: #162540;
 }
 .of-select { -webkit-appearance: none; appearance: none; }
 .of-textarea { resize: vertical; }
@@ -298,7 +298,7 @@
   padding: 12px;
   border-radius: 12px;
   border: 1.5px solid var(--gris-borde);
-  background: #fff;
+  background: var(--blanco);
   color: var(--texto);
   font-size: 14px;
   font-weight: 700;
@@ -1857,7 +1857,7 @@ function renderStats() {
       <div style="flex:1;background:var(--gris-borde);color:var(--texto);border-radius:10px;padding:6px 10px;text-align:center;font-size:12px;font-weight:800">${meses[prevMes]}</div>
     </div>` : ""}
 
-    <div class="card" style="margin-bottom:10px;background:#E8F5E9">
+    <div class="card" style="margin-bottom:10px;background:rgba(46,125,50,0.2)">
       ${kpi("Total facturado", cur.totalFacturado, cmpOn?prev.totalFacturado:null, "$", true)}
     </div>
 
@@ -1992,7 +1992,7 @@ function renderRentabilidadStats(mes, anio) {
   return `<div class="card" style="margin-bottom:10px">
     <div class="fsec-tit" style="margin-bottom:12px">💰 Rentabilidad</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div style="text-align:center;background:#E8F5E9;border-radius:10px;padding:10px">
+      <div style="text-align:center;background:rgba(46,125,50,0.2);border-radius:10px;padding:10px">
         <div style="font-size:10px;font-weight:700;color:#2E7D32;text-transform:uppercase">Ganancia</div>
         <div style="font-size:18px;font-weight:900;color:#2E7D32">$${num(ganancia.toFixed(0))}</div>
       </div>
@@ -2924,8 +2924,8 @@ function renderMensajes() {
     <!-- Nuevo mensaje -->
     <div class="card" style="margin-bottom:10px;border:2px dashed #CE93D8;background:#FAF5FF">
       <div style="font-size:13px;font-weight:800;color:#6A1B9A;margin-bottom:10px">➕ Nuevo mensaje personalizado</div>
-      <input id="nuevo-msg-nombre" placeholder="Nombre del mensaje (ej: Promoción temporada)" style="width:100%;border:1.5px solid #CE93D8;border-radius:9px;padding:10px 12px;font-size:14px;background:#fff;font-family:inherit;outline:none;margin-bottom:8px">
-      <textarea id="nuevo-msg-texto" placeholder="Hola {nombre}, te escribimos desde Olvisión..." style="width:100%;border:1.5px solid #CE93D8;border-radius:9px;padding:10px 12px;font-size:14px;background:#fff;font-family:inherit;color:var(--texto);outline:none;resize:none;height:80px;line-height:1.5"></textarea>
+      <input id="nuevo-msg-nombre" placeholder="Nombre del mensaje (ej: Promoción temporada)" style="width:100%;border:1.5px solid #CE93D8;border-radius:9px;padding:10px 12px;font-size:14px;background:#0D1E38;font-family:inherit;outline:none;margin-bottom:8px">
+      <textarea id="nuevo-msg-texto" placeholder="Hola {nombre}, te escribimos desde Olvisión..." style="width:100%;border:1.5px solid #CE93D8;border-radius:9px;padding:10px 12px;font-size:14px;background:#0D1E38;font-family:inherit;color:var(--texto);outline:none;resize:none;height:80px;line-height:1.5"></textarea>
       <button onclick="agregarMensaje()" style="width:100%;margin-top:8px;background:#6A1B9A;color:#fff;border:none;border-radius:9px;padding:11px;font-size:14px;font-weight:800;cursor:pointer">💾 Guardar mensaje</button>
     </div>
 
@@ -3104,7 +3104,7 @@ function renderSaldosPendientesHtml() {
     const waBtn   = cel_
       ? "<button onclick='enviarMensajeCliente(\"" + nom_ + "\",\"" + cel_ + "\")' class='btn-wa' style='padding:8px 12px;font-size:12px'>📲</button>"
       : "";
-    h += "<div style='background:#fff;border-radius:var(--radius-card);padding:12px 13px;margin-bottom:8px;border-left:4px solid #D97706;box-shadow:var(--shadow-card)'>"
+    h += "<div style='background:var(--blanco);border-radius:var(--radius-card);padding:12px 13px;margin-bottom:8px;border-left:4px solid #D97706;box-shadow:var(--shadow-card)'>"
       +   "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px'>"
       +     "<div style='flex:1;min-width:0'>"
       +       "<div style='font-weight:800;font-size:15px;color:var(--texto)'>" + (o.nombre||"—") + "</div>"
@@ -3170,14 +3170,14 @@ function renderPendientes() {
     const haySaldo = !o.pagado && saldoCalc > 0;
     const borderColor = haySaldo ? '#E65100' : e.color;
 
-    return `<div style="background:#fff;border-radius:var(--radius-card);padding:12px 13px;margin-bottom:8px;border-left:4px solid ${borderColor};box-shadow:var(--shadow-card)">
+    return `<div style="background:var(--blanco);border-radius:var(--radius-card);padding:12px 13px;margin-bottom:8px;border-left:4px solid ${borderColor};box-shadow:var(--shadow-card)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <span style="font-weight:800;font-size:15px;color:var(--texto)">${o.nombre||"—"}</span>
             <span style="font-size:11px;color:var(--suave);background:var(--gris);padding:1px 6px;border-radius:10px">N°${o.num||"—"}</span>
-            ${vencido?'<span style="font-size:10px;font-weight:800;color:#C62828;background:#FDECEA;border-radius:20px;padding:1px 7px">⏰ Vencido</span>':""}
-            ${haySaldo?`<span style="font-size:10px;font-weight:800;color:#E65100;background:#FFF3E0;border-radius:20px;padding:1px 7px">💰 $${num(saldoCalc)}</span>`:""}
+            ${vencido?'<span style="font-size:10px;font-weight:800;color:#C62828;background:rgba(198,40,40,0.25);border-radius:20px;padding:1px 7px">⏰ Vencido</span>':""}
+            ${haySaldo?`<span style="font-size:10px;font-weight:800;color:#E65100;background:rgba(230,81,0,0.25);border-radius:20px;padding:1px 7px">💰 $${num(saldoCalc)}</span>`:""}
           </div>
           <div style="margin-top:5px">${getEstadoBadge(o.estado)}</div>
           <div style="font-size:11.5px;color:var(--suave);margin-top:4px">
@@ -3197,7 +3197,7 @@ function renderPendientes() {
           <button onclick="cambiarEstado(${idx},'${k}')" style="font-size:10px;font-weight:700;padding:4px 9px;border:1.5px solid ${v.color};color:${v.color};background:${v.bg};border-radius:20px;cursor:pointer;font-family:inherit">
             ${v.emoji} ${v.label}
           </button>`).join("")}
-        <button onclick="cambiarEstado(${idx},'entregado')" style="font-size:10px;font-weight:700;padding:4px 9px;border:1.5px solid #2E7D32;color:#2E7D32;background:#E8F5E9;border-radius:20px;cursor:pointer;font-family:inherit">
+        <button onclick="cambiarEstado(${idx},'entregado')" style="font-size:10px;font-weight:700;padding:4px 9px;border:1.5px solid #2E7D32;color:#2E7D32;background:rgba(46,125,50,0.2);border-radius:20px;cursor:pointer;font-family:inherit">
           ✅ Marcar entregado
         </button>
       </div>
@@ -3408,7 +3408,7 @@ function renderListaSaldos(lista) {
     const acuenta = parseFloat(o.aCuenta)||0;
     const saldo   = total - acuenta;
     return `<div onclick="abrirPagoSaldo(${o._idx})"
-      style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:4px solid #F57F17;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer"
+      style="background:var(--blanco);border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:4px solid #F57F17;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer"
       onmouseenter="this.style.background='#FFFDE7'" onmouseleave="this.style.background='#fff'">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
@@ -4391,7 +4391,7 @@ function renderCaja() {
     <!-- ACCIONES — grid 2x2 compacto -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <button onclick="nuevaVenta()" style="background:var(--amarillo);color:var(--azul-dark);border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">➕ Nueva venta</button>
-      <button onclick="cobrarSaldoPendiente()" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">💰 Cobrar saldo</button>
+      <button onclick="cobrarSaldoPendiente()" style="background:rgba(46,125,50,0.2);color:#1B5E20;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">💰 Cobrar saldo</button>
       <button onclick="registrarGasto()" style="background:#FFF3E0;color:#E65100;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">📤 Gasto / retiro</button>
       <button onclick="cerrarCaja()" style="background:#FDECEA;color:#C0392B;border:none;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:900;cursor:pointer">🔒 Cerrar caja</button>
     </div>
@@ -4409,7 +4409,7 @@ function renderCaja() {
             o.tratamiento ? o.tratamiento.replace(" | "," / ") : "",
             o.dosAnteojos && o.b_tratamiento ? o.b_tratamiento.replace(" | "," / ") : ""
           ].filter(Boolean).join(" · ");
-          return `<div style="background:#fff;border-radius:12px;border:1.5px solid var(--gris-borde);border-left:4px solid ${accentColor};margin-bottom:7px;overflow:hidden">
+          return `<div style="background:var(--blanco);border-radius:12px;border:1.5px solid var(--gris-borde);border-left:4px solid ${accentColor};margin-bottom:7px;overflow:hidden">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer" onclick="verDetalle(${idx})">
               <div style="flex:1;min-width:0">
                 <div style="font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px">
@@ -4467,7 +4467,7 @@ function renderCaja() {
         ${cajaHoy.notas?`<span style="margin-left:auto;font-size:10px;background:#FDE68A;color:#B45309;padding:2px 7px;border-radius:10px;font-weight:700">Hay notas</span>`:""}
       </summary>
       <div style="background:#FAFBFF;border-radius:0 0 11px 11px;padding:10px 14px">
-        <textarea id="caja-notas" placeholder="Observaciones del día..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 11px;font-size:13px;background:#fff;font-family:inherit;outline:none;resize:none;height:70px;box-sizing:border-box">${cajaHoy.notas||""}</textarea>
+        <textarea id="caja-notas" placeholder="Observaciones del día..." style="width:100%;border:1.5px solid var(--gris-borde);border-radius:9px;padding:9px 11px;font-size:13px;background:#0D1E38;font-family:inherit;outline:none;resize:none;height:70px;box-sizing:border-box">${cajaHoy.notas||""}</textarea>
         <button onclick="guardarNotasCaja()" style="margin-top:6px;background:#1A2E50;color:var(--azul);border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">💾 Guardar notas</button>
       </div>
     </details>
@@ -4931,7 +4931,7 @@ function renderCajasAnteriores(filtroMes) {
   });
 
   const resumenMes = cajasFiltradas.length > 1 ? `
-    <div style="background:#E8F5E9;border-radius:12px;padding:12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+    <div style="background:rgba(46,125,50,0.2);border-radius:12px;padding:12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
       <div><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Días</div><div style="font-size:20px;font-weight:900;color:#1B5E20">${cajasFiltradas.length}</div></div>
       <div><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Órdenes</div><div style="font-size:20px;font-weight:900;color:#1B5E20">${totalOrdenes}</div></div>
       <div><div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Cobrado</div><div style="font-size:16px;font-weight:900;color:#1B5E20">$${num(totalCobrado)}</div></div>
@@ -4943,7 +4943,7 @@ function renderCajasAnteriores(filtroMes) {
     const gastos = getCajasVentas().filter(v => v.fecha === c.fecha && v.tipo === "gasto");
     const res = calcResumen(ordenes, c, c.fecha);
     const estadoBadge = c.cerrada
-      ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔒 Cerrada</span>`
+      ? `<span style="background:rgba(46,125,50,0.2);color:#2E7D32;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔒 Cerrada</span>`
       : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚠ Sin cerrar</span>`;
     const arqueoIcon = c.arqueo ? (c.arqueo.diferencia===0?" ✅":c.arqueo.diferencia>0?" 📈":" 📉") : "";
     return `<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="verResumenCaja('${c.fecha}')">
@@ -5078,13 +5078,13 @@ function verHistorialCajas(filtroMes) {
       : "";
     const estadoColor = c.cerrada ? "#4CAF50" : "#FF9800";
     const estadoLabel = c.cerrada
-      ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px">🔒 Cerrada</span>`
+      ? `<span style="background:rgba(46,125,50,0.2);color:#2E7D32;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px">🔒 Cerrada</span>`
       : `<span style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px">${esHoy?'🔓 Abierta':'⚠️ Sin cerrar'}</span>`;
     const hoyBadge = esHoy ? `<span style="background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;margin-left:4px">Hoy</span>` : "";
 
     return `
       <div onclick="verResumenCaja('${c.fecha}','${mesSel}')"
-        style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;
+        style="background:var(--blanco);border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;
           border-left:4px solid ${estadoColor};box-shadow:0 1px 4px rgba(0,0,0,.07);
           display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div style="flex:1;min-width:0">
@@ -5213,7 +5213,7 @@ function cerrarCaja() {
           <div style="font-size:9px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:.5px">Órdenes</div>
           <div style="font-size:22px;font-weight:900;color:#1565C0;line-height:1.2">${ordenesDia.length}</div>
         </div>
-        <div style="background:#E8F5E9;border-radius:11px;padding:9px 6px;text-align:center">
+        <div style="background:rgba(46,125,50,0.2);border-radius:11px;padding:9px 6px;text-align:center">
           <div style="font-size:9px;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px">Cobrado</div>
           <div style="font-size:16px;font-weight:900;color:#2E7D32;line-height:1.2">$${num(res.totalCobrado)}</div>
         </div>
@@ -5370,7 +5370,7 @@ function verResumenCaja(fecha, fromHistorial) {
         <div style="font-size:10px;font-weight:700;color:#1565C0;text-transform:uppercase">Órdenes</div>
         <div style="font-size:22px;font-weight:900;color:#1565C0">${ordenes.length}</div>
       </div>
-      <div style="background:#E8F5E9;border-radius:12px;padding:10px;text-align:center">
+      <div style="background:rgba(46,125,50,0.2);border-radius:12px;padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:#2E7D32;text-transform:uppercase">Cobrado</div>
         <div style="font-size:16px;font-weight:900;color:#2E7D32">$${num(res.totalCobrado)}</div>
       </div>
@@ -5450,7 +5450,7 @@ function verResumenCaja(fecha, fromHistorial) {
       <div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:8px">
         <div style="font-size:12px;color:#E65100;font-weight:700;margin-bottom:10px">⚠️ Esta caja no fue cerrada</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="cierre-retro-dejar" inputmode="numeric" placeholder="$ a dejar en caja" style="flex:1;min-width:120px;border:1.5px solid #FFD54F;border-radius:9px;padding:10px;font-size:14px;background:#fff;font-family:inherit;outline:none;text-align:center">
+          <input id="cierre-retro-dejar" inputmode="numeric" placeholder="$ a dejar en caja" style="flex:1;min-width:120px;border:1.5px solid #FFD54F;border-radius:9px;padding:10px;font-size:14px;background:#0D1E38;font-family:inherit;outline:none;text-align:center">
           <button onclick="cerrarCajaRetroactiva('${fecha}')" style="background:#E65100;color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap">🔒 Cerrar caja</button>
         </div>
       </div>` : ""}
@@ -6289,7 +6289,7 @@ function confirmarAccion(mensaje, onSi) {
       <div style="font-size:16px;font-weight:800;color:var(--texto);margin-bottom:8px">${mensaje}</div>
       <div style="font-size:13px;color:var(--suave);margin-bottom:24px">Esta acción no se puede deshacer</div>
       <div style="display:flex;gap:10px">
-        <button onclick="closeModal()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--gris-borde);background:#fff;font-size:15px;font-weight:700;cursor:pointer;color:var(--texto)">Cancelar</button>
+        <button onclick="closeModal()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--gris-borde);background:var(--blanco);font-size:15px;font-weight:700;cursor:pointer;color:var(--texto)">Cancelar</button>
         <button id="btn-confirmar-si" style="flex:1;padding:13px;border-radius:12px;border:none;background:#C0392B;color:#fff;font-size:15px;font-weight:800;cursor:pointer">🗑 Eliminar</button>
       </div>
     </div>
@@ -6715,7 +6715,7 @@ function renderFinanzas() {
             <div style="font-size:10px;color:#C62828;font-weight:700;text-transform:uppercase;margin-bottom:2px">Costo total</div>
             <div style="font-size:20px;font-weight:900;color:#C62828">${$(cur.costoOrdenes)}</div>
           </div>
-          <div style="flex:1;text-align:center;padding:12px 8px;background:#E8F5E9;border-radius:10px">
+          <div style="flex:1;text-align:center;padding:12px 8px;background:rgba(46,125,50,0.2);border-radius:10px">
             <div style="font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase;margin-bottom:2px">Margen bruto</div>
             <div style="font-size:20px;font-weight:900;color:#2E7D32">${$(cur.margenBruto)}</div>
           </div>
@@ -6794,7 +6794,7 @@ function renderFinanzas() {
             return `
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
                 <div style="flex:1;font-size:13px;font-weight:600;color:var(--texto)">${tr}</div>
-                <div style="display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:110px">
+                <div style="display:flex;align-items:center;gap:4px;background:#0D1E38;border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px;width:110px">
                   <span style="font-size:12px;color:var(--suave);font-weight:700">$</span>
                   <input type="number" min="0" value="${t.costo}"
                     placeholder="0"
@@ -6909,7 +6909,7 @@ function renderFinanzas() {
             <span style="font-size:13px;color:var(--suave);font-weight:700">%</span>
           </div>
         </div>
-        ${cfg.iibb ? `<div style="margin-top:10px;font-size:12px;color:#2E7D32;font-weight:700;background:#E8F5E9;border-radius:8px;padding:8px 12px">
+        ${cfg.iibb ? `<div style="margin-top:10px;font-size:12px;color:#2E7D32;font-weight:700;background:rgba(46,125,50,0.2);border-radius:8px;padding:8px 12px">
           ✓ Aplicando ${cfg.iibb}% de IIBB sobre lo facturado del período seleccionado
         </div>` : ""}
       </div>`;
@@ -7282,7 +7282,7 @@ function renderAdminCheques() {
               ${c.notas ? `<div style="font-size:12px;color:var(--suave);margin-bottom:8px">📝 ${c.notas}</div>` : ""}
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 ${!["debitado","cancelado"].includes(c.estado) ? `
-                  <button onclick="adminCambiarEstadoCheque('${c.id}','debitado')" style="flex:1;background:#E8F5E9;color:#2E7D32;border:1.5px solid #A5D6A7;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer">✅ Debitado</button>
+                  <button onclick="adminCambiarEstadoCheque('${c.id}','debitado')" style="flex:1;background:rgba(46,125,50,0.2);color:#2E7D32;border:1.5px solid #A5D6A7;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer">✅ Debitado</button>
                   <button onclick="adminCambiarEstadoCheque('${c.id}','cancelado')" style="flex:1;background:#F5F5F5;color:#999;border:1.5px solid #E0E0E0;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer">❌ Cancelar</button>
                 ` : `<div style="font-size:12px;color:var(--suave);font-style:italic">Cheque ${c.estado}</div>`}
                 <button onclick="adminEliminarCheque('${c.id}')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#ccc;padding:6px">×</button>
@@ -7461,7 +7461,7 @@ function renderAdminSueldos() {
                 <div style="margin-top:8px;background:#FDECEA;border-radius:9px;padding:8px 12px;font-size:12px;color:#C62828;font-weight:700">
                   ⚠️ Deuda acumulada: $${num(Math.round(deudaTotal))}
                 </div>` : deudaTotal < -0.01 ? `
-                <div style="margin-top:8px;background:#E8F5E9;border-radius:9px;padding:8px 12px;font-size:12px;color:#2E7D32;font-weight:700">
+                <div style="margin-top:8px;background:rgba(46,125,50,0.2);border-radius:9px;padding:8px 12px;font-size:12px;color:#2E7D32;font-weight:700">
                   ✅ Sin deuda pendiente (adelanto $${num(Math.abs(Math.round(deudaTotal)))})
                 </div>` : ""}
             </div>
@@ -7469,7 +7469,7 @@ function renderAdminSueldos() {
             <div style="padding:12px 16px;background:#1A2E50;border-bottom:1px solid var(--gris-borde)">
               <div style="font-size:11px;font-weight:800;color:var(--azul);text-transform:uppercase;margin-bottom:8px">Registrar pago</div>
               <div style="display:flex;gap:8px">
-                <div style="flex:1;display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px">
+                <div style="flex:1;display:flex;align-items:center;gap:4px;background:#0D1E38;border:1.5px solid var(--gris-borde);border-radius:9px;padding:0 10px">
                   <span style="font-size:12px;color:var(--suave)">$</span>
                   <input type="number" min="0" id="sp-monto-${emp.id}" placeholder="${num(Math.max(0,restante)||salario)}" style="flex:1;border:none;outline:none;font-size:14px;font-weight:800;padding:9px 0;font-family:inherit;background:transparent">
                 </div>
