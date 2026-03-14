@@ -558,7 +558,9 @@ const DEFAULT_CONFIG = {
   doctores:     [],
   laboratorios: [],
   marcasLC: ["Acuvue Oasys","Acuvue Moist","Air Optix","Dailies Total 1","Biotrue ONEday","PureVision","SofLens","Clariti"],
-  liquidosLC: ["Arlyt Express 120ml","Arlyt Express 360ml","Renu 60ml","Renu 120ml","Renu 360ml","Biotrue 60ml","Biotrue 120ml","Biotrue 360ml","Solo-Care Aqua 90ml","Solo-Care Aqua 360ml"]
+  liquidosLC: ["Arlyt Express 120ml","Arlyt Express 360ml","Renu 60ml","Renu 120ml","Renu 360ml","Biotrue 60ml","Biotrue 120ml","Biotrue 360ml","Solo-Care Aqua 90ml","Solo-Care Aqua 360ml"],
+  marcasSol: ["Ray-Ban","Vulk","Rusty","Infinit","Reef","Oakley","Carrera","Tommy Hilfiger"],
+  tenidos: ["Gris","Marrón","Verde","Azul","Degradé gris","Degradé marrón","Naranja","Amarillo"]
 };
 
 function getCfg() {
@@ -1071,6 +1073,8 @@ function renderConfig() {
     seccion("Laboratorios", "🏭", "laboratorios", "Ej: Visión Plus, Optica Lab...") +
     seccion("Marcas de Lentes de Contacto", "👁️", "marcasLC", "Ej: Acuvue, Air Optix...") +
     seccion("Soluciones / Líquidos LC", "💧", "liquidosLC", "Ej: Arlyt Express 120ml...") +
+    seccion("Marcas de Anteojos de Sol", "🕶️", "marcasSol", "Ej: Ray-Ban, Vulk, Rusty...") +
+    seccion("Teñidos de Cristales", "🎨", "tenidos", "Ej: Gris, Degradé marrón...") +
     seccion("Tratamientos", "✨", "tratamientos", "Ej: Orgánico Blue HD...") +
     seccion("Obras Sociales", "🏥", "obraSocial", "Ej: PAMI, OSDE...") +
     seccion("Tipos de Lente", "🔭", "lentes", "Ej: Progresivo...") +
@@ -3074,59 +3078,89 @@ function renderPendientes() {
 // NUEVA VENTA — selector de tipo
 // ══════════════════════════════════════════════════════════════
 function nuevaVenta() {
+  const lbl = (txt) => `<div style="font-size:9px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1.4px;margin-bottom:6px;padding-left:1px">${txt}</div>`;
+  const kbdO = (k) => `<span style="font-size:9px;font-weight:800;background:rgba(21,101,192,.15);color:#1565C0;border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">${k}</span>`;
+  const kbdN = (k) => `<span style="font-size:9px;font-weight:800;background:rgba(0,0,0,.07);color:var(--suave);border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">${k}</span>`;
+  const kbdV = (k,c) => `<span style="font-size:9px;font-weight:800;background:rgba(27,94,32,.15);color:${c};border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">${k}</span>`;
+  const BS = "position:relative;border-radius:10px;padding:9px 10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;text-align:left;width:100%;font-family:inherit;border:1.5px solid";
   document.getElementById("modal-body").innerHTML = `
-    <div style="font-size:20px;font-weight:900;color:var(--azul);margin-bottom:6px">➕ Nueva venta</div>
-    <div style="font-size:13px;color:var(--suave);margin-bottom:20px">¿Qué tipo de trabajo es?</div>
+    <div style="font-size:17px;font-weight:900;color:var(--azul);margin-bottom:14px">➕ Nueva venta</div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-
-      <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">🔭 Órdenes con receta</div>
-
-      ${["Recetado","Reposición de Cristales","Pase de Armazón"].map(t => `
-        <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('${t}'),100)"
-          class="btn-nueva-opcion">
-          <span style="font-size:20px">${t==="Recetado"?"👓":t==="Reposición de Cristales"?"🔭":"🔄"}</span>
-          ${t}
-        </button>`).join("")}
-
-      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('PAMI'),100)"
-        class="btn-nueva-opcion" style="background:#E3F2FD;color:#1565C0;border-color:#90CAF9">
-        <span style="font-size:20px">🏥</span> PAMI
+    ${lbl("🔭 Óptica")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('Recetado'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
+        <span style="font-size:16px">👓</span><span style="flex:1">Recetado</span>${kbdO("R")}
       </button>
-
-      <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-top:6px;margin-bottom:2px">⚡ Ventas rápidas</div>
-
-      <button onclick="closeModal();setTimeout(()=>ventaLC(),100)"
-        class="btn-nueva-opcion" style="background:#E0F7FA;color:#006064;border-color:#80DEEA">
-        <span style="font-size:20px">👁️</span> Lentes de Contacto
+      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('PAMI'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
+        <span style="font-size:16px">🏥</span><span style="flex:1">PAMI</span>${kbdO("P")}
       </button>
-
-      <button onclick="closeModal();setTimeout(()=>ventaRapida('taller'),100)"
-        class="btn-nueva-opcion" style="background:#FFF8E1;color:#F57F17;border-color:#FFD54F">
-        <span style="font-size:20px">🔧</span> Taller
+      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('Reposición de Cristales'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
+        <span style="font-size:16px">🔭</span><span style="flex:1">Reposición</span>${kbdO("K")}
       </button>
-
-      <button onclick="closeModal();setTimeout(()=>ventaRapida('accesorio'),100)"
-        class="btn-nueva-opcion" style="background:#F3E5F5;color:#6A1B9A;border-color:#CE93D8">
-        <span style="font-size:20px">🛍️</span> Accesorios
+      <button onclick="closeModal();setTimeout(()=>openOrdenFormTipo('Pase de Armazón'),100)" style="${BS} #BBDEFB;background:#EBF4FF;color:#1565C0">
+        <span style="font-size:16px">🔄</span><span style="flex:1">Pase Armazón</span>${kbdO("A")}
       </button>
-
     </div>
-      <div style="font-size:10px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-top:6px;margin-bottom:2px">💰 Cobros</div>
-      <button onclick="closeModal();setTimeout(()=>cobrarSaldo(),100)"
-        class="btn-nueva-opcion" style="background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7">
-        <span style="font-size:20px">💰</span> Cobrar saldo pendiente
-      </button>
 
-      <button onclick="closeModal();setTimeout(()=>registrarGasto(),100)"
-        class="btn-nueva-opcion" style="background:#FFF8F8;color:#C62828;border-color:#FFCDD2">
-        <span style="font-size:20px">💸</span> Registrar gasto / retiro
+    ${lbl("⚡ Ventas rápidas")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      <button onclick="closeModal();setTimeout(()=>ventaLC(),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
+        <span style="font-size:16px">👁️</span><span style="flex:1">LC</span>${kbdN("L")}
       </button>
+      <button onclick="closeModal();setTimeout(()=>ventaSol(),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
+        <span style="font-size:16px">🕶️</span><span style="flex:1">Sol</span>${kbdN("S")}
+      </button>
+      <button onclick="closeModal();setTimeout(()=>ventaRapida('taller'),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
+        <span style="font-size:16px">🔧</span><span style="flex:1">Taller</span>${kbdN("T")}
+      </button>
+      <button onclick="closeModal();setTimeout(()=>ventaRapida('accesorio'),100)" style="${BS} var(--gris-borde);background:#F5F7FA;color:var(--texto)">
+        <span style="font-size:16px">🛍️</span><span style="flex:1">Accesorios</span>${kbdN("X")}
+      </button>
+    </div>
 
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    ${lbl("💰 Cobros")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
+      <button onclick="closeModal();setTimeout(()=>cobrarSaldo(),100)" style="${BS} #A5D6A7;background:#E8F5E9;color:#1B5E20">
+        <span style="font-size:16px">💰</span><span style="flex:1">Cobrar</span>${kbdV("F","#1B5E20")}
+      </button>
+      <button onclick="closeModal();setTimeout(()=>registrarGasto(),100)" style="${BS} #FECACA;background:#FEF2F2;color:#C62828">
+        <span style="font-size:16px">💸</span><span style="flex:1">Gasto</span><span style="font-size:9px;font-weight:800;background:rgba(198,40,40,.12);color:#C62828;border-radius:4px;padding:2px 5px;letter-spacing:.5px;font-family:monospace">G</span>
+      </button>
+    </div>
+
+    <button class="btn-cancel" onclick="closeModal()" style="font-size:12px;padding:9px">
+      Cancelar <span style="font-size:9px;font-family:monospace;opacity:.5;margin-left:4px">Esc</span>
+    </button>
   `;
   document.getElementById("overlay").classList.add("open");
 }
+
+// ─── Keyboard shortcuts para el modal de nueva venta ────────────────────────
+(function() {
+  const run = (fn) => { closeModal(); setTimeout(fn, 100); };
+  const MAP = {
+    r: () => run(()=>openOrdenFormTipo('Recetado')),
+    p: () => run(()=>openOrdenFormTipo('PAMI')),
+    k: () => run(()=>openOrdenFormTipo('Reposición de Cristales')),
+    a: () => run(()=>openOrdenFormTipo('Pase de Armazón')),
+    l: () => run(()=>ventaLC()),
+    s: () => run(()=>ventaSol()),
+    t: () => run(()=>ventaRapida('taller')),
+    x: () => run(()=>ventaRapida('accesorio')),
+    f: () => run(()=>cobrarSaldo()),
+    g: () => run(()=>registrarGasto()),
+  };
+  document.addEventListener("keydown", function(e) {
+    if (!document.getElementById("overlay")?.classList.contains("open")) return;
+    // Solo actúa cuando el modal de nueva venta está abierto (hay botones data-nv-key)
+    if (!document.querySelector("[data-nv-key]")) return;
+    const tag = document.activeElement?.tagName?.toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const fn = MAP[e.key?.toLowerCase()];
+    if (fn) { e.preventDefault(); fn(); }
+  });
+})();
 
 function cobrarSaldo() {
   // Órdenes con saldo > 0
@@ -3744,34 +3778,17 @@ function actualizarCamposLC() {
 
 function guardarVentaLC() {
   const tipo = _lcTipo;
-
-  // Verificar si hay líquidos seleccionados (venta solo líquidos, sin LC)
-  const liquidosPreCheck = [];
-  document.querySelectorAll("#lc-liquidos-lista .check-item.checked input[type=checkbox]").forEach((cb, idx) => {
-    const label = cb.closest(".check-item");
-    const dataIdx = label?.dataset.liq;
-    const qtyEl = document.getElementById(`lc-liq-qty-${dataIdx}`);
-    const qty = parseInt(qtyEl?.value) || 1;
-    liquidosPreCheck.push({ nombre: cb.value, cantidad: qty });
-  });
-  const liqCustomNombrePreCheck = document.getElementById("lc-liq-custom")?.value.trim() || "";
-  const soloLiquidos = !tipo && (liquidosPreCheck.length > 0 || liqCustomNombrePreCheck);
-
-  let marca = "", gradOD = "", gradOI = "";
-
-  if (!soloLiquidos) {
-    if (!tipo) { toast("⚠ Seleccioná la presentación o elegí un líquido"); return; }
-    const marcaSel = document.getElementById("lc-marca")?.value || "";
-    const marcaCustom = document.getElementById("lc-marca-custom")?.value.trim() || "";
-    marca = marcaCustom || marcaSel;
-    if (!marca) { toast("⚠ Seleccioná o escribí la marca"); return; }
-    const gradPar = document.getElementById("lc-grad-par")?.value || "";
-    gradOD = tipo === "par" ? gradPar : (tipo !== "oi" ? (document.getElementById("lc-grad-od")?.value || "") : "");
-    gradOI = tipo === "par" ? gradPar : (tipo !== "od" ? (document.getElementById("lc-grad-oi")?.value || "") : "");
-    if (tipo === "par" && !gradPar) { toast("⚠ Seleccioná la graduación"); return; }
-    if (tipo !== "par" && tipo !== "oi" && !gradOD) { toast("⚠ Seleccioná la graduación OD"); return; }
-    if (tipo !== "par" && tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
-  }
+  if (!tipo) { toast("⚠ Seleccioná la presentación"); return; }
+  const marcaSel = document.getElementById("lc-marca")?.value || "";
+  const marcaCustom = document.getElementById("lc-marca-custom")?.value.trim() || "";
+  const marca = marcaCustom || marcaSel;
+  if (!marca) { toast("⚠ Seleccioná o escribí la marca"); return; }
+  const gradPar = document.getElementById("lc-grad-par")?.value || "";
+  const gradOD = tipo === "par" ? gradPar : (tipo !== "oi" ? (document.getElementById("lc-grad-od")?.value || "") : "");
+  const gradOI = tipo === "par" ? gradPar : (tipo !== "od" ? (document.getElementById("lc-grad-oi")?.value || "") : "");
+  if (tipo === "par" && !gradPar) { toast("⚠ Seleccioná la graduación"); return; }
+  if (tipo !== "par" && tipo !== "oi" && !gradOD) { toast("⚠ Seleccioná la graduación OD"); return; }
+  if (tipo !== "par" && tipo !== "od" && !gradOI) { toast("⚠ Seleccioná la graduación OI"); return; }
   const precio = parseFloat(getRawMonto(document.getElementById("lc-precio"))) || parseFloat(document.getElementById("lc-precio")?.value) || 0;
   if (!precio) { toast("⚠ Ingresá el precio"); return; }
   const pagoBase = document.getElementById("lc-pago")?.value || "";
@@ -3793,28 +3810,23 @@ function guardarVentaLC() {
   const liqCustomQty = parseInt(document.getElementById("lc-liq-custom-qty")?.value) || 1;
   if (liqCustomNombre) liquidosSeleccionados.push({ nombre: liqCustomNombre, cantidad: liqCustomQty });
 
-  let item;
-  if (soloLiquidos) {
+  const tipoLabel = { par:"Par completo", od:"Medio par OD", oi:"Medio par OI", "2medios":"2 medios pares" }[tipo];
+  let gradDesc = "";
+  if (tipo === "par" || tipo === "2medios") gradDesc = `OD ${gradOD} / OI ${gradOI}`;
+  else if (tipo === "od") gradDesc = `OD ${gradOD}`;
+  else if (tipo === "oi") gradDesc = `OI ${gradOI}`;
+
+  let item = `${marca} · ${tipoLabel} · ${gradDesc}`;
+  if (liquidosSeleccionados.length > 0) {
     const liqDesc = liquidosSeleccionados.map(l => l.cantidad > 1 ? `${l.cantidad}x ${l.nombre}` : l.nombre).join(", ");
-    item = liqDesc;
-  } else {
-    const tipoLabel = { par:"Par completo", od:"Medio par OD", oi:"Medio par OI", "2medios":"2 medios pares" }[tipo];
-    let gradDesc = "";
-    if (tipo === "par" || tipo === "2medios") gradDesc = `OD ${gradOD} / OI ${gradOI}`;
-    else if (tipo === "od") gradDesc = `OD ${gradOD}`;
-    else if (tipo === "oi") gradDesc = `OI ${gradOI}`;
-    item = `${marca} · ${tipoLabel} · ${gradDesc}`;
-    if (liquidosSeleccionados.length > 0) {
-      const liqDesc = liquidosSeleccionados.map(l => l.cantidad > 1 ? `${l.cantidad}x ${l.nombre}` : l.nombre).join(", ");
-      item += ` + ${liqDesc}`;
-    }
+    item += ` + ${liqDesc}`;
   }
 
   const venta = {
     id: uid(), fecha: getHoy(),
     hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     tipo: "lc",
-    item, marca, tipoLC: tipo || "", gradOD, gradOI,
+    item, marca, tipoLC: tipo, gradOD, gradOI,
     precio, cantidad: 1, total: precio, pago
   };
   if (liquidosSeleccionados.length > 0) venta.liquidosLC = liquidosSeleccionados;
@@ -3825,7 +3837,221 @@ function guardarVentaLC() {
   ventas.push(venta);
   saveCajasVentas(ventas);
   closeModal();
-  toast(`\u2705 ${soloLiquidos ? "L\u00edquido registrado" : "LC registrada"} \u00b7 $${num(precio)}`);
+  toast(`✅ LC registrada · $${num(precio)}`);
+  if (document.getElementById("screen-caja")?.classList.contains("active")) renderCajaConVentas();
+}
+
+// ══════════════════════════════════════════════════════════════
+// VENTA SOL — Anteojos de sol (sin o con aumento)
+// ══════════════════════════════════════════════════════════════
+function ventaSol() {
+  const cfg = getCfg();
+  const marcas = cfg.marcasSol || [];
+  const tenidos = cfg.tenidos || [];
+
+  const marcaSelect = marcas.length
+    ? `<select id="sol-marca" class="of-select">
+        <option value="">— Elegir marca —</option>
+        ${marcas.map(m=>`<option value="${m}">${m}</option>`).join("")}
+       </select>`
+    : `<input id="sol-marca" class="of-input" placeholder="Marca...">`;
+
+  const tenidoSelect = tenidos.length
+    ? `<select id="sol-tenido" class="of-select">
+        <option value="">— Elegir teñido —</option>
+        ${tenidos.map(t=>`<option value="${t}">${t}</option>`).join("")}
+       </select>`
+    : `<input id="sol-tenido" class="of-input" placeholder="Teñido...">`;
+
+  const gradOpts = [];
+  for (let i = -12; i <= 12; i += 0.25) {
+    const sign = i >= 0 ? "+" : "";
+    gradOpts.push(`<option value="${i.toFixed(2)}">${sign}${i.toFixed(2)}</option>`);
+  }
+  const gradOptStr = `<option value="">—</option>` + gradOpts.join("");
+
+  document.getElementById("modal-body").innerHTML = `
+    <div class="of-wrap">
+      <div style="background:linear-gradient(135deg,#E65100,#F57F17);border-radius:14px;padding:14px 18px;margin-bottom:14px;box-shadow:0 4px 18px rgba(230,81,0,.28)">
+        <div style="font-size:10px;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:1.2px">Olvisión · Venta rápida</div>
+        <div style="font-size:19px;font-weight:900;color:#fff;margin-top:2px">🕶️ Anteojos de Sol</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px">${new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})}</div>
+      </div>
+
+      <div class="of-field">
+        <label class="of-label">👤 Vendedora</label>
+        ${vendedoraSelect("sol-vendedora", "")}
+      </div>
+
+      <div class="of-field">
+        <label class="of-label">🙍 Nombre del cliente (opcional)</label>
+        <input id="sol-cliente" class="of-input" placeholder="Ej: María López">
+      </div>
+
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Tipo de venta</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+          <button type="button" id="sol-btn-sin" onclick="toggleTipoSol('sin')"
+            style="padding:11px 8px;border-radius:9px;border:1.5px solid var(--gris-borde);background:var(--gris);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--texto);transition:all .15s">
+            ☀️ Sin aumento
+          </button>
+          <button type="button" id="sol-btn-con" onclick="toggleTipoSol('con')"
+            style="padding:11px 8px;border-radius:9px;border:1.5px solid var(--gris-borde);background:var(--gris);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--texto);transition:all .15s">
+            🔭 Con aumento
+          </button>
+        </div>
+      </div>
+
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Marca y modelo</div>
+        <div class="of-field" style="margin-bottom:6px">
+          <label class="of-label">Marca</label>
+          ${marcaSelect}
+        </div>
+        <div class="of-field">
+          <label class="of-label">Modelo (opcional)</label>
+          <input id="sol-modelo" class="of-input" placeholder="Ej: Aviador, Wayfarer...">
+        </div>
+      </div>
+
+      <div class="of-card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🎨 Teñido del cristal</div>
+        ${tenidoSelect}
+      </div>
+
+      <div id="sol-grad-box" style="display:none">
+        <div class="of-card" style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:#7A8BA6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🔭 Graduación</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:4px">
+            <div style="font-size:9px;font-weight:700;color:#7A8BA6;text-transform:uppercase;text-align:center">Esf</div>
+            <div style="font-size:9px;font-weight:700;color:#7A8BA6;text-transform:uppercase;text-align:center">Cil</div>
+            <div style="font-size:9px;font-weight:700;color:#7A8BA6;text-transform:uppercase;text-align:center">Eje</div>
+            <div style="font-size:9px;font-weight:700;color:#7A8BA6;text-transform:uppercase;text-align:center">Add</div>
+          </div>
+          <div style="font-size:10px;font-weight:800;color:#E65100;margin-bottom:6px">OD (Derecho)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+            <select id="sol-od-esf" class="of-select" style="font-size:12px;padding:8px 4px">${gradOptStr}</select>
+            <select id="sol-od-cil" class="of-select" style="font-size:12px;padding:8px 4px">${gradOptStr}</select>
+            <input id="sol-od-eje" class="of-input" style="font-size:12px;padding:8px 4px;text-align:center" placeholder="0" type="number" min="0" max="180">
+            <select id="sol-od-add" class="of-select" style="font-size:12px;padding:8px 4px">${gradOptStr}</select>
+          </div>
+          <div style="font-size:10px;font-weight:800;color:#1565C0;margin-bottom:6px">OI (Izquierdo)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+            <select id="sol-oi-esf" class="of-select" style="font-size:12px;padding:8px 4px">${gradOptStr}</select>
+            <select id="sol-oi-cil" class="of-select" style="font-size:12px;padding:8px 4px">${gradOptStr}</select>
+            <input id="sol-oi-eje" class="of-input" style="font-size:12px;padding:8px 4px;text-align:center" placeholder="0" type="number" min="0" max="180">
+            <select id="sol-oi-add" class="of-select" style="font-size:12px;padding:8px 4px">${gradOptStr}</select>
+          </div>
+        </div>
+      </div>
+
+      <div class="of-field">
+        <label class="of-label">💰 Precio de venta</label>
+        <input id="sol-precio" class="of-input" type="number" placeholder="0" inputmode="numeric" style="font-size:18px;font-weight:800;color:var(--azul)">
+      </div>
+
+      <div class="of-field">
+        <label class="of-label">💳 Forma de pago</label>
+        <select id="sol-pago" class="of-select" onchange="onPagoVentaChange(this.value,'sol')">
+          <option value="">— Seleccioná —</option>
+          ${(cfg.formaPago||[]).map(p => `<option value="${p}">${p}</option>`).join("")}
+          <option value="Sin cargo">Sin cargo</option>
+        </select>
+      </div>
+      ${renderTarjetaWrap("sol", cfg)}
+
+      <div class="of-field">
+        <label class="of-label">📝 Observaciones (opcional)</label>
+        <textarea id="sol-notas" class="of-input" rows="2" placeholder="Detalles adicionales..." style="resize:vertical"></textarea>
+      </div>
+
+      <button onclick="guardarVentaSol()" class="of-btn-primary" style="background:linear-gradient(135deg,#E65100,#F57F17);margin-bottom:8px">☀️ Registrar venta</button>
+      <button class="of-btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>
+  `;
+  document.getElementById("overlay").classList.add("open");
+}
+
+let _solTipo = "";
+
+function toggleTipoSol(tipo) {
+  _solTipo = tipo;
+  const btnSin = document.getElementById("sol-btn-sin");
+  const btnCon = document.getElementById("sol-btn-con");
+  const gradBox = document.getElementById("sol-grad-box");
+  if (!btnSin || !btnCon) return;
+  const active = "padding:11px 8px;border-radius:9px;border:2px solid #E65100;background:#FFF3E0;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#E65100;transition:all .15s";
+  const inactive = "padding:11px 8px;border-radius:9px;border:1.5px solid var(--gris-borde);background:var(--gris);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--texto);transition:all .15s";
+  if (tipo === "sin") {
+    btnSin.style.cssText = active;
+    btnCon.style.cssText = inactive;
+    if (gradBox) gradBox.style.display = "none";
+  } else {
+    btnCon.style.cssText = active;
+    btnSin.style.cssText = inactive;
+    if (gradBox) gradBox.style.display = "block";
+  }
+}
+
+function guardarVentaSol() {
+  if (!_solTipo) { toast("⚠ Seleccioná si es con o sin aumento"); return; }
+  const marcaEl = document.getElementById("sol-marca");
+  const marca = marcaEl?.value?.trim() || "";
+  if (!marca) { toast("⚠ Seleccioná o escribí la marca"); return; }
+  const modelo = document.getElementById("sol-modelo")?.value.trim() || "";
+  const tenidoEl = document.getElementById("sol-tenido");
+  const tenido = tenidoEl?.value?.trim() || "";
+  const cliente = document.getElementById("sol-cliente")?.value.trim() || "";
+
+  let gradDesc = "";
+  if (_solTipo === "con") {
+    const odEsf = document.getElementById("sol-od-esf")?.value || "";
+    const odCil = document.getElementById("sol-od-cil")?.value || "";
+    const odEje = document.getElementById("sol-od-eje")?.value || "";
+    const odAdd = document.getElementById("sol-od-add")?.value || "";
+    const oiEsf = document.getElementById("sol-oi-esf")?.value || "";
+    const oiCil = document.getElementById("sol-oi-cil")?.value || "";
+    const oiEje = document.getElementById("sol-oi-eje")?.value || "";
+    const oiAdd = document.getElementById("sol-oi-add")?.value || "";
+    if (!odEsf && !oiEsf) { toast("⚠ Completá al menos la esfera de un ojo"); return; }
+    const fmtOD = [odEsf, odCil, odEje ? odEje + "°" : "", odAdd].filter(Boolean).join(" ");
+    const fmtOI = [oiEsf, oiCil, oiEje ? oiEje + "°" : "", oiAdd].filter(Boolean).join(" ");
+    gradDesc = "OD: " + fmtOD + " / OI: " + fmtOI;
+  }
+
+  const precio = parseFloat(document.getElementById("sol-precio")?.value) || 0;
+  if (!precio) { toast("⚠ Ingresá el precio"); return; }
+
+  const pagoBase = document.getElementById("sol-pago")?.value || "";
+  if (!pagoBase) { toast("⚠ Seleccioná la forma de pago"); return; }
+  const pago = buildPagoString("sol");
+
+  const notas = document.getElementById("sol-notas")?.value.trim() || "";
+  const vendedora = document.getElementById("sol-vendedora")?.value.trim() || "";
+
+  let item = marca + (modelo ? " " + modelo : "");
+  if (tenido) item += " · " + tenido;
+  item += _solTipo === "con" ? " · Con aumento · " + gradDesc : " · Sin aumento";
+
+  const venta = {
+    id: uid(), fecha: getHoy(),
+    hora: new Date().toLocaleTimeString("es-AR", {hour:"2-digit", minute:"2-digit"}),
+    tipo: "sol",
+    item, marca, modelo, tenido,
+    tipoSol: _solTipo,
+    gradDesc: gradDesc || "",
+    cliente,
+    precio, cantidad: 1, total: precio, pago
+  };
+  if (notas) venta.notas = notas;
+  if (vendedora) venta.vendedora = vendedora;
+
+  _solTipo = "";
+  const ventas = getCajasVentas();
+  ventas.push(venta);
+  saveCajasVentas(ventas);
+  closeModal();
+  toast("✅ Venta sol registrada · $" + num(precio));
   if (document.getElementById("screen-caja")?.classList.contains("active")) renderCajaConVentas();
 }
 
@@ -4834,6 +5060,7 @@ function cerrarCaja() {
           ${movDia.filter(v=>v.tipo==="accesorio").length?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--suave)">🛍️ Accesorios (${movDia.filter(v=>v.tipo==="accesorio").length})</span><b>$${num(movDia.filter(v=>v.tipo==="accesorio").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
           ${movDia.filter(v=>v.tipo==="taller").length?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--suave)">🔧 Taller (${movDia.filter(v=>v.tipo==="taller").length})</span><b>$${num(movDia.filter(v=>v.tipo==="taller").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
           ${movDia.filter(v=>v.tipo==="lc").length?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--suave)">👁️ LC (${movDia.filter(v=>v.tipo==="lc").length})</span><b>$${num(movDia.filter(v=>v.tipo==="lc").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
+          ${movDia.filter(v=>v.tipo==="sol").length?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--suave)">🕶️ Sol (${movDia.filter(v=>v.tipo==="sol").length})</span><b>$${num(movDia.filter(v=>v.tipo==="sol").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
           ${movDia.filter(v=>v.tipo==="saldo").length?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--suave)">💰 Saldos (${movDia.filter(v=>v.tipo==="saldo").length})</span><b>$${num(movDia.filter(v=>v.tipo==="saldo").reduce((a,v)=>a+v.total,0))}</b></div>`:""}
           ${gastosDia.map(g=>`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#C62828">💸 ${g.item}</span><b style="color:#C62828">−$${num(g.total)}</b></div>`).join("")}
         </div>
@@ -4929,7 +5156,7 @@ function verResumenCaja(fecha, fromHistorial) {
   const gastos = ventasDia.filter(v => v.tipo === "gasto");
   const res = calcResumen(ordenes, caja, fecha);
 
-  const tipoLabel = { accesorio:"🛍️ Accesorio", taller:"🔧 Taller", saldo:"💰 Saldo cobrado", lc:"👁️ Lentes de Contacto" };
+  const tipoLabel = { accesorio:"🛍️ Accesorio", taller:"🔧 Taller", saldo:"💰 Saldo cobrado", lc:"👁️ Lentes de Contacto", sol:"🕶️ Anteojos de Sol" };
 
   document.getElementById("modal-body").innerHTML = `
     <div style="font-size:18px;font-weight:900;color:var(--azul);margin-bottom:4px">📅 Resumen de caja</div>
@@ -6125,13 +6352,14 @@ function renderFinanzas() {
     const ventasAccesorios = vs.filter(v=>v.tipo==="accesorio").reduce((a,v)=>a+(parseFloat(v.monto)||0),0);
     const ventasTaller     = vs.filter(v=>v.tipo==="taller").reduce((a,v)=>a+(parseFloat(v.monto)||0),0);
     const cobrosSaldo      = vs.filter(v=>v.tipo==="saldo").reduce((a,v)=>a+(parseFloat(v.monto)||0),0);
-    const ingresoTotal     = cobradoOrdenes + ventasAccesorios + ventasTaller + cobrosSaldo;
+    const ventasSol        = vs.filter(v=>v.tipo==="sol").reduce((a,v)=>a+(parseFloat(v.total||v.monto)||0),0);
+    const ingresoTotal     = cobradoOrdenes + ventasAccesorios + ventasTaller + cobrosSaldo + ventasSol;
     const cantOrdenes      = os.length;
     const ticketMedio      = cantOrdenes > 0 ? facturadoOrdenes / cantOrdenes : 0;
     const pctPagado        = facturadoOrdenes > 0 ? Math.round(cobradoOrdenes / facturadoOrdenes * 100) : 0;
 
     return { facturadoOrdenes, cobradoOrdenes, saldoPendiente, costoLabArm, costoIIBB, costoOrdenes,
-             margenBruto, pctMargen, tieneCostos, ventasAccesorios, ventasTaller, cobrosSaldo,
+             margenBruto, pctMargen, tieneCostos, ventasAccesorios, ventasTaller, cobrosSaldo, ventasSol,
              ingresoTotal, cantOrdenes, ticketMedio, pctPagado };
   };
 
@@ -6246,6 +6474,7 @@ function renderFinanzas() {
       { label:"Órdenes cobradas", monto:cur.cobradoOrdenes, prev:prev.cobradoOrdenes, emoji:"📋" },
       { label:"Accesorios",       monto:cur.ventasAccesorios, prev:prev.ventasAccesorios, emoji:"🕶️" },
       { label:"Taller",           monto:cur.ventasTaller, prev:prev.ventasTaller, emoji:"🔧" },
+      { label:"Anteojos de Sol",  monto:cur.ventasSol, prev:prev.ventasSol, emoji:"🕶️" },
       { label:"Cobros cta. cte.", monto:cur.cobrosSaldo, prev:prev.cobrosSaldo, emoji:"📒" },
     ].map(it => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gris-borde)">
